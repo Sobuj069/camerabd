@@ -12,61 +12,31 @@
 @push('css')
     <style>
         @media print {
-            body {
+            @page {
+                size: 75mm 100mm;
                 margin: 0;
             }
-
-            #printableArea {
-                width: 75mm;
-                height: 100mm;
-                border: 1px solid black;
-                /* Ensure border is visible when printing */
-                padding: 10mm;
-                box-sizing: border-box;
-            }
-        }
-
-
-        .dropdown-menu {
-            position: absolute !important;
-            z-index: 9999;
-        }
-
-        .parent-container {
-            overflow: visible !important;
-        }
-    </style>
-
-    <style>
-        @media print {
             body {
-                font-size: 14px !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #ffffff !important;
             }
 
-            .container {
-                width: 100% !important;
+            .shipping-label-card {
+                width: 75mm !important;
+                max-width: 75mm !important;
+                min-height: 100mm !important;
+                border: none !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                page-break-inside: avoid !important;
+                page-break-after: always !important;
+                break-after: page !important;
             }
 
-            /* Each invoice will be on a new page */
-            .print_part2 {
-                page-break-before: always;
-            }
-
-            /* Hide Modal during printing */
             .modal,
             .modal-backdrop {
                 display: none !important;
-            }
-
-            /* To prevent table and elements from being cut off */
-            .list-item {
-                page-break-inside: avoid;
-            }
-
-            /* Adjust logo size */
-            .logo_part img {
-                max-width: 100px !important;
-                height: auto !important;
             }
         }
 
@@ -405,12 +375,7 @@
                     {{-- Carousel Status Filter Tabs matching Screenshot 2 & 3 --}}
                     @php
                         $curStatus = $status ?? 'all';
-                        $counts = $statusCounts ?? [
-                            'processing' => 0, 'rts' => 0, 'in_review' => 0, 'pending_courier' => 0,
-                            'in_transit' => 0, 'all_in_courier' => 0, 'on_hold' => 0, 'delivered' => 0,
-                            'pending_return' => 0, 'returned' => 0, 'partial' => 0, 'cancelled' => 0,
-                            'all' => 0, 'woocommerce' => 0
-                        ];
+                        $counts = $statusCounts ?? [];
                     @endphp
                     <div class="online-carousel-wrapper">
                         <button type="button" class="online-carousel-nav" id="scrollOnlinePillsLeft" title="Scroll Left">
@@ -422,85 +387,85 @@
                                class="online-pill {{ $curStatus === 'processing' ? 'active' : '' }}">
                                 <i class="feather icon-clock text-warning"></i>
                                 <span>Processing</span>
-                                <span class="online-pill-badge badge-orange">{{ $counts['processing'] }}</span>
+                                <span class="online-pill-badge badge-orange">{{ $counts['processing'] ?? 0 }}</span>
                             </a>
                             <a href="{{ route('invoice.online.sale', ['status' => 'rts']) }}"
                                class="online-pill {{ $curStatus === 'rts' ? 'active' : '' }}">
                                 <i class="feather icon-box text-cyan"></i>
                                 <span>RTS</span>
-                                <span class="online-pill-badge badge-cyan">{{ $counts['rts'] }}</span>
+                                <span class="online-pill-badge badge-cyan">{{ $counts['rts'] ?? 0 }}</span>
                             </a>
                             <a href="{{ route('invoice.online.sale', ['status' => 'in_review']) }}"
                                class="online-pill {{ $curStatus === 'in_review' ? 'active' : '' }}">
                                 <i class="feather icon-eye text-primary"></i>
                                 <span>In Review</span>
-                                <span class="online-pill-badge badge-blue">{{ $counts['in_review'] }}</span>
+                                <span class="online-pill-badge badge-blue">{{ $counts['in_review'] ?? 0 }}</span>
                             </a>
                             <a href="{{ route('invoice.online.sale', ['status' => 'pending_courier']) }}"
-                               class="online-pill {{ $curStatus === 'pending_courier' ? 'active' : '' }}">
+                               class="online-pill {{ in_array($curStatus, ['pending_courier', 'pending']) ? 'active' : '' }}">
                                 <i class="feather icon-clock text-warning"></i>
                                 <span>Pending (Courier)</span>
-                                <span class="online-pill-badge badge-orange">{{ $counts['pending_courier'] }}</span>
+                                <span class="online-pill-badge badge-orange">{{ $counts['pending_courier'] ?? $counts['pending'] ?? 0 }}</span>
                             </a>
                             <a href="{{ route('invoice.online.sale', ['status' => 'in_transit']) }}"
                                class="online-pill {{ $curStatus === 'in_transit' ? 'active' : '' }}">
                                 <i class="feather icon-truck text-info"></i>
                                 <span>In Transit</span>
-                                <span class="online-pill-badge badge-cyan">{{ $counts['in_transit'] }}</span>
+                                <span class="online-pill-badge badge-cyan">{{ $counts['in_transit'] ?? 0 }}</span>
                             </a>
                             <a href="{{ route('invoice.online.sale', ['status' => 'all_in_courier']) }}"
-                               class="online-pill {{ $curStatus === 'all_in_courier' ? 'active' : '' }}">
+                               class="online-pill {{ in_array($curStatus, ['all_in_courier', 'in_courier']) ? 'active' : '' }}">
                                 <i class="feather icon-send text-info"></i>
                                 <span>All in Courier</span>
-                                <span class="online-pill-badge badge-cyan">{{ $counts['all_in_courier'] }}</span>
+                                <span class="online-pill-badge badge-cyan">{{ $counts['all_in_courier'] ?? $counts['in_courier'] ?? 0 }}</span>
                             </a>
                             <a href="{{ route('invoice.online.sale', ['status' => 'on_hold']) }}"
                                class="online-pill {{ $curStatus === 'on_hold' ? 'active' : '' }}">
                                 <i class="feather icon-pause text-secondary"></i>
                                 <span>On Hold</span>
-                                <span class="online-pill-badge badge-dark">{{ $counts['on_hold'] }}</span>
+                                <span class="online-pill-badge badge-dark">{{ $counts['on_hold'] ?? 0 }}</span>
                             </a>
                             <a href="{{ route('invoice.online.sale', ['status' => 'delivered']) }}"
                                class="online-pill {{ $curStatus === 'delivered' ? 'active' : '' }}">
                                 <i class="feather icon-check-circle text-success"></i>
                                 <span>Delivered</span>
-                                <span class="online-pill-badge badge-green">{{ $counts['delivered'] }}</span>
+                                <span class="online-pill-badge badge-green">{{ $counts['delivered'] ?? 0 }}</span>
                             </a>
                             <a href="{{ route('invoice.online.sale', ['status' => 'pending_return']) }}"
                                class="online-pill {{ $curStatus === 'pending_return' ? 'active' : '' }}">
                                 <i class="feather icon-clock text-warning"></i>
                                 <span>Pending Return</span>
-                                <span class="online-pill-badge badge-orange">{{ $counts['pending_return'] }}</span>
+                                <span class="online-pill-badge badge-orange">{{ $counts['pending_return'] ?? 0 }}</span>
                             </a>
                             <a href="{{ route('invoice.online.sale', ['status' => 'returned']) }}"
                                class="online-pill {{ $curStatus === 'returned' ? 'active' : '' }}">
                                 <i class="feather icon-rotate-ccw text-danger"></i>
                                 <span>Returned</span>
-                                <span class="online-pill-badge badge-red">{{ $counts['returned'] }}</span>
+                                <span class="online-pill-badge badge-red">{{ $counts['returned'] ?? 0 }}</span>
                             </a>
                             <a href="{{ route('invoice.online.sale', ['status' => 'partial']) }}"
                                class="online-pill {{ $curStatus === 'partial' ? 'active' : '' }}">
                                 <i class="feather icon-pie-chart text-teal"></i>
                                 <span>Partial</span>
-                                <span class="online-pill-badge badge-cyan">{{ $counts['partial'] }}</span>
+                                <span class="online-pill-badge badge-cyan">{{ $counts['partial'] ?? 0 }}</span>
                             </a>
                             <a href="{{ route('invoice.online.sale', ['status' => 'cancelled']) }}"
                                class="online-pill {{ $curStatus === 'cancelled' ? 'active' : '' }}">
                                 <i class="feather icon-x-circle text-dark"></i>
                                 <span>Cancelled</span>
-                                <span class="online-pill-badge badge-dark">{{ $counts['cancelled'] }}</span>
+                                <span class="online-pill-badge badge-dark">{{ $counts['cancelled'] ?? 0 }}</span>
                             </a>
                             <a href="{{ route('invoice.online.sale', ['status' => 'all']) }}"
                                class="online-pill {{ $curStatus === 'all' ? 'active' : '' }}">
                                 <i class="feather icon-layers"></i>
                                 <span>All Orders</span>
-                                <span class="online-pill-badge badge-blue">{{ $counts['all'] }}</span>
+                                <span class="online-pill-badge badge-blue">{{ $counts['all'] ?? 0 }}</span>
                             </a>
                             <a href="{{ route('invoice.online.sale', ['status' => 'woocommerce']) }}"
                                class="online-pill {{ $curStatus === 'woocommerce' ? 'active' : '' }}">
                                 <i class="feather icon-globe text-info"></i>
                                 <span>WooCommerce Orders</span>
-                                <span class="online-pill-badge badge-cyan">{{ $counts['woocommerce'] }}</span>
+                                <span class="online-pill-badge badge-cyan">{{ $counts['woocommerce'] ?? 0 }}</span>
                             </a>
                         </div>
 
@@ -825,6 +790,9 @@
                                                             <i class="feather icon-x-circle mr-2"></i> Mark as Cancelled (Restores Stock)
                                                         </a>
                                                         <div class="dropdown-divider"></div>
+                                                        <a class="dropdown-item" href="javascript:void(0);" data-toggle="modal" data-target="#printModal-{{ $data->id }}">
+                                                            <i class="feather icon-tag mr-2" style="color: #8b5cf6;"></i> Print Label
+                                                        </a>
                                                         <a class="dropdown-item" href="{{ route('invoice.print', $data->id) }}" target="_blank">
                                                             <i class="feather icon-printer mr-2"></i> Print Invoice
                                                         </a>
@@ -859,136 +827,27 @@
                         {{-- Render modals here outside the table --}}
                         @foreach ($invoices as $data)
                             <div class="modal fade" id="printModal-{{ $data->id }}" tabindex="-1"
-                                aria-labelledby="printModalLabel" aria-hidden="true">
-                                <div class="modal-dialog">
+                                aria-labelledby="printModalLabel-{{ $data->id }}" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
                                     <div class="modal-content">
                                         <div class="modal-header">
-                                            <h5 class="modal-title" id="printModalLabel">Print Label</h5>
-                                            <button type="button" class="btn-close" data-dismiss="modal"
-                                                aria-label="Close"></button>
+                                            <h5 class="modal-title font-weight-bold" id="printModalLabel-{{ $data->id }}">
+                                                <i class="feather icon-tag mr-1 text-purple"></i> {{ __('Print Shipping Label') }}
+                                            </h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
                                         </div>
-                                        <div class="modal-body">
-                                            <!-- Printable design starts here -->
-                                            <div id="printableArea-{{ $data->id }}" class="print_part mt-4">
-
-                                                <div class="logo_part text-center">
-                                                    <span class="mt-2 text-black"><strong>
-                                                            <h5 class="text-center"
-                                                                style="font-size:28px; font-weight:800">
-                                                                {{ $data->shop?->shop_name }} </h5>
-                                                        </strong></span>
-                                                </div>
-                                                <div class=" text-right text-black container">
-                                                    <strong style="font-size: 12px">Date: {{ $data->date }}
-                                                    </strong>
-                                                </div>
-
-                                                <div class="container text-black">
-                                                    <div class="row">
-                                                        <div class="col">
-                                                            <strong> Invoice No: {{ $data->invoice_no }} </strong>
-                                                            <br>
-                                                            <strong> Parcel ID: {{ $data->consignment_id }}
-                                                            </strong> </br>
-                                                            <strong> NAME: {{ $data->customer->name }} </strong>
-                                                            </br>
-                                                            <strong> MOBILE: {{ $data->customer->phone }} </strong>
-                                                            <br>
-                                                            <strong> ADDRESS: {{ $data->customer->address }}
-                                                            </strong>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class=" container text-black mt-2">
-                                                    <div class="row">
-                                                        <div class="col">
-                                                            <h5 class="text-center text-black">Product List</h5>
-                                                            <ul class="list"
-                                                                style="list-style:none; margin-left:-40px">
-                                                                <li class="list-item"
-                                                                    style="list-style:none;font-size:14px">
-                                                                    <div class="">
-                                                                        <div class="row text-left product_font">
-                                                                            <div class="col-2 text-left">
-                                                                                <strong
-                                                                                    style="font-size:14px">Sl</strong>
-                                                                            </div>
-                                                                            <div class="col-7  text-left">
-                                                                                <strong
-                                                                                    style="font-size:14px">Description</strong>
-                                                                            </div>
-                                                                            <div class="col-3 text-right">
-                                                                                <strong
-                                                                                    style="font-size:14px">Qty</strong>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </li>
-                                                                @php
-                                                                    $products = App\Models\InvoiceItem::where(
-                                                                        'invoice_id',
-                                                                        $data->id,
-                                                                    )->get();
-                                                                    // dd($product);
-                                                                    $sl = 1;
-                                                                @endphp
-                                                                @foreach ($products as $item)
-                                                                    <li class="list-item" style="font-size:12px">
-                                                                        <div class="">
-                                                                            <div class="row">
-                                                                                <div class="col-2 text-left">
-                                                                                    <strong style="font-size:13px">
-                                                                                        {{ $sl++ }}
-                                                                                    </strong>
-                                                                                </div>
-                                                                                <div class="col-7  text-left">
-                                                                                    <strong style="font-size:13px">
-                                                                                        {{ $item->product->name }}
-                                                                                    </strong>
-                                                                                </div>
-                                                                                <div class="col-3 text-right">
-                                                                                    <strong style="font-size:13px">
-                                                                                        @php
-                                                                                            if ($item->product?->unit?->related_unit == null) {
-                                                                                                $qty = $item->main_qty . ' ' . ($item->product?->unit?->name ?? '');
-                                                                                            } else {
-                                                                                                $sub_qty = $item->sub_qty ?? 0;
-                                                                                                if ($item->main_qty == 0 && $sub_qty == 0) {
-                                                                                                    $qty = '0 ' . $item->product?->unit?->name;
-                                                                                                } else {
-                                                                                                    $qty = '';
-                                                                                                    if ($item->main_qty > 0) $qty .= $item->main_qty . ' ' . $item->product?->unit?->name;
-                                                                                                    if ($item->main_qty > 0 && $sub_qty > 0) $qty .= ' - ';
-                                                                                                    if ($sub_qty > 0) $qty .= $sub_qty . ' ' . $item->product?->unit?->related_unit?->name;
-                                                                                                }
-                                                                                            }
-                                                                                        @endphp
-                                                                                        {{ $qty }}
-                                                                                    </strong>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </li>
-                                                                @endforeach
-                                                            </ul>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class=" mb-4 mt-2 text-center text-black">
-                                                    <span
-                                                        style="border:1px solid black;font-size: 16px; padding: 15px 20px;font-weight:800;">COD
-                                                        - TK {{ $data->total_due }}</span>
-                                                </div>
-                                            </div>
-                                            <!-- Printable design ends here -->
+                                        <div class="modal-body text-center p-3" style="background: #f1f5f9; overflow-x: auto;">
+                                            @include('backend.pages.invoice.shipping-label', ['data' => $data, 'prefix' => 'printableArea'])
                                         </div>
                                         <div class="modal-footer">
-                                            <!-- Print button to trigger the print function -->
-                                            <button type="button" class="btn btn-primary"
-                                                onclick="printDiv('printableArea-{{ $data->id }}')">Print</button>
-                                            <button type="button" class="btn btn-secondary"
-                                                data-dismiss="modal">Close</button>
+                                            <button type="button" class="btn btn-primary font-weight-bold"
+                                                onclick="printDiv('printableArea-{{ $data->id }}')">
+                                                <i class="feather icon-printer mr-1"></i> {{ __('Print') }}
+                                            </button>
+                                            <button type="button" class="btn btn-secondary font-weight-bold"
+                                                data-dismiss="modal">{{ __('Close') }}</button>
                                         </div>
                                     </div>
                                 </div>
@@ -1359,118 +1218,7 @@
 
     <div id="bulkPrintContainer" class="d-none">
         @foreach ($invoices as $data)
-            <div id="printableArea2-{{ $data->id }}" class="print_part2" style="margin-left: -10px">
-                <div class="logo_part text-center" style="margin-top: 0px">
-                    <span class=" text-black"><strong>
-                            <h5 class="text-center mt-2" style="font-size:22px; font-weight:800;">
-                                {{ empty(get_setting('com_name')) ? 'Fast IT' : get_setting('com_name') }}</h5>
-                        </strong></span>
-                </div>
-                <div class="mt-1 text-right text-black container" style="margin-top: 0px;">
-                    <strong style="font-size: 12px">Date: {{ $data->date }}
-                    </strong>
-                </div>
-                
-
-                <div class="container text-black" style="margin-left: -10px">
-                    <div class="row">
-                        <div class="col-1"></div>
-                        <div class="col-10 text-left" style="line-height: 1.1;">
-                            <strong> Invoice No: {{ $data->invoice_no }} </strong> <br>
-                            <strong> Parcel ID: {{ $data->consignment_id }}
-                            </strong> </br>
-                            <strong> NAME: {{ $data->customer->name }} </strong>
-                            </br>
-                            <strong> MOBILE: {{ $data->customer->phone }} </strong>
-                            <br>
-                            <strong> ADDRESS: {{ $data->customer->address }}
-                            </strong>
-                        </div>
-                        <div class="col-1"></div>
-                    </div>
-                </div>
-
-                <div class=" container text-black">
-                    <div class="row">
-                        {{-- <div class="col-1"></div> --}}
-                        <div class="col-12">
-                            <h5 class="text-center text-black">Product List</h5>
-                            <ul class="list" style="list-style:none;">
-                                <li class="list-item" style="list-style:none;font-size:14px">
-                                    <div class="">
-                                        <div class="row text-left product_font">
-                                            <div class="col-2 text-left">
-                                                <strong style="font-size:14px">Sl</strong>
-                                            </div>
-                                            <div class="col-7  text-left">
-                                                <strong style="font-size:14px">Description</strong>
-                                            </div>
-                                            <div class="col-3 text-right">
-                                                <strong style="font-size:14px">Qty</strong>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </li>
-                                @php
-                                    $products = App\Models\InvoiceItem::where('invoice_id', $data->id)->get();
-                                    $sl = 1;
-                                @endphp
-                                @foreach ($products as $item)
-                                    <li class="list-item" style="font-size:12px">
-                                        <div class="">
-                                            <div class="row">
-                                                <div class="col-2 text-left">
-                                                    <strong style="font-size:13px">
-                                                        {{ $sl++ }}
-                                                    </strong>
-                                                </div>
-                                                <div class="col-7  text-left">
-                                                    <strong style="font-size:13px">
-                                                        {{ $item->product->name }}
-                                                        @if (env('APP_IMEI') == 'yes' && !empty($item->imei))
-                                                            <br>
-                                                            IMEI: {{ str_replace(',', ', ', $item->imei) }}
-                                                        @endif
-                                                    </strong>
-                                                </div>
-                                                <div class="col-3 text-right">
-                                                    <strong style="font-size:13px">
-                                                        @php
-                                                            if ($item->product?->unit?->related_unit == null) {
-                                                                $qty = $item->main_qty . ' ' . ($item->product?->unit?->name ?? '');
-                                                            } else {
-                                                                $sub_qty = $item->sub_qty ?? 0;
-                                                                if ($item->main_qty == 0 && $sub_qty == 0) {
-                                                                    $qty = '0 ' . $item->product?->unit?->name;
-                                                                } else {
-                                                                    $qty = '';
-                                                                    if ($item->main_qty > 0) $qty .= $item->main_qty . ' ' . $item->product?->unit?->name;
-                                                                    if ($item->main_qty > 0 && $sub_qty > 0) $qty .= ' - ';
-                                                                    if ($sub_qty > 0) $qty .= $sub_qty . ' ' . $item->product?->unit?->related_unit?->name;
-                                                                }
-                                                            }
-                                                        @endphp
-                                                        {{ $qty }}
-                                                    </strong>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class=" mb-5 mt-2 text-center text-black">
-                    <span style="border:1px solid black;font-size: 16px; padding: 15px 20px;font-weight:800;">COD
-                        - TK {{ $data->total_due }}</span>
-                </div>
-                <div class="mb-4 mt-4 text-center text-black">
-                    NO Return/NO Exchange Please Check before delivery man leave <br>
-                    Thank you for keeping trust on us
-                </div>
-                
-            </div>
+            @include('backend.pages.invoice.shipping-label', ['data' => $data, 'prefix' => 'printableArea2'])
         @endforeach
     </div>
 
@@ -1522,7 +1270,11 @@
             let selectedInvoices = document.querySelectorAll(".invoiceCheckbox:checked");
 
             if (selectedInvoices.length === 0) {
-                toastMagic.error("Please select at least one invoice to print.");
+                if (typeof toastMagic !== 'undefined' && toastMagic.error) {
+                    toastMagic.error("{{ __('Please select at least one invoice to print.') }}");
+                } else {
+                    alert("{{ __('Please select at least one invoice to print.') }}");
+                }
                 return;
             }
 
@@ -1534,44 +1286,111 @@
                     let invoiceId = invoice.value;
                     let invoiceDiv = document.getElementById("printableArea2-" + invoiceId);
                     if (invoiceDiv) {
-                        printContents += invoiceDiv.outerHTML +
-                            '<div style="page-break-after: always;"></div>';
+                        printContents += '<div class="print-label-item">' + invoiceDiv.outerHTML + '</div>';
                     }
                 });
 
                 if (printContents) {
                     let originalContents = document.body.innerHTML;
                     document.body.innerHTML = `
+                    <!DOCTYPE html>
                     <html>
                     <head>
-                    <title>Bulk Invoice Print</title>
+                    <title>{{ __('Shipping Labels Print') }}</title>
                     <style>
-                        @media print {
-                            body { font-size: 14px !important; }
-                            .print_part2 { width: 100%; page-break-before: always; }
-                            .modal, .modal-backdrop { display: none !important; }
-                            .list-item { page-break-inside: avoid; }
-                            .logo_part img { max-width: 100px !important; height: auto !important; }
+                        @page {
+                            size: 75mm 100mm;
+                            margin: 0;
+                        }
+                        * {
+                            box-sizing: border-box;
+                        }
+                        body {
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            background: #ffffff !important;
+                            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                        }
+                        .print-label-item {
+                            width: 75mm !important;
+                            margin: 0 auto !important;
+                            padding: 0 !important;
+                            page-break-after: always !important;
+                            break-after: page !important;
+                        }
+                        .print-label-item:last-child {
+                            page-break-after: auto !important;
+                            break-after: auto !important;
+                        }
+                        .shipping-label-card {
+                            border: none !important;
+                            border-radius: 0 !important;
+                            box-shadow: none !important;
+                            width: 75mm !important;
+                            max-width: 75mm !important;
+                            min-height: 100mm !important;
+                            margin: 0 auto !important;
+                            page-break-inside: avoid !important;
+                        }
+                        .modal, .modal-backdrop {
+                            display: none !important;
                         }
                     </style>
                     </head>
                     <body>` + printContents + `</body></html>`;
 
-                    window.print(); // Run print command
-
-                    document.body.innerHTML = originalContents; // Restore to original state
-                    // location.reload(); // Refresh to restore previous UI
+                    window.print();
+                    document.body.innerHTML = originalContents;
+                    window.location.reload();
                 }
-            }, 500);
+            }, 300);
         }
 
         function printDiv(divId) {
-            var content = document.getElementById(divId).innerHTML;
+            var el = document.getElementById(divId);
+            if (!el) return;
+            var content = el.outerHTML;
             var originalContent = document.body.innerHTML;
-            document.body.innerHTML = content;
+            document.body.innerHTML = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <title>{{ __('Shipping Label Print') }}</title>
+            <style>
+                @page {
+                    size: 75mm 100mm;
+                    margin: 0;
+                }
+                * {
+                    box-sizing: border-box;
+                }
+                body {
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    background: #ffffff !important;
+                    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+                .shipping-label-card {
+                    border: none !important;
+                    border-radius: 0 !important;
+                    box-shadow: none !important;
+                    width: 75mm !important;
+                    max-width: 75mm !important;
+                    min-height: 100mm !important;
+                    margin: 0 auto !important;
+                    page-break-inside: avoid !important;
+                }
+            </style>
+            </head>
+            <body>` + content + `</body></html>`;
+
             window.print();
             document.body.innerHTML = originalContent;
-            window.location.reload(); // Reload the page to restore the original content
+            window.location.reload();
         }
 
         // Online Carousel Scroll

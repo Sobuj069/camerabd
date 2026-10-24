@@ -269,13 +269,13 @@ class InvoiceController extends Controller
             $query->whereIn('order_status', ['RTS', 'rts']);
         } elseif ($activeStatus === 'in_review') {
             $query->whereIn('order_status', ['In Review', 'in_review', 'Review', 'review', 'in_review_approval']);
-        } elseif ($activeStatus === 'pending') {
+        } elseif ($activeStatus === 'pending' || $activeStatus === 'pending_courier') {
             $query->whereIn('order_status', ['Pending', 'pending', 'order_placed', 'pending_pickup'])
                   ->whereNotNull('consignment_id')->where('consignment_id', '!=', '')
                   ->whereNotIn('order_status', ['RTS', 'rts', 'Approved', 'approved', 'Processing', 'processing']);
         } elseif ($activeStatus === 'in_transit') {
             $query->whereIn('order_status', ['In Transit', 'in_transit', 'Transit', 'transit', 'Picked Up', 'picked_up', 'Shipped', 'shipped', 'out_for_delivery']);
-        } elseif ($activeStatus === 'in_courier') {
+        } elseif ($activeStatus === 'in_courier' || $activeStatus === 'all_in_courier') {
             $query->where(function($q) {
                 $q->whereIn('order_status', [
                     'In Courier', 'in_courier',
@@ -379,6 +379,8 @@ class InvoiceController extends Controller
             'cancelled' => (clone $baseStatusQuery)->whereIn('order_status', ['Cancelled', 'cancelled', 'failed', 'pickup_cancel', 'pickup_cancelled', 'canceled'])->count(),
         ];
 
+        $statusCounts['pending_courier'] = $statusCounts['pending'];
+        $statusCounts['all_in_courier'] = $statusCounts['in_courier'];
         $query = $this->buildOnlineSaleFilteredQuery($request);
 
         // Pre-calculate total due and count for all matching records across all pages

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -40,10 +40,16 @@
         }
 
         @media print {
+            @page {
+                size: 75mm 100mm;
+                margin: 0;
+            }
             body {
                 background: #ffffff !important;
                 padding: 0 !important;
                 margin: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
 
             .no-print-bar {
@@ -53,14 +59,22 @@
             .labels-container {
                 max-width: 100% !important;
                 margin: 0 !important;
+                padding: 0 !important;
             }
 
             .single-label-wrapper {
                 box-shadow: none !important;
                 border-radius: 0 !important;
-                margin: 0 !important;
+                border: none !important;
+                margin: 0 auto !important;
+                padding: 0 !important;
                 page-break-after: always !important;
                 break-after: page !important;
+            }
+
+            .shipping-label-card {
+                border: none !important;
+                border-radius: 0 !important;
             }
 
             .single-label-wrapper:last-child {
