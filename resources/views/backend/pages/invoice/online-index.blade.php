@@ -1038,11 +1038,12 @@
                                                   });
                                                   $modal_total_profit = 0;
 
-                                                  $isEditedInvoice = ($data->is_edited == 1 || $data->is_edited == 2 || $data->edit_status == 'edited' || $data->edit_status == 'exchange' || $data->bankTransactions->count() > 1);
-                                                  $firstTx = $data->bankTransactions->where('pay_type', 'invpay')->first();
+                                                  $bankTxs = $data->bankTransactions ?? App\Models\BankTransaction::where('invoice_id', $data->id)->get();
+                                                  $isEditedInvoice = ($data->is_edited == 1 || $data->is_edited == 2 || $data->edit_status == 'edited' || $data->edit_status == 'exchange' || ($bankTxs && $bankTxs->count() > 1));
+                                                  $firstTx = $bankTxs ? $bankTxs->where('pay_type', 'invpay')->first() : null;
                                                   $origDate = $firstTx?->date ?? date('Y-m-d', strtotime($data->created_at));
                                                   $origPaid = (float)($firstTx?->amount ?? 0);
-                                                  $addedPaid = (float)$data->bankTransactions->where('pay_type', 'invpay_edit')->sum('amount');
+                                                  $addedPaid = (float)($bankTxs ? $bankTxs->where('pay_type', 'invpay_edit')->sum('amount') : 0);
                                                   $origAmt = max(0, (float)$data->total_amount - $addedPaid);
                                                   $totalQtyCount = $raw_modal_items->sum('actual_main');
                                                   $origQtyCount = max(1, $totalQtyCount - ($addedPaid > 0 ? 1 : 0));

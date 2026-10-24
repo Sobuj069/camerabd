@@ -93,6 +93,16 @@ class Invoice extends Model
         return $this->hasMany(Transaction::class, 'invoice_id');
     }
 
+    public function bankTransactions()
+    {
+        return $this->hasMany(BankTransaction::class, 'invoice_id');
+    }
+
+    public function bank_transactions()
+    {
+        return $this->hasMany(BankTransaction::class, 'invoice_id');
+    }
+
     //created by
     public function user()
     {

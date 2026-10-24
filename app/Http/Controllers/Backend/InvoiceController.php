@@ -165,7 +165,7 @@ class InvoiceController extends Controller
      */
     protected function buildOnlineSaleBaseQuery(Request $request)
     {
-        $query = Invoice::with(['customer', 'user', 'returns', 'platform'])
+        $query = Invoice::with(['customer', 'user', 'returns', 'platform', 'bankTransactions'])
             ->where('sale_type', 'Online');
 
         // Date range filter
