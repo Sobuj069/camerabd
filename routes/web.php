@@ -174,7 +174,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
         Route::get('/invoice/online/sale', 'onlineSale')->name('invoice.online.sale');
         Route::post('/invoice/online/clear-selected-dues', 'clearSelectedDues')->name('invoice.online.clear-selected-dues');
         Route::post('/invoice/online/send-courier', 'sendToCourier')->name('invoice.online.send-courier');
-        Route::post('/invoice/online/update-status', 'updateOrderStatus')->name('invoice.online.update-status');
+        Route::post('/invoice/online/update-status/{id?}', 'updateOrderStatus')->name('invoice.online.update-status');
+        Route::post('/invoice/online/bulk-status', 'updateOrderStatus')->name('invoice.online.bulk-status');
         Route::post('/invoice/online/sync-courier', 'syncCourierStatus')->name('invoice.online.sync-courier');
         Route::get('/invoice/scan-to-update', 'scanToUpdate')->name('invoice.scan.update');
         Route::post('/invoice/scan-to-update/process', 'processScanToUpdate')->name('invoice.scan.process');

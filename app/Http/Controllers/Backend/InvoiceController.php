@@ -400,12 +400,15 @@ class InvoiceController extends Controller
         return view('backend.pages.invoice.online-index', $data, compact('invoices', 'statusCounts'));
     }
 
-    public function updateOrderStatus(Request $request)
+    public function updateOrderStatus(Request $request, $id = null)
     {
         $rawIds = $request->input('invoice_ids');
-        $status = $request->input('status', 'Processing');
+        $status = $request->input('status', $request->input('order_status', 'Processing'));
 
         $ids = [];
+        if (!empty($id)) {
+            $ids = [$id];
+        } else
         if ($request->input('select_all_pages') == 1 || $request->input('select_all_pages') === 'true' || $request->input('select_all_pages') === '1') {
             $ids = $this->buildOnlineSaleFilteredQuery($request)->pluck('id')->toArray();
         } elseif (is_array($rawIds)) {
