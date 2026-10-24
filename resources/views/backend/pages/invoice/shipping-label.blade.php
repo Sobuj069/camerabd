@@ -20,7 +20,7 @@
         $barcodeBase64 = '';
     }
 
-    $products = \App\Models\InvoiceItem::with(['product.unit', 'productVariation.size', 'productVariation.color'])
+    $products = \App\Models\InvoiceItem::with(['product.unit', 'product_variation.size', 'product_variation.color'])
         ->where('invoice_id', $data->id)
         ->get();
 
@@ -136,7 +136,7 @@
                         {{ $item->product?->name ?? 'Product' }}
                         @if ($item->product_variation_id != null)
                             <span style="font-size: 8.5px; color: #444;">
-                                ({{ $item->productVariation?->size?->size }} - {{ $item->productVariation?->color?->color }})
+                                ({{ $item->product_variation?->size?->size }} - {{ $item->product_variation?->color?->color }})
                             </span>
                         @endif
                         @if (env('APP_IMEI') == 'yes' && !empty($item->imei))

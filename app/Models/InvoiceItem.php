@@ -60,6 +60,11 @@ class InvoiceItem extends Model
         return $this->belongsTo(ProductVariation::class);
     }
 
+    public function productVariation()
+    {
+        return $this->belongsTo(ProductVariation::class, 'product_variation_id');
+    }
+
     public function size()
     {
         return $this->belongsTo('App\Models\ProductSize','size_id','id');
