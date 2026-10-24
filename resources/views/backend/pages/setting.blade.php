@@ -247,7 +247,7 @@
                         <label>{{ __('Google Tag Manager (GTM) Container ID') }}</label>
                         <input type="hidden" name="types[]" value="gtm_id">
                         <input type="text" name="gtm_id" value="{{ get_setting('gtm_id') ?: env('GTM_ID') }}" placeholder="GTM-XXXXXXX">
-                        <small class="text-muted">{{ __('e.g. GTM-XXXXXXX. Window DataLayer is always automatically enabled across all pages.') }}</small>
+                        <small class="text-muted">{{ __('e.g. GTM-XXXXXXX. Automatically generates the official GTM script and dataLayer across all pages.') }}</small>
                     </div>
 
                     <div class="field">
@@ -255,6 +255,20 @@
                         <input type="hidden" name="types[]" value="ga4_measurement_id">
                         <input type="text" name="ga4_measurement_id" value="{{ get_setting('ga4_measurement_id') ?: env('GA4_MEASUREMENT_ID') }}" placeholder="G-XXXXXXXXXX">
                         <small class="text-muted">{{ __('Optional if already configured via Google Tag Manager.') }}</small>
+                    </div>
+
+                    <div class="field col-span-1 md:col-span-2">
+                        <label>{{ __('Google Tag Manager Custom <head> Code (Dynamic Script)') }}</label>
+                        <input type="hidden" name="types[]" value="gtm_header_script">
+                        <textarea name="gtm_header_script" rows="4" placeholder="<!-- Paste your full Google Tag Manager <head> code here -->">{{ get_setting('gtm_header_script') }}</textarea>
+                        <small class="text-muted">{{ __('If you have custom GTM code provided by Google, paste it here. It will dynamically load in <head> on every page.') }}</small>
+                    </div>
+
+                    <div class="field col-span-1 md:col-span-2">
+                        <label>{{ __('Google Tag Manager Custom <body> (Noscript) Code (Dynamic Script)') }}</label>
+                        <input type="hidden" name="types[]" value="gtm_body_script">
+                        <textarea name="gtm_body_script" rows="3" placeholder="<!-- Paste your full Google Tag Manager (noscript) <body> code here -->">{{ get_setting('gtm_body_script') }}</textarea>
+                        <small class="text-muted">{{ __('Paste the noscript fallback code provided by GTM for immediately after the <body> opening tag.') }}</small>
                     </div>
                 </div>
 

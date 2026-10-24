@@ -453,7 +453,7 @@ class FrontendController extends Controller
 
         return [
             'id' => $dbProduct->id,
-            'slug' => (string)$dbProduct->id,
+            'slug' => !empty($dbProduct->slug) ? $dbProduct->slug : (\Illuminate\Support\Str::slug($dbProduct->name) ?: (string)$dbProduct->id),
             'name' => $dbProduct->name,
             'category' => $dbProduct->category?->name ?? 'Cinema & Gear',
             'brand' => $dbProduct->brand?->name ?? 'Official Brand',
@@ -498,9 +498,17 @@ class FrontendController extends Controller
         $product = null;
         $related = [];
 
-        // Try to find in database first (by ID, barcode, or matching name)
+        // Try to find in database first (by slug, ID, barcode, or matching name)
         $dbProduct = null;
-        if (is_numeric($slug)) {
+        if (!empty($slug)) {
+            $dbProduct = Product::with(['brand', 'category', 'subCategory', 'warranty'])
+                ->where('is_service', 0)
+                ->where('show_on_website', 1)
+                ->where('slug', $slug)
+                ->first();
+        }
+
+        if (!$dbProduct && is_numeric($slug)) {
             $dbProduct = Product::with(['brand', 'category', 'subCategory', 'warranty'])
                 ->where('is_service', 0)
                 ->where('show_on_website', 1)
@@ -512,14 +520,21 @@ class FrontendController extends Controller
                 ->where('is_service', 0)
                 ->where('show_on_website', 1)
                 ->where(function($q) use ($slug) {
+                    $clean = str_replace('-', ' ', $slug);
                     $q->where('barcode', $slug)
-                      ->orWhere('name', str_replace('-', ' ', $slug))
-                      ->orWhere('name', 'LIKE', '%' . str_replace('-', ' ', $slug) . '%');
+                      ->orWhere('name', $clean)
+                      ->orWhere('name', 'LIKE', '%' . $clean . '%');
                 })
                 ->first();
         }
 
         if ($dbProduct) {
+            // URL normalization: if accessed by numeric ID, redirect to slug URL so top URL always shows slug
+            $canonicalSlug = !empty($dbProduct->slug) ? $dbProduct->slug : \Illuminate\Support\Str::slug($dbProduct->name);
+            if (!empty($canonicalSlug) && $slug !== $canonicalSlug && is_numeric($slug)) {
+                return redirect()->route('frontend.product.details', $canonicalSlug, 301);
+            }
+
             $product = $this->formatDbProduct($dbProduct);
 
             // Fetch related products from DB

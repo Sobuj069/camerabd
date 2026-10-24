@@ -183,7 +183,7 @@
               </div>
 
               <!-- Product Image -->
-              <a href="{{ route('frontend.product.details', $p->id) }}" class="relative block w-full aspect-square bg-surface-container rounded-xl overflow-hidden p-2 group-hover:scale-102 transition-transform flex items-center justify-center">
+              <a href="{{ route('frontend.product.details', $p->slug ?: $p->id) }}" class="relative block w-full aspect-square bg-surface-container rounded-xl overflow-hidden p-2 group-hover:scale-102 transition-transform flex items-center justify-center">
                 @if($p->has_real_image)
                   <img src="{{ $p->featured_image }}" alt="{{ $p->name }}" class="w-full h-full object-contain mix-blend-multiply" loading="lazy" />
                 @else
@@ -204,7 +204,7 @@
                     @endif
                   </div>
 
-                  <a href="{{ route('frontend.product.details', $p->id) }}" class="block font-bold text-xs md:text-sm text-text-display group-hover:text-primary transition-colors line-clamp-2 leading-snug" title="{{ $p->name }}">
+                  <a href="{{ route('frontend.product.details', $p->slug ?: $p->id) }}" class="block font-bold text-xs md:text-sm text-text-display group-hover:text-primary transition-colors line-clamp-2 leading-snug" title="{{ $p->name }}">
                     {{ $p->name }}
                   </a>
                 </div>
@@ -223,7 +223,7 @@
                   </div>
 
                   <div class="grid grid-cols-2 gap-1.5">
-                    <a href="{{ route('frontend.product.details', $p->id) }}" class="border border-surface-border hover:border-primary text-slate-700 hover:text-primary text-[11px] font-bold py-1.5 rounded-xl text-center transition-colors">
+                    <a href="{{ route('frontend.product.details', $p->slug ?: $p->id) }}" class="border border-surface-border hover:border-primary text-slate-700 hover:text-primary text-[11px] font-bold py-1.5 rounded-xl text-center transition-colors">
                       Details
                     </a>
                     <button type="button" class="bg-primary hover:bg-primary-hover text-white text-[11px] font-bold py-1.5 rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1 active:scale-95" onclick="addToCart('{{ addslashes($p->name) }}', {{ $pPrice }}, '{{ $p->featured_image }}')">

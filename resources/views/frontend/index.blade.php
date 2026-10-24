@@ -675,7 +675,7 @@
                   <button aria-label="Add to Wishlist" class="wishlist-btn absolute top-2 right-2 z-10 w-8 h-8 rounded-full bg-surface-card/90 shadow-sm flex items-center justify-center text-text-muted hover:text-primary transition-colors cursor-pointer" onclick="toggleWishlist(this, '{{ addslashes($deal->name) }}', {{ $currentPrice }}, '{{ addslashes($deal->thumbnail_url ?? '') }}', '{{ $deal->slug ?? $deal->id }}', '{{ $deal->id }}', '{{ addslashes($deal->brand?->name ?? 'CAMERA BD') }}')" data-wishlist-product="{{ addslashes($deal->name) }}" data-wishlist-id="{{ $deal->id }}">
                     <span class="material-symbols-outlined text-[18px]">favorite_border</span>
                   </button>
-                  <a href="{{ route('frontend.product.details', $deal->id) }}" class="w-full h-full flex items-center justify-center">
+                  <a href="{{ route('frontend.product.details', $deal->slug ?: $deal->id) }}" class="w-full h-full flex items-center justify-center">
                     @if($deal->has_real_image)
                       <img alt="{{ $deal->name }}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="{{ $deal->thumbnail_url }}" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-50 p-2\'><span class=\'material-symbols-outlined text-[36px] text-slate-300\'>videocam</span><span class=\'text-[10px] font-bold text-slate-400 mt-1\'>Broadcast Gear</span></div>';"/>
                     @else
@@ -694,7 +694,7 @@
                   <span class="text-body-sm font-body-sm text-text-muted">({{ $deal->brand?->name ?? 'Verified' }})</span>
                 </div>
                 <h3 class="text-headline-sm font-headline-sm text-text-display line-clamp-2 mb-2 group-hover:text-primary transition-colors font-bold">
-                  <a href="{{ route('frontend.product.details', $deal->id) }}">{{ $deal->name }}</a>
+                  <a href="{{ route('frontend.product.details', $deal->slug ?: $deal->id) }}">{{ $deal->name }}</a>
                 </h3>
               </div>
               <div class="mt-2">
@@ -766,7 +766,7 @@
                 <button aria-label="Save to Wishlist" class="wishlist-btn absolute top-1.5 right-1.5 lg:top-2 lg:right-2 z-10 w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-surface-card shadow-xs flex items-center justify-center text-text-muted hover:text-primary transition-colors cursor-pointer" onclick="toggleWishlist(this, '{{ addslashes($popular->name) }}', {{ (float)($popular->dis_selling_price ?: $popular->selling_price) }}, '{{ addslashes($popular->thumbnail_url ?? '') }}', '{{ $popular->slug ?? $popular->id }}', '{{ $popular->id }}', '{{ addslashes($popular->brand?->name ?? 'CAMERA BD') }}')" data-wishlist-product="{{ addslashes($popular->name) }}" data-wishlist-id="{{ $popular->id }}">
                   <span class="material-symbols-outlined text-[16px] lg:text-[18px]">favorite_border</span>
                 </button>
-                <a href="{{ route('frontend.product.details', $popular->id) }}" class="w-full h-full flex items-center justify-center">
+                <a href="{{ route('frontend.product.details', $popular->slug ?: $popular->id) }}" class="w-full h-full flex items-center justify-center">
                   @if($popular->has_real_image)
                     <img alt="{{ $popular->name }}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="{{ $popular->thumbnail_url }}" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-50 p-2\'><span class=\'material-symbols-outlined text-[36px] text-slate-300\'>photo_camera</span><span class=\'text-[10px] font-bold text-slate-400 mt-1\'>Camera Gear</span></div>';"/>
                   @else
@@ -784,7 +784,7 @@
                 <span class="flex items-center gap-1 text-[11px]"><span class="w-1.5 h-1.5 rounded-full bg-stock-available"></span> In Stock</span>
               </div>
               <h3 class="text-headline-sm font-headline-sm text-text-display line-clamp-1 mb-1 group-hover:text-primary transition-colors font-bold">
-                <a href="{{ route('frontend.product.details', $popular->id) }}">{{ $popular->name }}</a>
+                <a href="{{ route('frontend.product.details', $popular->slug ?: $popular->id) }}">{{ $popular->name }}</a>
               </h3>
               <div class="flex items-baseline gap-1.5 mb-2">
                 <span class="text-price-headline font-price-headline text-price-tk font-bold">৳ {{ number_format($pPrice) }} TK</span>
@@ -940,7 +940,7 @@
 
                     <!-- Product Image -->
                     <div class="w-full aspect-square flex items-center justify-center p-2 mb-1.5 overflow-hidden">
-                      <a href="{{ route('frontend.product.details', $hlProduct->id) }}" class="w-full h-full flex items-center justify-center">
+                      <a href="{{ route('frontend.product.details', $hlProduct->slug ?: $hlProduct->id) }}" class="w-full h-full flex items-center justify-center">
                         @if($hlProduct->has_real_image)
                           <img src="{{ $hlProduct->thumbnail_url }}" alt="{{ $hlProduct->name }}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full flex flex-col items-center justify-center text-[#006a61] bg-[#f0faf7] p-2 rounded-lg\'><span class=\'material-symbols-outlined text-[32px]\'>mic</span><span class=\'text-[10px] font-bold mt-1\'>Hollyland</span></div>';"/>
                         @else
@@ -962,7 +962,7 @@
 
                     <!-- Title -->
                     <h4 class="text-xs sm:text-sm font-semibold text-[#18332f] line-clamp-2 leading-snug mb-1 group-hover:text-primary transition-colors font-bold">
-                      <a href="{{ route('frontend.product.details', $hlProduct->id) }}">{{ $hlProduct->name }}</a>
+                      <a href="{{ route('frontend.product.details', $hlProduct->slug ?: $hlProduct->id) }}">{{ $hlProduct->name }}</a>
                     </h4>
 
                     <!-- Rating -->
@@ -1035,7 +1035,7 @@
                 @elseif($essential->category?->name)
                   <span class="absolute top-1.5 left-1.5 lg:top-2 lg:left-2 z-10 bg-broadcast-teal text-white text-label-sm font-label-sm px-1.5 lg:px-2 py-0.5 rounded font-bold shadow-xs">{{ $essential->category->name }}</span>
                 @endif
-                <a href="{{ route('frontend.product.details', $essential->id) }}" class="w-full h-full flex items-center justify-center">
+                <a href="{{ route('frontend.product.details', $essential->slug ?: $essential->id) }}" class="w-full h-full flex items-center justify-center">
                   @if($essential->has_real_image)
                     <img alt="{{ $essential->name }}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="{{ $essential->thumbnail_url }}" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-50 p-2\'><span class=\'material-symbols-outlined text-[36px] text-slate-300\'>power</span><span class=\'text-[10px] font-bold text-slate-400 mt-1\'>Studio Gear</span></div>';"/>
                   @else
@@ -1050,7 +1050,7 @@
               </div>
               <div class="text-label-sm font-label-sm text-text-muted mb-0.5">{{ $essential->brand?->name ?? ($essential->category?->name ?? 'Pro Accessory') }}</div>
               <h3 class="text-headline-sm font-headline-sm text-text-display line-clamp-2 mb-1 group-hover:text-primary transition-colors font-bold">
-                <a href="{{ route('frontend.product.details', $essential->id) }}">{{ $essential->name }}</a>
+                <a href="{{ route('frontend.product.details', $essential->slug ?: $essential->id) }}">{{ $essential->name }}</a>
               </h3>
               <div class="flex items-baseline gap-1.5 mb-2">
                 <span class="text-price-headline font-price-headline text-price-tk font-bold">৳ {{ number_format($ePrice) }} TK</span>
@@ -1117,7 +1117,7 @@
                       @elseif($secProd->category?->name)
                         <span class="absolute top-1.5 left-1.5 lg:top-2 lg:left-2 z-10 text-white text-label-sm font-label-sm px-1.5 lg:px-2 py-0.5 rounded font-bold shadow-xs" style="background-color: {{ $customSec->accent_color ?: '#006a61' }};">{{ $secProd->category->name }}</span>
                       @endif
-                      <a href="{{ route('frontend.product.details', $secProd->id) }}" class="w-full h-full flex items-center justify-center">
+                      <a href="{{ route('frontend.product.details', $secProd->slug ?: $secProd->id) }}" class="w-full h-full flex items-center justify-center">
                         @if($secProd->has_real_image)
                           <img alt="{{ $secProd->name }}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="{{ $secProd->thumbnail_url }}" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-50 p-2\'><span class=\'material-symbols-outlined text-[36px] text-slate-300\'>{{ $customSec->icon ?: 'inventory_2' }}</span><span class=\'text-[10px] font-bold text-slate-400 mt-1\'>{{ addslashes($customSec->name) }}</span></div>';"/>
                         @else
@@ -1132,7 +1132,7 @@
                     </div>
                     <div class="text-label-sm font-label-sm text-text-muted mb-0.5">{{ $secProd->brand?->name ?? ($secProd->category?->name ?? 'Pro Gear') }}</div>
                     <h3 class="text-headline-sm font-headline-sm text-text-display line-clamp-2 mb-1 group-hover:text-primary transition-colors font-bold">
-                      <a href="{{ route('frontend.product.details', $secProd->id) }}">{{ $secProd->name }}</a>
+                      <a href="{{ route('frontend.product.details', $secProd->slug ?: $secProd->id) }}">{{ $secProd->name }}</a>
                     </h3>
                     <div class="flex items-baseline gap-1.5 mb-2">
                       <span class="text-price-headline font-price-headline text-price-tk font-bold">৳ {{ number_format($sPrice) }} TK</span>

@@ -26,9 +26,18 @@
                             {{-- Product name --}}
                             <div class="mt-2 col-md-6">
                                 <label for="name" class="form-label fw-bold">{{ __('Name *') }}</label>
-                                <input type="text" onfocus="this.select()" autofocus class="form-control" name="name"
+                                <input type="text" onfocus="this.select()" autofocus class="form-control" id="product_name" name="name" value="{{ old('name') }}"
                                     placeholder="{{ __('Enter Name') }}">
                                 <div class="errors">{{ $errors->has('name') ? $errors->first('name') : '' }}</div>
+                            </div>
+
+                            {{-- Product slug --}}
+                            <div class="mt-2 col-md-6">
+                                <label for="slug" class="form-label fw-bold">{{ __('Slug (Product Details URL)') }}</label>
+                                <input type="text" class="form-control" id="product_slug" name="slug"
+                                    value="{{ old('slug') }}" placeholder="{{ __('e.g. sony-fx30-cinema-camera') }}">
+                                <small class="text-muted text-[11px]">{{ __('Will appear in URL: /product-details/your-slug') }}</small>
+                                <div class="errors">{{ $errors->has('slug') ? $errors->first('slug') : '' }}</div>
                             </div>
 
                             {{-- Product barcode  --}}
@@ -940,6 +949,23 @@
     </script>
     <script>
         $(document).ready(function() {
+            // Auto slug generator from name
+            var userChangedSlug = false;
+            $('#product_slug').on('input', function() {
+                userChangedSlug = $(this).val().trim().length > 0;
+            });
+            $('#product_name').on('input', function() {
+                if (!userChangedSlug) {
+                    var str = $(this).val();
+                    var slug = str.toLowerCase()
+                        .replace(/[^\w\s-]/g, '')
+                        .trim()
+                        .replace(/[\s_-]+/g, '-')
+                        .replace(/^-+|-+$/g, '');
+                    $('#product_slug').val(slug);
+                }
+            });
+
             if ($.fn.summernote) {
                 $('#description').summernote({
                     placeholder: '{{ __("Enter Description...") }}',

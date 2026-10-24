@@ -1,4 +1,5 @@
 @php
+  $gtmHeaderScript = function_exists('get_setting') ? get_setting('gtm_header_script') : null;
   $gtmId = function_exists('get_setting') && get_setting('gtm_id') ? get_setting('gtm_id') : env('GTM_ID');
   $ga4Id = function_exists('get_setting') && get_setting('ga4_measurement_id') ? get_setting('ga4_measurement_id') : env('GA4_MEASUREMENT_ID');
 @endphp
@@ -50,7 +51,11 @@
   });
 </script>
 
-@if(!empty($gtmId))
+@if(!empty($gtmHeaderScript))
+<!-- Dynamic Google Tag Manager Header Script -->
+{!! $gtmHeaderScript !!}
+<!-- End Dynamic Google Tag Manager Header Script -->
+@elseif(!empty($gtmId))
 <!-- Google Tag Manager Container -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],

@@ -90,6 +90,26 @@ class Product extends Model
     }
 
     /**
+     * Get product slug or auto-generate from name
+     */
+    public function getSlugAttribute($value)
+    {
+        if (!empty($value)) {
+            return $value;
+        }
+        return !empty($this->name) ? \Illuminate\Support\Str::slug($this->name) : (string)$this->id;
+    }
+
+    /**
+     * Set sanitized slug attribute
+     */
+    public function setSlugAttribute($value)
+    {
+        $clean = !empty($value) ? \Illuminate\Support\Str::slug($value) : (!empty($this->name) ? \Illuminate\Support\Str::slug($this->name) : null);
+        $this->attributes['slug'] = $clean;
+    }
+
+    /**
      * Get array of raw stored images (filenames or URLs).
      */
     public function getRawImagesAttribute()

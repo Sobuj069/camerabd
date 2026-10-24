@@ -31,9 +31,18 @@
                             {{-- Product name --}}
                             <div class="mt-2 col-md-6">
                                 <label for="name" class="form-label fw-bold">Product Name *</label>
-                                <input type="text" class="form-control" name="name" placeholder="Enter product name"
+                                <input type="text" class="form-control" id="product_name" name="name" placeholder="Enter product name"
                                     value="{{ $data->name }}">
                                 <div class="errors">{{ $errors->has('name') ? $errors->first('name') : '' }}</div>
+                            </div>
+
+                            {{-- Product slug --}}
+                            <div class="mt-2 col-md-6">
+                                <label for="slug" class="form-label fw-bold">Slug (Product Details URL)</label>
+                                <input type="text" class="form-control" id="product_slug" name="slug"
+                                    placeholder="e.g. sony-fx30-cinema-camera" value="{{ old('slug', $data->slug) }}">
+                                <small class="text-muted text-[11px]">Will appear in URL: /product-details/your-slug</small>
+                                <div class="errors">{{ $errors->has('slug') ? $errors->first('slug') : '' }}</div>
                             </div>
 
                             {{-- Product barcode  --}}
@@ -902,6 +911,20 @@
     </script>
     <script>
         $(document).ready(function() {
+            // Auto slug generator if empty
+            $('#product_name').on('input', function() {
+                var currentSlug = $('#product_slug').val().trim();
+                if (!currentSlug) {
+                    var str = $(this).val();
+                    var slug = str.toLowerCase()
+                        .replace(/[^\w\s-]/g, '')
+                        .trim()
+                        .replace(/[\s_-]+/g, '-')
+                        .replace(/^-+|-+$/g, '');
+                    $('#product_slug').val(slug);
+                }
+            });
+
             if ($.fn.summernote) {
                 $('#description').summernote({
                     placeholder: '{{ __("Enter Description...") }}',

@@ -217,6 +217,17 @@ class ProductController extends Controller
 
         $product = new Product();
         $product->name = $request->name;
+
+        // Auto-generate / unique slug
+        $baseSlug = !empty($request->slug) ? \Illuminate\Support\Str::slug($request->slug) : \Illuminate\Support\Str::slug($request->name);
+        $baseSlug = $baseSlug ?: 'product';
+        $finalSlug = $baseSlug;
+        $counter = 1;
+        while (Product::where('slug', $finalSlug)->exists()) {
+            $finalSlug = "{$baseSlug}-{$counter}";
+            $counter++;
+        }
+        $product->slug = $finalSlug;
         $product->date = date('Y-m-d');
         if (empty($request->barcode)) {
             $product->barcode = $this->generateUniqueBarcode();
@@ -536,6 +547,17 @@ class ProductController extends Controller
             return back();
         }
         $product->name = $request->name;
+
+        // Auto-generate / unique slug
+        $baseSlug = !empty($request->slug) ? \Illuminate\Support\Str::slug($request->slug) : \Illuminate\Support\Str::slug($request->name);
+        $baseSlug = $baseSlug ?: 'product';
+        $finalSlug = $baseSlug;
+        $counter = 1;
+        while (Product::where('slug', $finalSlug)->where('id', '!=', $product->id)->exists()) {
+            $finalSlug = "{$baseSlug}-{$counter}";
+            $counter++;
+        }
+        $product->slug = $finalSlug;
         $numberBarcode = rand(000000, 999999);
         if ($product->barcode == NULL) {
             $product->barcode = $numberBarcode;
