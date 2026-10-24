@@ -1,0 +1,2302 @@
+<!DOCTYPE html>
+<html class="light" lang="bn">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+  <meta content="Camera Bazar | Premier Pro Camera & Broadcast Solutions Bangladesh" name="description"/>
+  <title>Camera Bazar | Premier Pro Camera & Broadcast Solutions Bangladesh</title>
+  
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  
+  <!-- Material Symbols Outlined -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#b70011",
+            "primary-container": "#dc2626",
+            "on-primary": "#ffffff",
+            "on-primary-container": "#fff6f5",
+            "primary-fixed": "#ffdad6",
+            "primary-fixed-dim": "#ffb4ab",
+            "on-primary-fixed": "#410002",
+            "on-primary-fixed-variant": "#93000b",
+            "rec-red-base": "#DC2626",
+            "rec-red-hover": "#B91C1C",
+            "rec-red-subtle": "#FEF2F2",
+            "broadcast-teal": "#0D9488",
+            "broadcast-teal-subtle": "#F0FDFA",
+            "secondary": "#006a61",
+            "secondary-container": "#86f2e4",
+            "secondary-fixed": "#89f5e7",
+            "secondary-fixed-dim": "#6bd8cb",
+            "on-secondary": "#ffffff",
+            "on-secondary-fixed": "#00201d",
+            "on-secondary-fixed-variant": "#005049",
+            "on-secondary-container": "#006f66",
+            "surface": "#f8f9ff",
+            "surface-base": "#F8FAFC",
+            "surface-card": "#FFFFFF",
+            "surface-border": "#E2E8F0",
+            "surface-container": "#e5eeff",
+            "surface-container-low": "#eff4ff",
+            "surface-container-high": "#dce9ff",
+            "surface-container-highest": "#d3e4fe",
+            "surface-container-lowest": "#ffffff",
+            "surface-bright": "#f8f9ff",
+            "surface-dim": "#cbdbf5",
+            "surface-variant": "#d3e4fe",
+            "surface-tint": "#bf0715",
+            "on-surface": "#0b1c30",
+            "on-surface-variant": "#5c403c",
+            "inverse-surface": "#213145",
+            "inverse-on-surface": "#eaf1ff",
+            "inverse-primary": "#ffb4ab",
+            "text-display": "#090D16",
+            "text-muted": "#64748B",
+            "price-tk": "#0F172A",
+            "stock-available": "#16A34A",
+            "outline": "#916f6b",
+            "outline-variant": "#e6bdb8",
+            "tertiary": "#51596f",
+            "tertiary-container": "#6a7188",
+            "tertiary-fixed": "#dae2fd",
+            "tertiary-fixed-dim": "#bec6e0",
+            "on-tertiary": "#ffffff",
+            "on-tertiary-fixed": "#131b2e",
+            "on-tertiary-fixed-variant": "#3f465c",
+            "on-tertiary-container": "#f8f7ff",
+            "error": "#ba1a1a",
+            "error-container": "#ffdad6",
+            "on-error": "#ffffff",
+            "on-error-container": "#93000a"
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "2xl": "1rem",
+            "full": "9999px"
+          },
+          spacing: {
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "space-md": "0.75rem",
+            "space-lg": "1.25rem",
+            "space-xl": "2rem",
+            "gutter": "0.75rem",
+            "gutter-desktop": "1.25rem",
+            "margin": "1rem",
+            "margin-desktop": "2rem"
+          },
+          fontFamily: {
+            "sans": ["Plus Jakarta Sans", "sans-serif"],
+            "headline-lg": ["Plus Jakarta Sans", "sans-serif"],
+            "headline-md": ["Plus Jakarta Sans", "sans-serif"],
+            "headline-sm": ["Plus Jakarta Sans", "sans-serif"],
+            "display-lg": ["Plus Jakarta Sans", "sans-serif"],
+            "body-lg": ["Plus Jakarta Sans", "sans-serif"],
+            "body-md": ["Plus Jakarta Sans", "sans-serif"],
+            "body-sm": ["Plus Jakarta Sans", "sans-serif"],
+            "price-headline": ["Plus Jakarta Sans", "sans-serif"],
+            "price-strikethrough": ["Plus Jakarta Sans", "sans-serif"],
+            "label-lg": ["Plus Jakarta Sans", "sans-serif"],
+            "label-md": ["Plus Jakarta Sans", "sans-serif"],
+            "label-sm": ["Plus Jakarta Sans", "sans-serif"]
+          },
+          fontSize: {
+            "display-lg": ["32px", { lineHeight: "38px", letterSpacing: "-0.03em", fontWeight: "800" }],
+            "headline-lg": ["22px", { lineHeight: "28px", letterSpacing: "-0.02em", fontWeight: "700" }],
+            "headline-md": ["18px", { lineHeight: "24px", letterSpacing: "-0.015em", fontWeight: "700" }],
+            "headline-sm": ["15px", { lineHeight: "20px", letterSpacing: "-0.01em", fontWeight: "600" }],
+            "body-lg": ["15px", { lineHeight: "22px", fontWeight: "400" }],
+            "body-md": ["13px", { lineHeight: "18px", fontWeight: "400" }],
+            "body-sm": ["12px", { lineHeight: "16px", fontWeight: "400" }],
+            "price-headline": ["16px", { lineHeight: "20px", letterSpacing: "-0.01em", fontWeight: "800" }],
+            "price-strikethrough": ["11px", { lineHeight: "14px", fontWeight: "500" }],
+            "label-lg": ["13px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "600" }],
+            "label-md": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "600" }],
+            "label-sm": ["10px", { lineHeight: "12px", letterSpacing: "0.04em", fontWeight: "700" }]
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    @layer base {
+      html, body {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        scroll-behavior: smooth;
+      }
+      body {
+        overscroll-behavior-y: none;
+      }
+      .pb-safe {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      .pt-safe {
+        padding-top: env(safe-area-inset-top, 0px);
+      }
+    }
+    ::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .line-clamp-1 {
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    /* Toast Animation */
+    @keyframes slideInDown {
+      from { transform: translateY(-100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .animate-toast {
+      animation: slideInDown 0.3s ease-out forwards;
+    }
+  </style>
+</head>
+
+<body class="bg-surface-base font-body-md text-on-surface antialiased min-h-screen flex flex-col selection:bg-primary selection:text-on-primary">
+
+  <!-- ========================================== -->
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <!-- ========================================== -->
+  <div id="toast-container" class="fixed top-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ========================================== -->
+  <!-- 1. MOBILE HEADER (Visible on < lg screens) -->
+  <!-- ========================================== -->
+  <header class="lg:hidden fixed top-0 w-full z-50 pt-safe bg-surface-card/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+    <div class="h-16 px-4 flex items-center justify-between gap-2">
+      <!-- Logo + Tag -->
+      <div class="flex items-center gap-2 min-w-0 flex-1">
+        <a class="flex items-center shrink-0" href="#">
+          <img alt="Camera Bazar Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1WL3yj50eBzFp9pSaVx9W_q08fXnv9BRV8n0Z9KyGTpDx2Q2tYGIjq3Hg-sUP4SHnOjyBijq02lvUWUDQrRPEpvL7k30TGQ5V_2wdB60cZJSUYFtVZO33tn7Wye-xcMNBpu1sVLM17INZUbYzW2p195Ma55k9Ak4-DcPbFbSC_DESRlPURONuq-St3d_e0kN_tNadYTj8qwx0sC_jf_Jt7fTidQzeO14StrSB_FhudX13lu5p1ST1WQheo"/>
+        </a>
+        <div class="flex flex-col min-w-0">
+          <span class="font-label-sm text-[10px] text-rec-red-base uppercase tracking-wider leading-none font-bold">Camera Bazar</span>
+          <span class="font-headline-sm text-sm text-on-surface truncate leading-tight font-bold">Pro Cine & Audio</span>
+        </div>
+      </div>
+      
+      <!-- Right Action Icons -->
+      <div class="flex items-center gap-1 shrink-0">
+        <!-- Hotline call -->
+        <a aria-label="Call Hotline" class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface hover:text-broadcast-teal hover:bg-surface-container-low transition-colors" href="tel:+8801917256756">
+          <span class="material-symbols-outlined text-[20px]">support_agent</span>
+        </a>
+        <!-- Search Trigger -->
+        <button aria-label="Search Gear" id="mobile-search-btn" class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface hover:text-primary hover:bg-surface-container-low transition-colors">
+          <span class="material-symbols-outlined text-[20px]">search</span>
+        </button>
+        <!-- Wishlist -->
+        <a aria-label="Wishlist" class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface hover:text-primary hover:bg-surface-container-low transition-colors relative" href="#wishlist" onclick="toggleWishlistModal()">
+          <span class="material-symbols-outlined text-[20px]">favorite</span>
+          <span id="mobile-wishlist-count" class="absolute top-1.5 right-1.5 w-4 h-4 bg-broadcast-teal text-white font-label-sm text-[9px] font-bold rounded-full flex items-center justify-center leading-none ring-2 ring-surface-card">3</span>
+        </a>
+        <!-- Shopping Cart -->
+        <button aria-label="Shopping Cart" class="relative w-10 h-10 flex items-center justify-center rounded-full text-on-surface hover:text-primary hover:bg-surface-container-low transition-colors" onclick="toggleCartDrawer()">
+          <span class="material-symbols-outlined text-[20px]">shopping_bag</span>
+          <span id="mobile-cart-badge" class="absolute top-1.5 right-1.5 w-4 h-4 bg-primary text-on-primary font-label-sm text-[9px] font-bold rounded-full flex items-center justify-center leading-none ring-2 ring-surface-card">3</span>
+        </button>
+        <!-- User Profile Avatar -->
+        <a href="#account" class="w-8 h-8 rounded-full bg-primary flex items-center justify-center ml-1 shadow-sm">
+          <span class="material-symbols-outlined text-on-primary text-[18px]">person</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================== -->
+  <!-- 2. DESKTOP HEADER (Visible on >= lg screens) -->
+  <!-- ========================================== -->
+  <header class="hidden lg:block fixed top-0 left-0 right-0 z-50 bg-surface-card/95 backdrop-blur-md shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+    <!-- Top Announcement Strip -->
+    <div class="bg-inverse-surface text-inverse-on-surface text-body-sm font-body-sm py-1.5 px-6">
+      <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        <span class="flex items-center gap-2">
+          <span class="inline-block w-2 h-2 rounded-full bg-rec-red-base animate-pulse"></span>
+          বাংলাদেশের বিশ্বস্ত ক্যামেরা ও আধুনিক ব্রডকাস্টিং সলিউশন | হটলাইন: <strong class="text-white">+880-1917-256-756</strong> | ২টি ফ্ল্যাগশিপ স্টোর: বায়তুল মোকাররম ও বসুন্ধরা সিটি | ডেলিভারি ১-৩ দিন
+        </span>
+        <div class="flex items-center gap-4 text-label-sm font-label-sm shrink-0">
+          <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-stock-available">verified</span> অফিসিয়াল ওয়ারেন্টি</span>
+          <span class="text-white/30">|</span>
+          <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-broadcast-teal">local_shipping</span> দ্রুত ডেলিভারি</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Desktop Header Row -->
+    <div class="h-20 max-w-7xl mx-auto px-6 flex items-center justify-between gap-6">
+      <!-- Logo -->
+      <a href="#" class="flex items-center gap-3 flex-shrink-0">
+        <img alt="Camera Bazar Logo" class="h-9 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1WL3yj50eBzFp9pSaVx9W_q08fXnv9BRV8n0Z9KyGTpDx2Q2tYGIjq3Hg-sUP4SHnOjyBijq02lvUWUDQrRPEpvL7k30TGQ5V_2wdB60cZJSUYFtVZO33tn7Wye-xcMNBpu1sVLM17INZUbYzW2p195Ma55k9Ak4-DcPbFbSC_DESRlPURONuq-St3d_e0kN_tNadYTj8qwx0sC_jf_Jt7fTidQzeO14StrSB_FhudX13lu5p1ST1WQheo"/>
+        <div class="flex flex-col">
+          <span class="font-headline-md text-headline-md tracking-tight text-text-display uppercase leading-tight font-extrabold">Camera Bazar</span>
+          <span class="font-label-sm text-label-sm text-broadcast-teal font-bold uppercase tracking-wider">Pro Cine & Broadcast</span>
+        </div>
+      </a>
+
+      <!-- Desktop Search Bar with Category Dropdown -->
+      <div class="flex-1 max-w-2xl">
+        <div class="flex items-center bg-surface-container-low rounded-xl p-1 border border-surface-border focus-within:border-primary transition-colors">
+          <div class="relative group">
+            <select id="desktop-search-category" class="bg-transparent pl-3 pr-7 py-2 text-on-surface font-label-md text-label-md cursor-pointer outline-none appearance-none font-semibold">
+              <option value="all">All Gear</option>
+              <option value="cameras">Digital Cameras</option>
+              <option value="lenses">Cinema Lenses</option>
+              <option value="drones">Drones</option>
+              <option value="audio">Pro Audio</option>
+              <option value="switchers">Switchers</option>
+              <option value="lighting">Studio Light</option>
+            </select>
+            <span class="material-symbols-outlined text-[16px] text-text-muted absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none">expand_more</span>
+          </div>
+          <div class="h-5 w-px bg-outline-variant opacity-40"></div>
+          <div class="flex-1 flex items-center px-3">
+            <span class="material-symbols-outlined text-text-muted text-[18px] mr-2">search</span>
+            <input id="desktop-search-input" class="w-full bg-transparent text-body-md font-body-md text-on-surface placeholder:text-text-muted focus:outline-none" placeholder="Search cameras, lenses, switchers, mics..." type="text"/>
+          </div>
+          <button onclick="handleDesktopSearch()" class="bg-primary hover:bg-rec-red-hover text-on-primary font-label-md text-label-md px-5 py-2.5 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm font-bold">
+            <span>Search</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Right Header Actions (Hotline, Compare, Wishlist, Cart, Account) -->
+      <div class="flex items-center gap-5 flex-shrink-0">
+        <!-- Helpline & WhatsApp -->
+        <a class="flex items-center gap-2 group" href="https://wa.me/8801917256756" target="_blank">
+          <div class="w-9 h-9 rounded-full bg-broadcast-teal-subtle flex items-center justify-center text-broadcast-teal group-hover:scale-105 transition-transform">
+            <span class="material-symbols-outlined text-[20px]">support_agent</span>
+          </div>
+          <div class="flex flex-col text-left">
+            <span class="font-label-sm text-label-sm text-text-muted">Helpline & WhatsApp</span>
+            <span class="font-label-md text-label-md text-price-tk font-bold">+880-1917-256-756</span>
+          </div>
+        </a>
+
+        <!-- Compare / Wishlist / Cart Icons -->
+        <div class="flex items-center gap-1">
+          <a class="relative p-2 text-on-surface-variant hover:text-primary transition-colors flex flex-col items-center" href="#compare">
+            <span class="material-symbols-outlined text-[22px]">sync_alt</span>
+            <span class="text-[10px] font-medium mt-0.5">Compare</span>
+          </a>
+          <button class="relative p-2 text-on-surface-variant hover:text-primary transition-colors flex flex-col items-center" onclick="showToast('Wishlist contains 3 items', 'info')">
+            <span class="material-symbols-outlined text-[22px]">favorite_border</span>
+            <span id="desktop-wishlist-count" class="absolute top-1 right-2 bg-primary text-on-primary text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">3</span>
+            <span class="text-[10px] font-medium mt-0.5">Wishlist</span>
+          </button>
+          <button class="relative p-2 text-on-surface-variant hover:text-primary transition-colors flex flex-col items-center" onclick="toggleCartDrawer()">
+            <span class="material-symbols-outlined text-[22px]">shopping_bag</span>
+            <span id="desktop-cart-badge" class="absolute top-1 right-2 bg-primary text-on-primary text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">3</span>
+            <span id="desktop-cart-total" class="text-[10px] font-bold mt-0.5 text-price-tk">৳ ৩,২৪,০০০</span>
+          </button>
+        </div>
+
+        <!-- User Account -->
+        <div class="flex items-center gap-2 pl-2 border-l border-surface-border">
+          <a class="flex items-center gap-2 text-on-surface-variant hover:text-on-surface group" href="#account">
+            <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+              <span class="material-symbols-outlined text-on-primary text-[18px]">person</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="font-label-sm text-[10px] text-text-muted leading-none">Cinematographer</span>
+              <span class="font-label-md text-label-md text-on-surface font-bold">Account</span>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Category Subnav Bar -->
+    <div class="bg-surface-card border-t border-surface-border shadow-[0_1px_4px_rgba(0,0,0,0.03)]">
+      <div class="max-w-7xl mx-auto px-6 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <!-- All Categories Mega Dropdown Trigger -->
+          <div class="relative py-2">
+            <button id="desktop-megamenu-btn" class="bg-primary text-on-primary px-4 py-2 rounded-lg font-label-lg text-label-lg flex items-center gap-2 hover:bg-rec-red-hover transition-colors shadow-sm font-bold">
+              <span class="material-symbols-outlined text-[20px]">menu</span>
+              <span>All Equipment Categories</span>
+              <span class="material-symbols-outlined text-[18px]">arrow_drop_down</span>
+            </button>
+          </div>
+          
+          <!-- Nav Links -->
+          <nav class="flex items-center gap-1">
+            <a aria-current="page" class="px-3 py-1.5 text-primary font-bold bg-primary-container/10 rounded-md font-label-md text-label-md" href="#">Home</a>
+            <a class="px-3 py-1.5 text-on-surface-variant hover:text-primary font-label-md text-label-md transition-colors" href="#hot-deals">Hot Deals</a>
+            <a class="px-3 py-1.5 text-on-surface-variant hover:text-primary font-label-md text-label-md transition-colors" href="#popular-cinema">Popular Cinema</a>
+            <a class="px-3 py-1.5 text-on-surface-variant hover:text-primary font-label-md text-label-md transition-colors" href="#hollyland-audio">Hollyland Audio</a>
+            <a class="px-3 py-1.5 text-on-surface-variant hover:text-primary font-label-md text-label-md transition-colors" href="#studio-gear">Studio Gear</a>
+            <a class="px-3 py-1.5 text-on-surface-variant hover:text-primary font-label-md text-label-md transition-colors" href="#brands">Brands</a>
+            <a class="px-3 py-1.5 text-on-surface-variant hover:text-primary font-label-md text-label-md transition-colors" href="#flagship-stores">Flagship Stores</a>
+            <a class="px-3 py-1.5 text-on-surface-variant hover:text-primary font-label-md text-label-md transition-colors" href="#warranty-support">Warranty & Support</a>
+          </nav>
+        </div>
+
+        <div class="flex items-center gap-4 text-label-sm font-label-sm text-text-muted">
+          <a class="hover:text-primary flex items-center gap-1 font-semibold" href="#track-order">
+            <span class="material-symbols-outlined text-[16px]">local_shipping</span>
+            <span>Track Order</span>
+          </a>
+          <span class="text-outline-variant">|</span>
+          <div class="flex items-center gap-1.5 text-broadcast-teal font-bold">
+            <span class="inline-block w-2 h-2 rounded-full bg-stock-available animate-pulse"></span>
+            <span>Live Studio Demo Available</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================== -->
+  <!-- MOBILE SEARCH OVERLAY MODAL -->
+  <!-- ========================================== -->
+  <div id="mobile-search-modal" class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm hidden flex-col">
+    <div class="bg-surface-card p-4 pt-safe flex items-center gap-3 shadow-lg">
+      <div class="flex-1 flex items-center bg-surface-container-low rounded-xl px-3 py-2 border border-surface-border">
+        <span class="material-symbols-outlined text-text-muted text-[20px] mr-2">search</span>
+        <input id="mobile-search-input" class="w-full bg-transparent text-body-md font-body-md text-on-surface placeholder:text-text-muted focus:outline-none" placeholder="Search cameras, lenses, mics, gimbals..." type="text" autofocus/>
+      </div>
+      <button id="mobile-search-close" class="p-2 text-on-surface-variant hover:text-primary font-bold">Cancel</button>
+    </div>
+    <div class="flex-1 p-4 overflow-y-auto" onclick="closeMobileSearch()">
+      <div class="bg-surface-card rounded-2xl p-4 shadow-sm" onclick="event.stopPropagation()">
+        <span class="text-label-sm text-text-muted uppercase font-bold block mb-2">Trending Searches</span>
+        <div class="flex flex-wrap gap-2">
+          <span class="bg-surface-container-low px-3 py-1.5 rounded-lg text-body-sm cursor-pointer hover:bg-primary hover:text-white" onclick="quickSearch('DJI Osmo Pocket')">DJI Osmo Pocket 4P</span>
+          <span class="bg-surface-container-low px-3 py-1.5 rounded-lg text-body-sm cursor-pointer hover:bg-primary hover:text-white" onclick="quickSearch('Sony FX30')">Sony FX30 Cinema</span>
+          <span class="bg-surface-container-low px-3 py-1.5 rounded-lg text-body-sm cursor-pointer hover:bg-primary hover:text-white" onclick="quickSearch('Hollyland LARK')">Hollyland LARK M2</span>
+          <span class="bg-surface-container-low px-3 py-1.5 rounded-lg text-body-sm cursor-pointer hover:bg-primary hover:text-white" onclick="quickSearch('Datavideo Switcher')">Datavideo Switcher</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- CART SLIDE-OVER DRAWER -->
+  <!-- ========================================== -->
+  <div id="cart-drawer-overlay" class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs hidden transition-opacity" onclick="toggleCartDrawer()"></div>
+  <div id="cart-drawer" class="fixed top-0 right-0 bottom-0 z-[101] w-full max-w-md bg-surface-card shadow-2xl flex flex-col translate-x-full transition-transform duration-300 ease-in-out">
+    <div class="p-4 border-b border-surface-border flex items-center justify-between bg-surface-container-low">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary text-[24px]">shopping_bag</span>
+        <h3 class="font-headline-sm text-headline-sm text-text-display font-bold">Your Production Bag</h3>
+        <span id="cart-drawer-count" class="bg-primary text-white text-[11px] font-bold px-2 py-0.5 rounded-full">3</span>
+      </div>
+      <button class="w-8 h-8 rounded-full hover:bg-surface-container flex items-center justify-center text-text-muted" onclick="toggleCartDrawer()">
+        <span class="material-symbols-outlined text-[20px]">close</span>
+      </button>
+    </div>
+
+    <!-- Cart Items List -->
+    <div id="cart-items-container" class="flex-1 overflow-y-auto p-4 space-y-3">
+      <!-- Item 1 -->
+      <div class="flex gap-3 bg-surface-base p-3 rounded-xl border border-surface-border">
+        <img class="w-16 h-16 object-contain bg-white rounded-lg p-1" src="https://lh3.googleusercontent.com/aida/AEtjO1VlkIaGWo4pZtCfRCtGHkIOYCB_lwbnbvypPczrc0Zep_5j_I3I0x0272WYzgzQnR6mFOG1JpYO3uIg0xlKUhkOIXtcA6Qp2Zme48SvdFxUfa3pDyf7UYGMTt_0crdEY4IWr-fMPJE4HKv1wR8h0D3M29za-nyxKsI1baXPZpnRPPdiRDAor_1aq5t6z3orCGyAOsGo5fPLDHnPZOYuMkEEseZJU08eG_N6Eob7mwbRTy3H7IVw2Qc-BwY" alt="Sony FX30"/>
+        <div class="flex-1 min-w-0">
+          <h4 class="font-headline-sm text-body-md text-text-display truncate">Sony FX30 Cinema Camera</h4>
+          <span class="text-price-headline text-body-md text-price-tk font-bold">৳ ১৯৪,৯৯৯ TK</span>
+          <div class="flex items-center justify-between mt-1 text-label-sm">
+            <span class="text-text-muted">Qty: 1</span>
+            <button class="text-rec-red-base hover:underline" onclick="removeCartItem(this, 194999)">Remove</button>
+          </div>
+        </div>
+      </div>
+      <!-- Item 2 -->
+      <div class="flex gap-3 bg-surface-base p-3 rounded-xl border border-surface-border">
+        <img class="w-16 h-16 object-contain bg-white rounded-lg p-1" src="https://lh3.googleusercontent.com/aida/AEtjO1UtwKYg6iZpMl5Fh535es5hvtVBj6b1J_gMRxIUJq70aHGREGvG8S8hHmMvJo3K6dh6OkcyvqZf9ZdrroGSyDV0UoPKAsNQNv1vXa_AIHpSzNA6UFVFi7BdXB0hXxLVKDfYOJ14c9GH9ehBwDeY0ZWokAVvKOoqR4NOj-c5cRHNmIY4O5KEKxj_ECnSFkJblKF5p9ROOClIvXKIS_yct4Dm4BgbKp4o50pNnPe30Z2sys-iwVTrbqw0_AI" alt="DJI RS 5"/>
+        <div class="flex-1 min-w-0">
+          <h4 class="font-headline-sm text-body-md text-text-display truncate">DJI RS 5 Gimbal Combo</h4>
+          <span class="text-price-headline text-body-md text-price-tk font-bold">৳ ৫৪,৯৯০ TK</span>
+          <div class="flex items-center justify-between mt-1 text-label-sm">
+            <span class="text-text-muted">Qty: 1</span>
+            <button class="text-rec-red-base hover:underline" onclick="removeCartItem(this, 54990)">Remove</button>
+          </div>
+        </div>
+      </div>
+      <!-- Item 3 -->
+      <div class="flex gap-3 bg-surface-base p-3 rounded-xl border border-surface-border">
+        <img class="w-16 h-16 object-contain bg-white rounded-lg p-1" src="https://lh3.googleusercontent.com/aida/AEtjO1X-nc7VZD9tYHp6qutS95cjA-Xk5pOOzJwdae3Vi5yg75ZaanA4-bPFLwz-qoo-JoQi5TkDwO71GgUsiHVOVo5x8y535Jg4E3WEA_VzQl9ZAdT5TVIR5gEoikhv-Z2gFvZvSkGbsxQIifYqIgqsF8YhYzvl6tPc6smePHKqrg_ApXKYK0N-E5a5oijUQjPNmBCEz6Eh9i35JKinBfJI9ZCuzzIm1KilnSKr1gZmzV4bCV9tLBN_Y3w1T5o" alt="DJI Osmo 360"/>
+        <div class="flex-1 min-w-0">
+          <h4 class="font-headline-sm text-body-md text-text-display truncate">DJI Osmo 360 II Adventure Combo</h4>
+          <span class="text-price-headline text-body-md text-price-tk font-bold">৳ ৬৮,৯৯০ TK</span>
+          <div class="flex items-center justify-between mt-1 text-label-sm">
+            <span class="text-text-muted">Qty: 1</span>
+            <button class="text-rec-red-base hover:underline" onclick="removeCartItem(this, 68990)">Remove</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cart Footer & Checkout -->
+    <div class="p-4 border-t border-surface-border bg-surface-card">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-body-md text-text-muted">Subtotal:</span>
+        <span id="cart-drawer-subtotal" class="font-headline-md text-headline-md text-price-tk font-bold">৳ ৩,১৮,৯৭৯ TK</span>
+      </div>
+      <div class="flex items-center justify-between mb-4 text-body-sm text-stock-available font-bold">
+        <span>Delivery:</span>
+        <span>FREE Across Bangladesh</span>
+      </div>
+      <button class="w-full bg-primary hover:bg-rec-red-hover text-on-primary font-headline-sm text-label-lg py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2" onclick="showToast('Proceeding to SSLCommerz Secure Checkout...', 'success')">
+        <span class="material-symbols-outlined text-[18px]">lock</span>
+        <span>Secure Checkout (SSLCommerz)</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MAIN CONTENT CONTAINER -->
+  <!-- ========================================== -->
+  <main class="flex-1 w-full pt-16 lg:pt-[172px] pb-24 lg:pb-0 bg-surface-base">
+    
+    <!-- Dynamic Bengali Tagline Marquee (Mobile Only) -->
+    <div class="lg:hidden w-full bg-surface-container py-1.5 px-4 overflow-hidden flex items-center justify-between">
+      <div class="flex items-center gap-2 min-w-0">
+        <span class="inline-flex items-center justify-center w-2 h-2 rounded-full bg-rec-red-base animate-pulse"></span>
+        <p class="font-label-sm text-label-sm text-on-surface truncate">
+          বাংলাদেশের বিশ্বস্ত ক্যামেরা ও আধুনিক ব্রডকাস্টিং সলিউশন | হটলাইন: <span class="font-bold text-primary">+880-1917-256-756</span>
+        </p>
+      </div>
+      <span class="font-label-sm text-label-sm text-text-muted shrink-0 flex items-center gap-0.5 ml-2">
+        <span class="material-symbols-outlined text-[13px] text-broadcast-teal">storefront</span> ২ স্টোর
+      </span>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 1: HERO SECTION (CLEAN BANNERS) -->
+    <!-- ========================================== -->
+    <section class="max-w-7xl mx-auto px-4 lg:px-6 pt-4 lg:pt-6 pb-2 w-full">
+      
+      <!-- MOBILE HERO (Visible on < lg) -->
+      <div class="lg:hidden flex flex-col gap-3">
+        <!-- Main Featured Hero: DJI Osmo Pocket 4P -->
+        <a href="#dji-osmo-pocket-4p" class="block w-full rounded-2xl overflow-hidden shadow-sm aspect-[2/1] bg-surface-card border border-surface-border group">
+          <img alt="DJI Osmo Pocket 4P" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida/AEtjO1Vqtovg_xZlDnZaVLXZXohSSKxOzwNsqMMehT2gASqjyOfoGneJMZFqoH9IPecShYtpwgk9u7piXxWXoxpDO3um1RY2TiwiV07r6eOYuayiVh2wtWy2mFCC7cRlyTcyGO5Oow-9tFRAkoIMevpq-fd1cgrFpY2jHKfVeiNgh_iTom9zUqW3Ma_1mf2SEbP2PjUTxpPZkHYWb_ZrFZhOob0QRha2GFauumTzaWXmI3sUn8DY_-RRBUeP5Kg"/>
+        </a>
+
+        <!-- Secondary Hero Quick Tiles (2 Columns) -->
+        <div class="grid grid-cols-2 gap-2.5">
+          <!-- Card 1: DJI Neo 2 Drone -->
+          <a class="block rounded-xl overflow-hidden bg-surface-card shadow-sm border border-surface-border aspect-[16/9] group active:scale-[0.99] transition-transform" href="#drones">
+            <img alt="DJI Neo 2 Drone" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="https://lh3.googleusercontent.com/aida/AEtjO1VhOgpQCvjwP81MCDPHJoV-TCBpVyatc_-EgTdYpU1gErRH_l_jm3yo999fSrNbB71ww4lj1OO7VCT2_6YVzNGYCIhfP53eAwmaELrh5oG5d6IDeulyBqrmcb1_FbCW1DD-0CulNGjDfY4q-YgQA4kRw7onQ9_o4Q2vrVcGlcYyW5nHaPfXyAhtBJbexteyxElnOs_0FS5tROKeEz8tFh-dWLAE52k2g5mJpaUorGGuCV9sVBx_9sv-dOE"/>
+          </a>
+          <!-- Card 2: Nikon Z30 -->
+          <a class="block rounded-xl overflow-hidden bg-surface-card shadow-sm border border-surface-border aspect-[16/9] group active:scale-[0.99] transition-transform" href="#nikon">
+            <img alt="Nikon Cinema Series" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="https://lh3.googleusercontent.com/aida/AEtjO1Uo-ckvULlFV2gVtf9Pp7azws98fqwuvjcqQw3boocOesHEduRc9_3Dh1hXNM3kSacsR3e5Dv9QVTd43GszBoTaQeY911zs_dpSq0GPIO6ELFZslqUonTjzdo7jBxBUDwaP9x3niWmwC18RUiavJ635vJfgHEPBY5u9RS0z315h3uIirGohyxMIPY_ULhnG4GD0tF12d8d1h0VNSrLlz-F7GnHY6BS-r3uOR3Q7w7Vq4Xll1UhToPrl92M"/>
+          </a>
+        </div>
+      </div>
+
+      <!-- DESKTOP HERO (Visible on >= lg) -->
+      <div class="hidden lg:grid grid-cols-12 gap-5 items-stretch">
+        <!-- Main Billboard: DJI Osmo Pocket 4P (8 Columns) -->
+        <a href="#dji-osmo-pocket-4p" class="col-span-8 block bg-surface-card rounded-2xl shadow-sm overflow-hidden border border-surface-border group aspect-[16/8.5]">
+          <img alt="DJI Osmo Pocket 4P Dual-Lens Camera" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out" src="https://lh3.googleusercontent.com/aida/AEtjO1Vqtovg_xZlDnZaVLXZXohSSKxOzwNsqMMehT2gASqjyOfoGneJMZFqoH9IPecShYtpwgk9u7piXxWXoxpDO3um1RY2TiwiV07r6eOYuayiVh2wtWy2mFCC7cRlyTcyGO5Oow-9tFRAkoIMevpq-fd1cgrFpY2jHKfVeiNgh_iTom9zUqW3Ma_1mf2SEbP2PjUTxpPZkHYWb_ZrFZhOob0QRha2GFauumTzaWXmI3sUn8DY_-RRBUeP5Kg"/>
+        </a>
+
+        <!-- Secondary Stacked Cards (4 Columns) -->
+        <div class="col-span-4 flex flex-col gap-5 justify-between">
+          <!-- Card 1: DJI Neo 2 Drone -->
+          <a href="#drones" class="flex-1 block bg-surface-card rounded-2xl shadow-sm overflow-hidden border border-surface-border group aspect-[16/7.5]">
+            <img alt="DJI Neo 2 Drone" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" src="https://lh3.googleusercontent.com/aida/AEtjO1VhOgpQCvjwP81MCDPHJoV-TCBpVyatc_-EgTdYpU1gErRH_l_jm3yo999fSrNbB71ww4lj1OO7VCT2_6YVzNGYCIhfP53eAwmaELrh5oG5d6IDeulyBqrmcb1_FbCW1DD-0CulNGjDfY4q-YgQA4kRw7onQ9_o4Q2vrVcGlcYyW5nHaPfXyAhtBJbexteyxElnOs_0FS5tROKeEz8tFh-dWLAE52k2g5mJpaUorGGuCV9sVBx_9sv-dOE"/>
+          </a>
+
+          <!-- Card 2: Nikon Z30 Cinema Body -->
+          <a href="#nikon-z30" class="flex-1 block bg-surface-card rounded-2xl shadow-sm overflow-hidden border border-surface-border group aspect-[16/7.5]">
+            <img alt="Nikon Z30 Cinema Body" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" src="https://lh3.googleusercontent.com/aida/AEtjO1Uo-ckvULlFV2gVtf9Pp7azws98fqwuvjcqQw3boocOesHEduRc9_3Dh1hXNM3kSacsR3e5Dv9QVTd43GszBoTaQeY911zs_dpSq0GPIO6ELFZslqUonTjzdo7jBxBUDwaP9x3niWmwC18RUiavJ635vJfgHEPBY5u9RS0z315h3uIirGohyxMIPY_ULhnG4GD0tF12d8d1h0VNSrLlz-F7GnHY6BS-r3uOR3Q7w7Vq4Xll1UhToPrl92M"/>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SECTION 2: VALUE PROPOSITIONS & TRUST BADGES -->
+    <!-- ========================================== -->
+    <section class="max-w-7xl mx-auto px-4 lg:px-6 py-3 lg:py-4 w-full">
+      <!-- Mobile 3-Column Badges -->
+      <div class="grid grid-cols-3 gap-2 bg-surface-card p-2 rounded-xl shadow-sm lg:hidden border border-surface-border">
+        <div class="flex flex-col items-center text-center p-1.5 rounded-lg bg-surface-container-low">
+          <div class="w-8 h-8 rounded-full bg-broadcast-teal-subtle text-broadcast-teal flex items-center justify-center mb-1">
+            <span class="material-symbols-outlined text-[18px]">local_shipping</span>
+          </div>
+          <span class="font-label-md text-[11px] text-on-surface leading-tight font-bold">Quick Shipping</span>
+          <span class="font-label-sm text-[9px] text-text-muted mt-0.5">1-3 Days BD</span>
+        </div>
+        <div class="flex flex-col items-center text-center p-1.5 rounded-lg bg-surface-container-low">
+          <div class="w-8 h-8 rounded-full bg-rec-red-subtle text-primary flex items-center justify-center mb-1">
+            <span class="material-symbols-outlined text-[18px]">headset_mic</span>
+          </div>
+          <span class="font-label-md text-[11px] text-on-surface leading-tight font-bold">24/7 Support</span>
+          <span class="font-label-sm text-[9px] text-text-muted mt-0.5">Live Engineers</span>
+        </div>
+        <div class="flex flex-col items-center text-center p-1.5 rounded-lg bg-surface-container-low">
+          <div class="w-8 h-8 rounded-full bg-secondary-container/40 text-secondary flex items-center justify-center mb-1">
+            <span class="material-symbols-outlined text-[18px]">verified_user</span>
+          </div>
+          <span class="font-label-md text-[11px] text-on-surface leading-tight font-bold">SSLCommerz</span>
+          <span class="font-label-sm text-[9px] text-text-muted mt-0.5">100% Protected</span>
+        </div>
+      </div>
+
+      <!-- Desktop 4-Column Value Props -->
+      <div class="hidden lg:grid grid-cols-4 gap-4 bg-surface-card rounded-2xl p-5 shadow-sm border border-surface-border">
+        <div class="flex items-center gap-3.5 p-2">
+          <div class="w-11 h-11 rounded-xl bg-rec-red-subtle text-primary flex items-center justify-center flex-shrink-0">
+            <span class="material-symbols-outlined text-[24px]">local_shipping</span>
+          </div>
+          <div>
+            <h4 class="text-headline-sm font-headline-sm text-text-display font-bold">1-3 Days Express BD</h4>
+            <p class="text-body-sm font-body-sm text-text-muted">Free across Bangladesh above ৳ 5,000</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3.5 p-2">
+          <div class="w-11 h-11 rounded-xl bg-broadcast-teal-subtle text-broadcast-teal flex items-center justify-center flex-shrink-0">
+            <span class="material-symbols-outlined text-[24px]">engineering</span>
+          </div>
+          <div>
+            <h4 class="text-headline-sm font-headline-sm text-text-display font-bold">Pro Calibration & Support</h4>
+            <p class="text-body-sm font-body-sm text-text-muted">Broadcast engineers ready 24/7</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3.5 p-2">
+          <div class="w-11 h-11 rounded-xl bg-surface-container-low text-on-surface flex items-center justify-center flex-shrink-0">
+            <span class="material-symbols-outlined text-[24px]">credit_card</span>
+          </div>
+          <div>
+            <h4 class="text-headline-sm font-headline-sm text-text-display font-bold">36 Months EMI Facility</h4>
+            <p class="text-body-sm font-body-sm text-text-muted">Verified SSLCommerz & 36 Bank Partners</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3.5 p-2">
+          <div class="w-11 h-11 rounded-xl bg-emerald-50 text-stock-available flex items-center justify-center flex-shrink-0">
+            <span class="material-symbols-outlined text-[24px]">verified_user</span>
+          </div>
+          <div>
+            <h4 class="text-headline-sm font-headline-sm text-text-display font-bold">100% Genuine Warranty</h4>
+            <p class="text-body-sm font-body-sm text-text-muted">Official Importer & Direct Channel</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SECTION 3: BROWSE BY CATEGORY -->
+    <!-- ========================================== -->
+    <section class="max-w-7xl mx-auto px-4 lg:px-6 pt-6 lg:pt-8 w-full">
+      <div class="flex items-center justify-between mb-4 lg:mb-6">
+        <div>
+          <div class="text-label-sm font-label-sm uppercase tracking-wider text-broadcast-teal font-bold mb-0.5">Equipment Directory</div>
+          <h2 class="text-headline-md lg:text-headline-lg font-headline-lg text-text-display font-bold">Browse by Category</h2>
+        </div>
+        <a class="text-label-sm lg:text-label-lg font-label-lg text-broadcast-teal lg:text-primary hover:text-rec-red-hover flex items-center gap-1 font-bold group" href="#all-categories">
+          <span>All Categories</span>
+          <span class="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+        </a>
+      </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 3: BROWSE BY CATEGORY (AUTO SLIDE) -->
+    <!-- ========================================== -->
+    <section class="max-w-7xl mx-auto px-4 lg:px-6 pt-6 lg:pt-8 w-full">
+      <div class="flex items-center justify-between mb-4 lg:mb-5">
+        <div>
+          <h2 class="text-xl lg:text-2xl font-bold text-[#102d28] font-headline-lg">Browse by Category</h2>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <a class="hidden sm:flex text-label-sm lg:text-label-md font-label-md text-secondary hover:text-primary items-center gap-1 font-bold mr-2 group" href="#all-categories">
+            <span>All Categories</span>
+            <span class="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+          </a>
+          <!-- Slider Navigation Arrows -->
+          <button id="cat-slider-prev" aria-label="Previous Category" class="w-8 h-8 lg:w-9 lg:h-9 rounded-full bg-white border border-[#d0ece7] text-[#102d28] hover:bg-secondary hover:text-white hover:border-secondary shadow-xs flex items-center justify-center transition-all duration-200 active:scale-90">
+            <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+          </button>
+          <button id="cat-slider-next" aria-label="Next Category" class="w-8 h-8 lg:w-9 lg:h-9 rounded-full bg-white border border-[#d0ece7] text-[#102d28] hover:bg-secondary hover:text-white hover:border-secondary shadow-xs flex items-center justify-center transition-all duration-200 active:scale-90">
+            <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Auto-Sliding Categories Carousel Track -->
+      <div class="relative w-full overflow-hidden">
+        <div id="category-slider-track" class="flex items-stretch gap-3 md:gap-4 overflow-x-auto scroll-smooth no-scrollbar py-2 px-0.5">
+          
+          <!-- Category 1: Accessories -->
+          <a href="#cat-accessories" class="w-[125px] sm:w-[135px] md:w-[150px] lg:w-[160px] shrink-0 flex-none bg-white rounded-2xl border border-[#d0ece7] p-3 md:p-3.5 flex flex-col items-center justify-between text-center group hover:border-secondary hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 select-none">
+            <div class="w-full aspect-square rounded-xl bg-gradient-to-b from-[#f2f9f8] to-[#e6f4f1] flex items-center justify-center p-2.5 mb-2 overflow-hidden group-hover:bg-[#d8efe9] transition-colors">
+              <img src="https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?w=250&auto=format&fit=crop&q=80" alt="Accessories" class="w-full h-full object-contain filter drop-shadow-sm group-hover:scale-110 transition-transform duration-300"/>
+            </div>
+            <span class="text-xs md:text-sm font-semibold text-[#18332f] text-center tracking-tight leading-snug group-hover:text-primary transition-colors">Accessories</span>
+          </a>
+
+          <!-- Category 2: Action Cameras -->
+          <a href="#cat-action-cameras" class="w-[125px] sm:w-[135px] md:w-[150px] lg:w-[160px] shrink-0 flex-none bg-white rounded-2xl border border-[#d0ece7] p-3 md:p-3.5 flex flex-col items-center justify-between text-center group hover:border-secondary hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 select-none">
+            <div class="w-full aspect-square rounded-xl bg-gradient-to-b from-[#f2f9f8] to-[#e6f4f1] flex items-center justify-center p-2.5 mb-2 overflow-hidden group-hover:bg-[#d8efe9] transition-colors">
+              <img src="https://images.unsplash.com/photo-1565849904461-04a58ad377e0?w=250&auto=format&fit=crop&q=80" alt="Action Cameras" class="w-full h-full object-contain filter drop-shadow-sm group-hover:scale-110 transition-transform duration-300"/>
+            </div>
+            <span class="text-xs md:text-sm font-semibold text-[#18332f] text-center tracking-tight leading-snug group-hover:text-primary transition-colors">Action Cameras</span>
+          </a>
+
+          <!-- Category 3: Drones -->
+          <a href="#cat-drones" class="w-[125px] sm:w-[135px] md:w-[150px] lg:w-[160px] shrink-0 flex-none bg-white rounded-2xl border border-[#d0ece7] p-3 md:p-3.5 flex flex-col items-center justify-between text-center group hover:border-secondary hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 select-none">
+            <div class="w-full aspect-square rounded-xl bg-gradient-to-b from-[#f2f9f8] to-[#e6f4f1] flex items-center justify-center p-2.5 mb-2 overflow-hidden group-hover:bg-[#d8efe9] transition-colors">
+              <img src="https://images.unsplash.com/photo-1508614589041-895b88991e3e?w=250&auto=format&fit=crop&q=80" alt="Drones" class="w-full h-full object-contain filter drop-shadow-sm group-hover:scale-110 transition-transform duration-300"/>
+            </div>
+            <span class="text-xs md:text-sm font-semibold text-[#18332f] text-center tracking-tight leading-snug group-hover:text-primary transition-colors">Drones</span>
+          </a>
+
+          <!-- Category 4: Tripod -->
+          <a href="#cat-tripod" class="w-[125px] sm:w-[135px] md:w-[150px] lg:w-[160px] shrink-0 flex-none bg-white rounded-2xl border border-[#d0ece7] p-3 md:p-3.5 flex flex-col items-center justify-between text-center group hover:border-secondary hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 select-none">
+            <div class="w-full aspect-square rounded-xl bg-gradient-to-b from-[#f2f9f8] to-[#e6f4f1] flex items-center justify-center p-2.5 mb-2 overflow-hidden group-hover:bg-[#d8efe9] transition-colors">
+              <img src="https://images.unsplash.com/photo-1544816155-12df9643f363?w=250&auto=format&fit=crop&q=80" alt="Tripod" class="w-full h-full object-contain filter drop-shadow-sm group-hover:scale-110 transition-transform duration-300"/>
+            </div>
+            <span class="text-xs md:text-sm font-semibold text-[#18332f] text-center tracking-tight leading-snug group-hover:text-primary transition-colors">Tripod</span>
+          </a>
+
+          <!-- Category 5: Camera Lenses -->
+          <a href="#cat-lenses" class="w-[125px] sm:w-[135px] md:w-[150px] lg:w-[160px] shrink-0 flex-none bg-white rounded-2xl border border-[#d0ece7] p-3 md:p-3.5 flex flex-col items-center justify-between text-center group hover:border-secondary hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 select-none">
+            <div class="w-full aspect-square rounded-xl bg-gradient-to-b from-[#f2f9f8] to-[#e6f4f1] flex items-center justify-center p-2.5 mb-2 overflow-hidden group-hover:bg-[#d8efe9] transition-colors">
+              <img src="https://images.unsplash.com/photo-1617005082133-548c4dd27f35?w=250&auto=format&fit=crop&q=80" alt="Camera Lenses" class="w-full h-full object-contain filter drop-shadow-sm group-hover:scale-110 transition-transform duration-300"/>
+            </div>
+            <span class="text-xs md:text-sm font-semibold text-[#18332f] text-center tracking-tight leading-snug group-hover:text-primary transition-colors">Camera Lenses</span>
+          </a>
+
+          <!-- Category 6: Digital Cameras -->
+          <a href="#cat-digital-cameras" class="w-[125px] sm:w-[135px] md:w-[150px] lg:w-[160px] shrink-0 flex-none bg-white rounded-2xl border border-[#d0ece7] p-3 md:p-3.5 flex flex-col items-center justify-between text-center group hover:border-secondary hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 select-none">
+            <div class="w-full aspect-square rounded-xl bg-gradient-to-b from-[#f2f9f8] to-[#e6f4f1] flex items-center justify-center p-2.5 mb-2 overflow-hidden group-hover:bg-[#d8efe9] transition-colors">
+              <img src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=250&auto=format&fit=crop&q=80" alt="Digital Cameras" class="w-full h-full object-contain filter drop-shadow-sm group-hover:scale-110 transition-transform duration-300"/>
+            </div>
+            <span class="text-xs md:text-sm font-semibold text-[#18332f] text-center tracking-tight leading-snug group-hover:text-primary transition-colors">Digital Cameras</span>
+          </a>
+
+          <!-- Category 7: Lighting & Studio -->
+          <a href="#cat-lighting" class="w-[125px] sm:w-[135px] md:w-[150px] lg:w-[160px] shrink-0 flex-none bg-white rounded-2xl border border-[#d0ece7] p-3 md:p-3.5 flex flex-col items-center justify-between text-center group hover:border-secondary hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 select-none">
+            <div class="w-full aspect-square rounded-xl bg-gradient-to-b from-[#f2f9f8] to-[#e6f4f1] flex items-center justify-center p-2.5 mb-2 overflow-hidden group-hover:bg-[#d8efe9] transition-colors">
+              <img src="https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=250&auto=format&fit=crop&q=80" alt="Lighting & Studio" class="w-full h-full object-contain filter drop-shadow-sm group-hover:scale-110 transition-transform duration-300"/>
+            </div>
+            <span class="text-xs md:text-sm font-semibold text-[#18332f] text-center tracking-tight leading-snug group-hover:text-primary transition-colors">Lighting & Studio</span>
+          </a>
+
+          <!-- Category 8: Video Cameras -->
+          <a href="#cat-video-cameras" class="w-[125px] sm:w-[135px] md:w-[150px] lg:w-[160px] shrink-0 flex-none bg-white rounded-2xl border border-[#d0ece7] p-3 md:p-3.5 flex flex-col items-center justify-between text-center group hover:border-secondary hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 select-none">
+            <div class="w-full aspect-square rounded-xl bg-gradient-to-b from-[#f2f9f8] to-[#e6f4f1] flex items-center justify-center p-2.5 mb-2 overflow-hidden group-hover:bg-[#d8efe9] transition-colors">
+              <img src="https://lh3.googleusercontent.com/aida/AEtjO1VlkIaGWo4pZtCfRCtGHkIOYCB_lwbnbvypPczrc0Zep_5j_I3I0x0272WYzgzQnR6mFOG1JpYO3uIg0xlKUhkOIXtcA6Qp2Zme48SvdFxUfa3pDyf7UYGMTt_0crdEY4IWr-fMPJE4HKv1wR8h0D3M29za-nyxKsI1baXPZpnRPPdiRDAor_1aq5t6z3orCGyAOsGo5fPLDHnPZOYuMkEEseZJU08eG_N6Eob7mwbRTy3H7IVw2Qc-BwY" alt="Video Cameras" class="w-full h-full object-contain filter drop-shadow-sm group-hover:scale-110 transition-transform duration-300"/>
+            </div>
+            <span class="text-xs md:text-sm font-semibold text-[#18332f] text-center tracking-tight leading-snug group-hover:text-primary transition-colors">Video Cameras</span>
+          </a>
+
+          <!-- Category 9: Pro Audio -->
+          <a href="#cat-audio" class="w-[125px] sm:w-[135px] md:w-[150px] lg:w-[160px] shrink-0 flex-none bg-white rounded-2xl border border-[#d0ece7] p-3 md:p-3.5 flex flex-col items-center justify-between text-center group hover:border-secondary hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 select-none">
+            <div class="w-full aspect-square rounded-xl bg-gradient-to-b from-[#f2f9f8] to-[#e6f4f1] flex items-center justify-center p-2.5 mb-2 overflow-hidden group-hover:bg-[#d8efe9] transition-colors">
+              <img src="https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=250&auto=format&fit=crop&q=80" alt="Pro Audio" class="w-full h-full object-contain filter drop-shadow-sm group-hover:scale-110 transition-transform duration-300"/>
+            </div>
+            <span class="text-xs md:text-sm font-semibold text-[#18332f] text-center tracking-tight leading-snug group-hover:text-primary transition-colors">Pro Audio</span>
+          </a>
+
+          <!-- Category 10: Gimbals -->
+          <a href="#cat-gimbals" class="w-[125px] sm:w-[135px] md:w-[150px] lg:w-[160px] shrink-0 flex-none bg-white rounded-2xl border border-[#d0ece7] p-3 md:p-3.5 flex flex-col items-center justify-between text-center group hover:border-secondary hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 select-none">
+            <div class="w-full aspect-square rounded-xl bg-gradient-to-b from-[#f2f9f8] to-[#e6f4f1] flex items-center justify-center p-2.5 mb-2 overflow-hidden group-hover:bg-[#d8efe9] transition-colors">
+              <img src="https://lh3.googleusercontent.com/aida/AEtjO1UtwKYg6iZpMl5Fh535es5hvtVBj6b1J_gMRxIUJq70aHGREGvG8S8hHmMvJo3K6dh6OkcyvqZf9ZdrroGSyDV0UoPKAsNQNv1vXa_AIHpSzNA6UFVFi7BdXB0hXxLVKDfYOJ14c9GH9ehBwDeY0ZWokAVvKOoqR4NOj-c5cRHNmIY4O5KEKxj_ECnSFkJblKF5p9ROOClIvXKIS_yct4Dm4BgbKp4o50pNnPe30Z2sys-iwVTrbqw0_AI" alt="Gimbals & Rigs" class="w-full h-full object-contain filter drop-shadow-sm group-hover:scale-110 transition-transform duration-300"/>
+            </div>
+            <span class="text-xs md:text-sm font-semibold text-[#18332f] text-center tracking-tight leading-snug group-hover:text-primary transition-colors">Gimbals & Rigs</span>
+          </a>
+
+          <!-- Category 11: Switchers -->
+          <a href="#cat-switchers" class="w-[125px] sm:w-[135px] md:w-[150px] lg:w-[160px] shrink-0 flex-none bg-white rounded-2xl border border-[#d0ece7] p-3 md:p-3.5 flex flex-col items-center justify-between text-center group hover:border-secondary hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 select-none">
+            <div class="w-full aspect-square rounded-xl bg-gradient-to-b from-[#f2f9f8] to-[#e6f4f1] flex items-center justify-center p-2.5 mb-2 overflow-hidden group-hover:bg-[#d8efe9] transition-colors">
+              <img src="https://lh3.googleusercontent.com/aida/AEtjO1UBDPEziCcfUcrZsVf0ztZ5r7q_PN_MC51xHqhHZ8fE9iYi_CLXiYp1-zXZihrrkt0z0zvXAiWGqXsqR80S9uScTtSgQAfQIYufte0A_cmBmS7INxkujstyrdcDTCmTKSjgUMi74qE-O7I2YRPobLot4y97ayawdrOkd-lWKufzVH5lFi4JqWKUCjFwtKnm0A6KHxzuNgN4Ykrf-eSDnBgKmmxOnvfiPphUB4yuOYuwrRhj96o2ZLUjh_A" alt="Video Switchers" class="w-full h-full object-contain filter drop-shadow-sm group-hover:scale-110 transition-transform duration-300"/>
+            </div>
+            <span class="text-xs md:text-sm font-semibold text-[#18332f] text-center tracking-tight leading-snug group-hover:text-primary transition-colors">Video Switchers</span>
+          </a>
+
+          <!-- Category 12: Field Monitors -->
+          <a href="#cat-monitors" class="w-[125px] sm:w-[135px] md:w-[150px] lg:w-[160px] shrink-0 flex-none bg-white rounded-2xl border border-[#d0ece7] p-3 md:p-3.5 flex flex-col items-center justify-between text-center group hover:border-secondary hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 select-none">
+            <div class="w-full aspect-square rounded-xl bg-gradient-to-b from-[#f2f9f8] to-[#e6f4f1] flex items-center justify-center p-2.5 mb-2 overflow-hidden group-hover:bg-[#d8efe9] transition-colors">
+              <img src="https://lh3.googleusercontent.com/aida/AEtjO1WTYQOWZYKu7j1g5Ze9K3fUovlCSuAvHuCJ4svSBOR3AUlmcAZbdvDFoi6WyjMTnlJn6M25vn9k8CnLgNtjzHJYrj8Ntw7PteEUcQWoK1w5ZBK3ruWRmoyzi-1-Qj9WB6q3FbljuxesnPyOISO8yp_vqI_fs_TKiDUVvsWeo_nsvLwqD-RwrHbYbhJGUIF8yV_lgZZQqlW-Mt14aumENqycYQ1t45lg0hDFiH6Q02x5Xsy-WPSf5kAyHGo" alt="Field Monitors" class="w-full h-full object-contain filter drop-shadow-sm group-hover:scale-110 transition-transform duration-300"/>
+            </div>
+            <span class="text-xs md:text-sm font-semibold text-[#18332f] text-center tracking-tight leading-snug group-hover:text-primary transition-colors">Field Monitors</span>
+          </a>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SECTION 4: LIMITED-TIME FLASH DEALS -->
+    <!-- ========================================== -->
+    <section id="hot-deals" class="max-w-7xl mx-auto px-4 lg:px-6 pt-8 lg:pt-10 w-full">
+      <!-- Section Header with Countdown -->
+      <div class="bg-surface-card rounded-2xl p-4 lg:p-8 shadow-sm border border-surface-border">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 lg:mb-6 pb-4 border-b border-surface-border">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-sm">
+              <span class="material-symbols-outlined text-[22px]">timer</span>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-label-sm font-label-sm uppercase tracking-wider text-primary font-bold">Limited Studio Drops</span>
+                <span class="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+              </div>
+              <h2 class="text-headline-md lg:text-headline-lg font-headline-lg text-text-display font-bold">Broadcast & Studio Flash</h2>
+            </div>
+          </div>
+
+          <!-- Synchronized Countdown Timer -->
+          <div class="flex items-center gap-2 bg-surface-container-low px-4 py-2 rounded-xl self-start md:self-auto">
+            <span class="text-label-sm font-label-sm text-text-muted uppercase font-bold mr-1">Offer Ends In:</span>
+            <div class="flex items-center gap-1 font-headline-sm font-bold text-text-display">
+              <span class="bg-surface-card px-2 py-1 rounded shadow-xs cd-hours">18</span>
+              <span>:</span>
+              <span class="bg-surface-card px-2 py-1 rounded shadow-xs cd-mins">42</span>
+              <span>:</span>
+              <span class="bg-surface-card px-2 py-1 rounded shadow-xs text-primary cd-secs">09</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Deals Scroll Track on Mobile / 4-Col Grid on Desktop -->
+        <div class="flex lg:grid lg:grid-cols-4 gap-4 overflow-x-auto lg:overflow-x-visible snap-x snap-mandatory pb-2 no-scrollbar">
+          
+          <!-- Deal 1: Datavideo HS-3200 -->
+          <div class="min-w-[240px] max-w-[240px] lg:min-w-0 lg:max-w-none shrink-0 snap-start bg-surface-base lg:bg-surface-base rounded-xl p-4 flex flex-col justify-between group hover:shadow-md transition-all duration-200 border border-surface-border">
+            <div>
+              <div class="relative bg-surface-card rounded-lg overflow-hidden p-3 aspect-square flex items-center justify-center mb-3">
+                <span class="absolute top-2 left-2 z-10 bg-primary text-on-primary text-label-sm font-label-sm px-2 py-0.5 rounded font-bold shadow-xs">
+                  Save 11%
+                </span>
+                <button aria-label="Add to Wishlist" class="wishlist-btn absolute top-2 right-2 z-10 w-8 h-8 rounded-full bg-surface-card/90 shadow-sm flex items-center justify-center text-text-muted hover:text-primary transition-colors" onclick="toggleWishlist(this, 'Datavideo HS-3200')">
+                  <span class="material-symbols-outlined text-[18px]">favorite_border</span>
+                </button>
+                <img alt="Datavideo HS-3200" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="https://lh3.googleusercontent.com/aida/AEtjO1UBDPEziCcfUcrZsVf0ztZ5r7q_PN_MC51xHqhHZ8fE9iYi_CLXiYp1-zXZihrrkt0z0zvXAiWGqXsqR80S9uScTtSgQAfQIYufte0A_cmBmS7INxkujstyrdcDTCmTKSjgUMi74qE-O7I2YRPobLot4y97ayawdrOkd-lWKufzVH5lFi4JqWKUCjFwtKnm0A6KHxzuNgN4Ykrf-eSDnBgKmmxOnvfiPphUB4yuOYuwrRhj96o2ZLUjh_A"/>
+              </div>
+              <div class="flex items-center gap-1 text-amber-500 mb-1">
+                <span class="material-symbols-outlined text-[15px] text-amber-500" style="font-variation-settings: 'FILL' 1;">star</span>
+                <span class="text-label-md font-label-md text-text-display font-bold">5.0</span>
+                <span class="text-body-sm font-body-sm text-text-muted">(14 Reviews)</span>
+              </div>
+              <h3 class="text-headline-sm font-headline-sm text-text-display line-clamp-2 mb-2 group-hover:text-primary transition-colors font-bold">
+                Datavideo HS-3200 12-CH Streaming Studio
+              </h3>
+            </div>
+            <div class="mt-2">
+              <div class="flex items-baseline gap-2">
+                <span class="text-price-headline font-price-headline text-price-tk font-bold">৳ ১,১৫০,০০০ TK</span>
+              </div>
+              <span class="text-price-strikethrough font-price-strikethrough text-text-muted line-through">৳ ১,২৯০,০০০ TK</span>
+              <button onclick="addToCart('Datavideo HS-3200 12-CH', 1150000, 'https://lh3.googleusercontent.com/aida/AEtjO1UBDPEziCcfUcrZsVf0ztZ5r7q_PN_MC51xHqhHZ8fE9iYi_CLXiYp1-zXZihrrkt0z0zvXAiWGqXsqR80S9uScTtSgQAfQIYufte0A_cmBmS7INxkujstyrdcDTCmTKSjgUMi74qE-O7I2YRPobLot4y97ayawdrOkd-lWKufzVH5lFi4JqWKUCjFwtKnm0A6KHxzuNgN4Ykrf-eSDnBgKmmxOnvfiPphUB4yuOYuwrRhj96o2ZLUjh_A')" class="w-full mt-3 bg-primary hover:bg-rec-red-hover text-on-primary text-label-md font-label-md py-2.5 rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm font-bold active:scale-95">
+                <span class="material-symbols-outlined text-[16px]">shopping_cart</span>
+                <span>Add to Cart</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Deal 2: Datavideo PTC-140 Kit -->
+          <div class="min-w-[240px] max-w-[240px] lg:min-w-0 lg:max-w-none shrink-0 snap-start bg-surface-base lg:bg-surface-base rounded-xl p-4 flex flex-col justify-between group hover:shadow-md transition-all duration-200 border border-surface-border">
+            <div>
+              <div class="relative bg-surface-card rounded-lg overflow-hidden p-3 aspect-square flex items-center justify-center mb-3">
+                <span class="absolute top-2 left-2 z-10 bg-primary text-on-primary text-label-sm font-label-sm px-2 py-0.5 rounded font-bold shadow-xs">
+                  Save 7%
+                </span>
+                <button aria-label="Add to Wishlist" class="wishlist-btn absolute top-2 right-2 z-10 w-8 h-8 rounded-full bg-surface-card/90 shadow-sm flex items-center justify-center text-text-muted hover:text-primary transition-colors" onclick="toggleWishlist(this, 'Datavideo PTC-140 Kit')">
+                  <span class="material-symbols-outlined text-[18px]">favorite_border</span>
+                </button>
+                <img alt="Datavideo PTC-140 Kit" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="https://lh3.googleusercontent.com/aida/AEtjO1WTYQOWZYKu7j1g5Ze9K3fUovlCSuAvHuCJ4svSBOR3AUlmcAZbdvDFoi6WyjMTnlJn6M25vn9k8CnLgNtjzHJYrj8Ntw7PteEUcQWoK1w5ZBK3ruWRmoyzi-1-Qj9WB6q3FbljuxesnPyOISO8yp_vqI_fs_TKiDUVvsWeo_nsvLwqD-RwrHbYbhJGUIF8yV_lgZZQqlW-Mt14aumENqycYQ1t45lg0hDFiH6Q02x5Xsy-WPSf5kAyHGo"/>
+              </div>
+              <div class="flex items-center gap-1 text-amber-500 mb-1">
+                <span class="material-symbols-outlined text-[15px] text-amber-500" style="font-variation-settings: 'FILL' 1;">star</span>
+                <span class="text-label-md font-label-md text-text-display font-bold">5.0</span>
+                <span class="text-body-sm font-body-sm text-text-muted">(9 Reviews)</span>
+              </div>
+              <h3 class="text-headline-sm font-headline-sm text-text-display line-clamp-2 mb-2 group-hover:text-primary transition-colors font-bold">
+                Datavideo PTC-140 Camera & Monitor Kit
+              </h3>
+            </div>
+            <div class="mt-2">
+              <div class="flex items-baseline gap-2">
+                <span class="text-price-headline font-price-headline text-price-tk font-bold">৳ ২৩২,৪৯৯ TK</span>
+              </div>
+              <span class="text-price-strikethrough font-price-strikethrough text-text-muted line-through">৳ ২৫০,০০০ TK</span>
+              <button onclick="addToCart('Datavideo PTC-140 Camera Kit', 232499, 'https://lh3.googleusercontent.com/aida/AEtjO1WTYQOWZYKu7j1g5Ze9K3fUovlCSuAvHuCJ4svSBOR3AUlmcAZbdvDFoi6WyjMTnlJn6M25vn9k8CnLgNtjzHJYrj8Ntw7PteEUcQWoK1w5ZBK3ruWRmoyzi-1-Qj9WB6q3FbljuxesnPyOISO8yp_vqI_fs_TKiDUVvsWeo_nsvLwqD-RwrHbYbhJGUIF8yV_lgZZQqlW-Mt14aumENqycYQ1t45lg0hDFiH6Q02x5Xsy-WPSf5kAyHGo')" class="w-full mt-3 bg-primary hover:bg-rec-red-hover text-on-primary text-label-md font-label-md py-2.5 rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm font-bold active:scale-95">
+                <span class="material-symbols-outlined text-[16px]">shopping_cart</span>
+                <span>Add to Cart</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Deal 3: AVMATRIX Shark S6 Plus -->
+          <div class="min-w-[240px] max-w-[240px] lg:min-w-0 lg:max-w-none shrink-0 snap-start bg-surface-base lg:bg-surface-base rounded-xl p-4 flex flex-col justify-between group hover:shadow-md transition-all duration-200 border border-surface-border">
+            <div>
+              <div class="relative bg-surface-card rounded-lg overflow-hidden p-3 aspect-square flex items-center justify-center mb-3">
+                <span class="absolute top-2 left-2 z-10 bg-broadcast-teal text-on-primary text-label-sm font-label-sm px-2 py-0.5 rounded font-bold shadow-xs">
+                  Save 5%
+                </span>
+                <button aria-label="Add to Wishlist" class="wishlist-btn absolute top-2 right-2 z-10 w-8 h-8 rounded-full bg-surface-card/90 shadow-sm flex items-center justify-center text-text-muted hover:text-primary transition-colors" onclick="toggleWishlist(this, 'AVMATRIX Shark S6 Plus')">
+                  <span class="material-symbols-outlined text-[18px]">favorite_border</span>
+                </button>
+                <img alt="AVMATRIX Shark S6 Plus" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="https://lh3.googleusercontent.com/aida/AEtjO1Xs-N4dUIhJQJ_r8rrlYjqLGwQ-P8JXqcyae-vdnXuOArnbTJgbIqYQ0gKSSU0_2MJLpRO44r1oXURg7c2TQv17PrJd099Aw9XHJfA6QSnXfryAxenGGh28VblC9WK-d94MgBYKvp4pTfr8N_E1OE3TcdT4iMqFxLk5Eip-E-E9nEXmEy86xPAF_L5xVg2EHWE1SjYFXKFkWx0kG3YKZNJ4752KZzKzNybWBMOYlnIEPlNq9FW4CnqQSNE"/>
+              </div>
+              <div class="flex items-center gap-1 text-amber-500 mb-1">
+                <span class="material-symbols-outlined text-[15px] text-amber-500" style="font-variation-settings: 'FILL' 1;">star</span>
+                <span class="text-label-md font-label-md text-text-display font-bold">5.0</span>
+                <span class="text-body-sm font-body-sm text-text-muted">(8 Reviews)</span>
+              </div>
+              <h3 class="text-headline-sm font-headline-sm text-text-display line-clamp-2 mb-2 group-hover:text-primary transition-colors font-bold">
+                AVMATRIX Shark S6 Plus 6-CH Switcher 17.3"
+              </h3>
+            </div>
+            <div class="mt-2">
+              <div class="flex items-baseline gap-2">
+                <span class="text-price-headline font-price-headline text-price-tk font-bold">৳ ১৯৯,৯৯৯ TK</span>
+              </div>
+              <span class="text-price-strikethrough font-price-strikethrough text-text-muted line-through">৳ ২১০,০০০ TK</span>
+              <button onclick="addToCart('AVMATRIX Shark S6 Plus Switcher', 199999, 'https://lh3.googleusercontent.com/aida/AEtjO1Xs-N4dUIhJQJ_r8rrlYjqLGwQ-P8JXqcyae-vdnXuOArnbTJgbIqYQ0gKSSU0_2MJLpRO44r1oXURg7c2TQv17PrJd099Aw9XHJfA6QSnXfryAxenGGh28VblC9WK-d94MgBYKvp4pTfr8N_E1OE3TcdT4iMqFxLk5Eip-E-E9nEXmEy86xPAF_L5xVg2EHWE1SjYFXKFkWx0kG3YKZNJ4752KZzKzNybWBMOYlnIEPlNq9FW4CnqQSNE')" class="w-full mt-3 bg-primary hover:bg-rec-red-hover text-on-primary text-label-md font-label-md py-2.5 rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm font-bold active:scale-95">
+                <span class="material-symbols-outlined text-[16px]">shopping_cart</span>
+                <span>Add to Cart</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Deal 4: Datavideo HBT-5 4K Transmitter -->
+          <div class="min-w-[240px] max-w-[240px] lg:min-w-0 lg:max-w-none shrink-0 snap-start bg-surface-base lg:bg-surface-base rounded-xl p-4 flex flex-col justify-between group hover:shadow-md transition-all duration-200 border border-surface-border">
+            <div>
+              <div class="relative bg-surface-card rounded-lg overflow-hidden p-3 aspect-square flex items-center justify-center mb-3">
+                <span class="absolute top-2 left-2 z-10 bg-broadcast-teal text-white text-label-sm font-label-sm px-2 py-0.5 rounded font-bold shadow-xs">
+                  In Stock
+                </span>
+                <button aria-label="Add to Wishlist" class="wishlist-btn absolute top-2 right-2 z-10 w-8 h-8 rounded-full bg-surface-card/90 shadow-sm flex items-center justify-center text-text-muted hover:text-primary transition-colors" onclick="toggleWishlist(this, 'Datavideo HBT-5 4K Transmitter')">
+                  <span class="material-symbols-outlined text-[18px]">favorite_border</span>
+                </button>
+                <img alt="Datavideo HBT-5 4K Transmitter Box" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="https://lh3.googleusercontent.com/aida/AEtjO1WePUW3Fk0PZ72azCAsKlRKBRFP84pHVRz1Qz51XBB1Tj6D90fdhsFF3KsIs9liQGXjYLxTNFnGyFf89-wcXauMelty0Mgm9wbObo87cMClHDGGKp957rOOr0Wuwfl25Hge4kO2Mgkmpo_IbSTq0VNTDbAlzl-bXj0gHBmsRFtdVPpyASY98ocDa2KZJK_vxaqdc96kNH0gPc4bawZSecMUd9ySSwntu_IThHD9zDaMbibT5eshzAwGXp4"/>
+              </div>
+              <div class="flex items-center gap-1 text-amber-500 mb-1">
+                <span class="material-symbols-outlined text-[15px] text-amber-500" style="font-variation-settings: 'FILL' 1;">star</span>
+                <span class="text-label-md font-label-md text-text-display font-bold">5.0</span>
+                <span class="text-body-sm font-body-sm text-text-muted">(6 Reviews)</span>
+              </div>
+              <h3 class="text-headline-sm font-headline-sm text-text-display line-clamp-2 mb-2 group-hover:text-primary transition-colors font-bold">
+                Datavideo Short Range HDBaseT Transmitter
+              </h3>
+            </div>
+            <div class="mt-2">
+              <div class="flex items-baseline gap-2">
+                <span class="text-price-headline font-price-headline text-price-tk font-bold">৳ ৪০,৯৯৯ TK</span>
+              </div>
+              <span class="text-price-strikethrough font-price-strikethrough text-text-muted line-through">৳ ৪১,৫০০ TK</span>
+              <button onclick="addToCart('Datavideo HDBaseT Transmitter', 40999, 'https://lh3.googleusercontent.com/aida/AEtjO1WePUW3Fk0PZ72azCAsKlRKBRFP84pHVRz1Qz51XBB1Tj6D90fdhsFF3KsIs9liQGXjYLxTNFnGyFf89-wcXauMelty0Mgm9wbObo87cMClHDGGKp957rOOr0Wuwfl25Hge4kO2Mgkmpo_IbSTq0VNTDbAlzl-bXj0gHBmsRFtdVPpyASY98ocDa2KZJK_vxaqdc96kNH0gPc4bawZSecMUd9ySSwntu_IThHD9zDaMbibT5eshzAwGXp4')" class="w-full mt-3 bg-primary hover:bg-rec-red-hover text-on-primary text-label-md font-label-md py-2.5 rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm font-bold active:scale-95">
+                <span class="material-symbols-outlined text-[16px]">shopping_cart</span>
+                <span>Add to Cart</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SECTION 5: POPULAR CINEMA & CREATOR GEAR -->
+    <!-- ========================================== -->
+    <section id="popular-cinema" class="max-w-7xl mx-auto px-4 lg:px-6 pt-8 lg:pt-10 w-full">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-3 mb-6">
+        <div>
+          <div class="flex items-center gap-1.5 mb-0.5">
+            <span class="w-2 h-2 rounded-full bg-broadcast-teal"></span>
+            <span class="font-label-sm text-label-sm uppercase tracking-wider text-broadcast-teal font-bold">Essentials</span>
+          </div>
+          <h2 class="text-headline-md lg:text-headline-lg font-headline-lg text-text-display font-bold">Popular Cinema & Creator Gear</h2>
+        </div>
+
+        <!-- Filter Tabs (Desktop & Mobile Friendly) -->
+        <div class="flex items-center gap-1 bg-surface-card p-1 rounded-xl shadow-xs overflow-x-auto border border-surface-border">
+          <button onclick="filterCategory('all', this)" class="cinema-tab px-3.5 py-1.5 rounded-lg text-label-md font-label-md bg-primary text-on-primary font-bold shadow-xs">All Gear</button>
+          <button onclick="filterCategory('mirrorless', this)" class="cinema-tab px-3.5 py-1.5 rounded-lg text-label-md font-label-md text-text-muted hover:text-text-display transition-colors">Mirrorless</button>
+          <button onclick="filterCategory('gimbals', this)" class="cinema-tab px-3.5 py-1.5 rounded-lg text-label-md font-label-md text-text-muted hover:text-text-display transition-colors">Gimbals</button>
+          <button onclick="filterCategory('action', this)" class="cinema-tab px-3.5 py-1.5 rounded-lg text-label-md font-label-md text-text-muted hover:text-text-display transition-colors">Action & 360</button>
+          <button onclick="filterCategory('lenses', this)" class="cinema-tab px-3.5 py-1.5 rounded-lg text-label-md font-label-md text-text-muted hover:text-text-display transition-colors">Cine Lenses</button>
+        </div>
+      </div>
+
+      <!-- 2 Columns on Mobile / 4 Columns on Desktop Grid -->
+      <div id="popular-products-grid" class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
+        
+        <!-- 1. Sony FX30 -->
+        <div data-category="mirrorless" class="product-card bg-surface-card rounded-2xl p-3 lg:p-4 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between group border border-surface-border">
+          <div>
+            <div class="relative bg-surface-base rounded-xl overflow-hidden p-3 lg:p-4 aspect-square flex items-center justify-center mb-2 lg:mb-3">
+              <span class="absolute top-1.5 left-1.5 lg:top-2 lg:left-2 z-10 bg-broadcast-teal text-on-primary text-label-sm font-label-sm px-1.5 lg:px-2 py-0.5 rounded font-bold shadow-xs">
+                Cinema Line
+              </span>
+              <button aria-label="Save to Wishlist" class="wishlist-btn absolute top-1.5 right-1.5 lg:top-2 lg:right-2 z-10 w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-surface-card shadow-xs flex items-center justify-center text-text-muted hover:text-primary transition-colors" onclick="toggleWishlist(this, 'Sony FX30')">
+                <span class="material-symbols-outlined text-[16px] lg:text-[18px]">favorite_border</span>
+              </button>
+              <img alt="Sony FX30" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="https://lh3.googleusercontent.com/aida/AEtjO1VlkIaGWo4pZtCfRCtGHkIOYCB_lwbnbvypPczrc0Zep_5j_I3I0x0272WYzgzQnR6mFOG1JpYO3uIg0xlKUhkOIXtcA6Qp2Zme48SvdFxUfa3pDyf7UYGMTt_0crdEY4IWr-fMPJE4HKv1wR8h0D3M29za-nyxKsI1baXPZpnRPPdiRDAor_1aq5t6z3orCGyAOsGo5fPLDHnPZOYuMkEEseZJU08eG_N6Eob7mwbRTy3H7IVw2Qc-BwY"/>
+            </div>
+            <div class="flex items-center justify-between text-body-sm font-body-sm text-text-muted mb-1">
+              <span class="text-broadcast-teal font-semibold text-[11px]">Sony BD</span>
+              <span class="flex items-center gap-1 text-[11px]"><span class="w-1.5 h-1.5 rounded-full bg-stock-available"></span> In Stock</span>
+            </div>
+            <h3 class="text-headline-sm font-headline-sm text-text-display line-clamp-1 mb-1 group-hover:text-primary transition-colors font-bold">
+              Sony FX30 Digital Cinema Camera
+            </h3>
+            <div class="flex items-baseline gap-1.5 mb-2">
+              <span class="text-price-headline font-price-headline text-price-tk font-bold">৳ ১৯৪,৯৯৯ TK</span>
+              <span class="text-price-strikethrough font-price-strikethrough text-text-muted line-through">৳ ২০০,০০০</span>
+            </div>
+          </div>
+          <button onclick="addToCart('Sony FX30 Cinema Camera', 194999, 'https://lh3.googleusercontent.com/aida/AEtjO1VlkIaGWo4pZtCfRCtGHkIOYCB_lwbnbvypPczrc0Zep_5j_I3I0x0272WYzgzQnR6mFOG1JpYO3uIg0xlKUhkOIXtcA6Qp2Zme48SvdFxUfa3pDyf7UYGMTt_0crdEY4IWr-fMPJE4HKv1wR8h0D3M29za-nyxKsI1baXPZpnRPPdiRDAor_1aq5t6z3orCGyAOsGo5fPLDHnPZOYuMkEEseZJU08eG_N6Eob7mwbRTy3H7IVw2Qc-BwY')" class="w-full bg-on-surface hover:bg-black text-surface font-headline-sm text-label-sm py-2 rounded-xl transition-colors flex items-center justify-center gap-1 font-bold">
+            <span class="material-symbols-outlined text-[15px]">add_shopping_cart</span>
+            <span>Add to Cart</span>
+          </button>
+        </div>
+
+        <!-- 2. Canon EOS R8 Mark II -->
+        <div data-category="mirrorless" class="product-card bg-surface-card rounded-2xl p-3 lg:p-4 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between group border border-surface-border">
+          <div>
+            <div class="relative bg-surface-base rounded-xl overflow-hidden p-3 lg:p-4 aspect-square flex items-center justify-center mb-2 lg:mb-3">
+              <span class="absolute top-1.5 left-1.5 lg:top-2 lg:left-2 z-10 bg-broadcast-teal text-white text-label-sm font-label-sm px-1.5 lg:px-2 py-0.5 rounded font-bold shadow-xs">
+                Upcoming
+              </span>
+              <button aria-label="Save to Wishlist" class="wishlist-btn absolute top-1.5 right-1.5 lg:top-2 lg:right-2 z-10 w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-surface-card shadow-xs flex items-center justify-center text-text-muted hover:text-primary transition-colors" onclick="toggleWishlist(this, 'Canon EOS R8 Mark II')">
+                <span class="material-symbols-outlined text-[16px] lg:text-[18px]">favorite_border</span>
+              </button>
+              <img alt="Canon EOS R8 Mark II" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="https://lh3.googleusercontent.com/aida/AEtjO1UovuMbO4Fajyg8WIOY8XSpSvs28oQvd8dNHA-MfxpNnrs6RAnuxEPLiFVHOHDLTuyKj4AzmigoLtaqu19aK0bYq__mUjJlrL_YnnCaqTR0ZSUvRG3O-PzDrNPaWwYaZpWyi6ekcYCY_GAVC-RGcUe1TblugwSJi2soH7Zjx3aKjQHi5q1utrRxkZoyb8axiFvq6qvlPFa2DhWfrf4y1x-mByDhlUCYbPeZ_qOYeYhBXDAuZShdlTxSlSY"/>
+            </div>
+            <div class="flex items-center justify-between text-body-sm font-body-sm text-text-muted mb-1">
+              <span class="text-primary font-semibold text-[11px]">Canon Official</span>
+              <span class="text-text-muted text-[11px]">Pre-Booking</span>
+            </div>
+            <h3 class="text-headline-sm font-headline-sm text-text-display line-clamp-1 mb-1 group-hover:text-primary transition-colors font-bold">
+              Canon EOS R8 Mark II Mirrorless
+            </h3>
+            <div class="flex items-baseline gap-1.5 mb-2">
+              <span class="text-price-headline font-price-headline text-price-tk font-bold">৳ ২০৬,৯৯৯ TK</span>
+              <span class="text-body-sm text-[10px] text-text-muted">Available Next Week</span>
+            </div>
+          </div>
+          <button onclick="showToast('Pre-order notification registered for Canon R8 Mark II!', 'success')" class="w-full bg-broadcast-teal hover:bg-secondary text-white font-headline-sm text-label-sm py-2 rounded-xl transition-colors flex items-center justify-center gap-1 font-bold">
+            <span class="material-symbols-outlined text-[15px]">notifications_active</span>
+            <span>Notify Me</span>
+          </button>
+        </div>
+
+        <!-- 3. DJI Osmo 360 II -->
+        <div data-category="action" class="product-card bg-surface-card rounded-2xl p-3 lg:p-4 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between group border border-surface-border">
+          <div>
+            <div class="relative bg-surface-base rounded-xl overflow-hidden p-3 lg:p-4 aspect-square flex items-center justify-center mb-2 lg:mb-3">
+              <span class="absolute top-1.5 left-1.5 lg:top-2 lg:left-2 z-10 bg-rec-red-base text-on-primary text-label-sm font-label-sm px-1.5 lg:px-2 py-0.5 rounded font-bold shadow-xs">
+                Hot 360 VR
+              </span>
+              <button aria-label="Save to Wishlist" class="wishlist-btn absolute top-1.5 right-1.5 lg:top-2 lg:right-2 z-10 w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-surface-card shadow-xs flex items-center justify-center text-text-muted hover:text-primary transition-colors" onclick="toggleWishlist(this, 'DJI Osmo 360 II')">
+                <span class="material-symbols-outlined text-[16px] lg:text-[18px]">favorite_border</span>
+              </button>
+              <img alt="DJI Osmo 360 II" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="https://lh3.googleusercontent.com/aida/AEtjO1X-nc7VZD9tYHp6qutS95cjA-Xk5pOOzJwdae3Vi5yg75ZaanA4-bPFLwz-qoo-JoQi5TkDwO71GgUsiHVOVo5x8y535Jg4E3WEA_VzQl9ZAdT5TVIR5gEoikhv-Z2gFvZvSkGbsxQIifYqIgqsF8YhYzvl6tPc6smePHKqrg_ApXKYK0N-E5a5oijUQjPNmBCEz6Eh9i35JKinBfJI9ZCuzzIm1KilnSKr1gZmzV4bCV9tLBN_Y3w1T5o"/>
+            </div>
+            <div class="flex items-center justify-between text-body-sm font-body-sm text-text-muted mb-1">
+              <span class="text-text-display font-semibold text-[11px]">DJI Official</span>
+              <span class="flex items-center gap-1 text-[11px] text-stock-available font-bold"><span class="w-1.5 h-1.5 rounded-full bg-stock-available"></span> In Stock (2 Stores)</span>
+            </div>
+            <h3 class="text-headline-sm font-headline-sm text-text-display line-clamp-1 mb-1 group-hover:text-primary transition-colors font-bold">
+              DJI Osmo 360 II Adventure Combo
+            </h3>
+            <div class="flex items-baseline gap-1.5 mb-2">
+              <span class="text-price-headline font-price-headline text-price-tk font-bold">৳ ৬৮,৯৯০ TK</span>
+              <span class="text-price-strikethrough font-price-strikethrough text-text-muted line-through">৳ ৭১,৫০০</span>
+            </div>
+          </div>
+          <button onclick="addToCart('DJI Osmo 360 II Adventure', 68990, 'https://lh3.googleusercontent.com/aida/AEtjO1X-nc7VZD9tYHp6qutS95cjA-Xk5pOOzJwdae3Vi5yg75ZaanA4-bPFLwz-qoo-JoQi5TkDwO71GgUsiHVOVo5x8y535Jg4E3WEA_VzQl9ZAdT5TVIR5gEoikhv-Z2gFvZvSkGbsxQIifYqIgqsF8YhYzvl6tPc6smePHKqrg_ApXKYK0N-E5a5oijUQjPNmBCEz6Eh9i35JKinBfJI9ZCuzzIm1KilnSKr1gZmzV4bCV9tLBN_Y3w1T5o')" class="w-full bg-rec-red-base hover:bg-rec-red-hover text-on-primary font-headline-sm text-label-sm py-2 rounded-xl transition-colors flex items-center justify-center gap-1 font-bold">
+            <span class="material-symbols-outlined text-[15px]">shopping_bag</span>
+            <span>Add to Cart</span>
+          </button>
+        </div>
+
+        <!-- 4. DJI RS 5 Gimbal Combo -->
+        <div data-category="gimbals" class="product-card bg-surface-card rounded-2xl p-3 lg:p-4 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between group border border-surface-border">
+          <div>
+            <div class="relative bg-surface-base rounded-xl overflow-hidden p-3 lg:p-4 aspect-square flex items-center justify-center mb-2 lg:mb-3">
+              <span class="absolute top-1.5 left-1.5 lg:top-2 lg:left-2 z-10 bg-broadcast-teal text-on-primary text-label-sm font-label-sm px-1.5 lg:px-2 py-0.5 rounded font-bold shadow-xs">
+                AI Tracking
+              </span>
+              <button aria-label="Save to Wishlist" class="wishlist-btn absolute top-1.5 right-1.5 lg:top-2 lg:right-2 z-10 w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-surface-card shadow-xs flex items-center justify-center text-text-muted hover:text-primary transition-colors" onclick="toggleWishlist(this, 'DJI RS 5 Gimbal')">
+                <span class="material-symbols-outlined text-[16px] lg:text-[18px]">favorite_border</span>
+              </button>
+              <img alt="DJI RS 5" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="https://lh3.googleusercontent.com/aida/AEtjO1UtwKYg6iZpMl5Fh535es5hvtVBj6b1J_gMRxIUJq70aHGREGvG8S8hHmMvJo3K6dh6OkcyvqZf9ZdrroGSyDV0UoPKAsNQNv1vXa_AIHpSzNA6UFVFi7BdXB0hXxLVKDfYOJ14c9GH9ehBwDeY0ZWokAVvKOoqR4NOj-c5cRHNmIY4O5KEKxj_ECnSFkJblKF5p9ROOClIvXKIS_yct4Dm4BgbKp4o50pNnPe30Z2sys-iwVTrbqw0_AI"/>
+            </div>
+            <div class="flex items-center justify-between text-body-sm font-body-sm text-text-muted mb-1">
+              <span class="text-text-display font-semibold text-[11px]">Stabilization</span>
+              <span class="text-primary font-bold text-[11px]">-5% Off</span>
+            </div>
+            <h3 class="text-headline-sm font-headline-sm text-text-display line-clamp-1 mb-1 group-hover:text-primary transition-colors font-bold">
+              DJI RS 5 Gimbal Combo Kit
+            </h3>
+            <div class="flex items-baseline gap-1.5 mb-2">
+              <span class="text-price-headline font-price-headline text-price-tk font-bold">৳ ৫৪,৯৯০ TK</span>
+              <span class="text-price-strikethrough font-price-strikethrough text-text-muted line-through">৳ ৫৮,০০০</span>
+            </div>
+          </div>
+          <button onclick="addToCart('DJI RS 5 Gimbal Kit', 54990, 'https://lh3.googleusercontent.com/aida/AEtjO1UtwKYg6iZpMl5Fh535es5hvtVBj6b1J_gMRxIUJq70aHGREGvG8S8hHmMvJo3K6dh6OkcyvqZf9ZdrroGSyDV0UoPKAsNQNv1vXa_AIHpSzNA6UFVFi7BdXB0hXxLVKDfYOJ14c9GH9ehBwDeY0ZWokAVvKOoqR4NOj-c5cRHNmIY4O5KEKxj_ECnSFkJblKF5p9ROOClIvXKIS_yct4Dm4BgbKp4o50pNnPe30Z2sys-iwVTrbqw0_AI')" class="w-full bg-rec-red-base hover:bg-rec-red-hover text-on-primary font-headline-sm text-label-sm py-2 rounded-xl transition-colors flex items-center justify-center gap-1 font-bold">
+            <span class="material-symbols-outlined text-[15px]">shopping_bag</span>
+            <span>Add to Cart</span>
+          </button>
+        </div>
+
+        <!-- 5. GoPro HERO13 Black -->
+        <div data-category="action" class="product-card bg-surface-card rounded-2xl p-3 lg:p-4 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between group border border-surface-border">
+          <div>
+            <div class="relative bg-surface-base rounded-xl overflow-hidden p-3 lg:p-4 aspect-square flex items-center justify-center mb-2 lg:mb-3">
+              <span class="absolute top-1.5 left-1.5 lg:top-2 lg:left-2 z-10 bg-broadcast-teal text-white text-label-sm font-label-sm px-1.5 lg:px-2 py-0.5 rounded font-bold shadow-xs">Action 5.3K</span>
+              <button aria-label="Save to Wishlist" class="wishlist-btn absolute top-1.5 right-1.5 lg:top-2 lg:right-2 z-10 w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-surface-card shadow-xs flex items-center justify-center text-text-muted hover:text-primary transition-colors" onclick="toggleWishlist(this, 'GoPro HERO13')">
+                <span class="material-symbols-outlined text-[16px] lg:text-[18px]">favorite_border</span>
+              </button>
+              <img alt="GoPro HERO13 Black" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="https://lh3.googleusercontent.com/aida/AEtjO1W9aVxqvfhFfwXNkhIDrx3cfFpw2vpu7kmzijEVLiYCphqNBJbH-MuTp-RFhe9NTXHkJWllAIz6NtjfeAR1jPuCyVR65tIh25t_MnxtOwkzyW2tTfVZyMl2Fk-LnxZiA4y-CX0rx_ts3i_TjxU0xldoY9tD9dx5Jk8bNzEi_xC0nFNSozySvRnwLpwDr8Ma2Z_hzIJYpkSkN6WVXswhVWX6Rr2z_UULW1stBILIGfca4C4AiB9zx5QAMaU"/>
+            </div>
+            <div class="flex items-center justify-between text-body-sm font-body-sm text-text-muted mb-1">
+              <span class="text-[11px]">Action 5.3K60</span>
+              <span class="flex items-center gap-1 text-[11px] text-stock-available font-bold"><span class="w-1.5 h-1.5 rounded-full bg-stock-available"></span> Official Stock</span>
+            </div>
+            <h3 class="text-headline-sm font-headline-sm text-text-display line-clamp-1 mb-1 group-hover:text-primary transition-colors font-bold">
+              GoPro HERO13 Black Action Camera
+            </h3>
+            <div class="flex items-baseline gap-1.5 mb-2">
+              <span class="text-price-headline font-price-headline text-price-tk font-bold">৳ ৪১,৪৯৯ TK</span>
+              <span class="text-price-strikethrough font-price-strikethrough text-text-muted line-through">৳ ৪২,০০০</span>
+            </div>
+          </div>
+          <button onclick="addToCart('GoPro HERO13 Black', 41499, 'https://lh3.googleusercontent.com/aida/AEtjO1W9aVxqvfhFfwXNkhIDrx3cfFpw2vpu7kmzijEVLiYCphqNBJbH-MuTp-RFhe9NTXHkJWllAIz6NtjfeAR1jPuCyVR65tIh25t_MnxtOwkzyW2tTfVZyMl2Fk-LnxZiA4y-CX0rx_ts3i_TjxU0xldoY9tD9dx5Jk8bNzEi_xC0nFNSozySvRnwLpwDr8Ma2Z_hzIJYpkSkN6WVXswhVWX6Rr2z_UULW1stBILIGfca4C4AiB9zx5QAMaU')" class="w-full bg-on-surface hover:bg-black text-surface font-headline-sm text-label-sm py-2 rounded-xl transition-colors flex items-center justify-center gap-1 font-bold">
+            <span class="material-symbols-outlined text-[15px]">add_shopping_cart</span>
+            <span>Add to Cart</span>
+          </button>
+        </div>
+
+        <!-- 6. FUJIFILM X-S20 -->
+        <div data-category="mirrorless" class="product-card bg-surface-card rounded-2xl p-3 lg:p-4 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between group border border-surface-border">
+          <div>
+            <div class="relative bg-surface-base rounded-xl overflow-hidden p-3 lg:p-4 aspect-square flex items-center justify-center mb-2 lg:mb-3">
+              <span class="absolute top-1.5 left-1.5 lg:top-2 lg:left-2 z-10 bg-rec-red-base text-on-primary text-label-sm font-label-sm px-1.5 lg:px-2 py-0.5 rounded font-bold shadow-xs">
+                -11% Off
+              </span>
+              <button aria-label="Save to Wishlist" class="wishlist-btn absolute top-1.5 right-1.5 lg:top-2 lg:right-2 z-10 w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-surface-card shadow-xs flex items-center justify-center text-text-muted hover:text-primary transition-colors" onclick="toggleWishlist(this, 'FUJIFILM X-S20')">
+                <span class="material-symbols-outlined text-[16px] lg:text-[18px]">favorite_border</span>
+              </button>
+              <img alt="FUJIFILM X-S20" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="https://lh3.googleusercontent.com/aida/AEtjO1XwLvJU1U_mzZjnLgioGtoaoHC9ZzSAfjEw5Rc1rwHyQGZEaMyjNCqYNw4EKckGLPU2k2ABCBLP5Tu-Yte6VltnwxnmgqTVzEgL9Fd62vIl8G7Xf9OPriJUWNHdEQwZ1neYbNzKouDF6bH5FFAMIc8eyNgMELvm_r_oQr5yDezzFGQfp7wv7ZhjK_ZF5wkSWpw6xXj4-ZSUpNAiXO2erHKZyLndrOLuBsd_CHZlBsDvFkxmXHPZGw1J4Ac"/>
+            </div>
+            <div class="flex items-center justify-between text-body-sm font-body-sm text-text-muted mb-1">
+              <span class="text-broadcast-teal font-semibold text-[11px]">6.2K Open Gate</span>
+              <span class="text-primary font-bold text-[11px]">৳ ১৯,০০০ Off</span>
+            </div>
+            <h3 class="text-headline-sm font-headline-sm text-text-display line-clamp-1 mb-1 group-hover:text-primary transition-colors font-bold">
+              FUJIFILM X-S20 Mirrorless Camera
+            </h3>
+            <div class="flex items-baseline gap-1.5 mb-2">
+              <span class="text-price-headline font-price-headline text-price-tk font-bold">৳ ১৬০,৯৯৯ TK</span>
+              <span class="text-price-strikethrough font-price-strikethrough text-text-muted line-through">৳ ১৮০,০০০</span>
+            </div>
+          </div>
+          <button onclick="addToCart('FUJIFILM X-S20 Mirrorless', 160999, 'https://lh3.googleusercontent.com/aida/AEtjO1XwLvJU1U_mzZjnLgioGtoaoHC9ZzSAfjEw5Rc1rwHyQGZEaMyjNCqYNw4EKckGLPU2k2ABCBLP5Tu-Yte6VltnwxnmgqTVzEgL9Fd62vIl8G7Xf9OPriJUWNHdEQwZ1neYbNzKouDF6bH5FFAMIc8eyNgMELvm_r_oQr5yDezzFGQfp7wv7ZhjK_ZF5wkSWpw6xXj4-ZSUpNAiXO2erHKZyLndrOLuBsd_CHZlBsDvFkxmXHPZGw1J4Ac')" class="w-full bg-rec-red-base hover:bg-rec-red-hover text-on-primary font-headline-sm text-label-sm py-2 rounded-xl transition-colors flex items-center justify-center gap-1 font-bold">
+            <span class="material-symbols-outlined text-[15px]">shopping_bag</span>
+            <span>Add to Cart</span>
+          </button>
+        </div>
+
+        <!-- 7. Sigma 35mm f/1.2 DG DN Art -->
+        <div data-category="lenses" class="product-card bg-surface-card rounded-2xl p-3 lg:p-4 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between group border border-surface-border">
+          <div>
+            <div class="relative bg-surface-base rounded-xl overflow-hidden p-3 lg:p-4 aspect-square flex items-center justify-center mb-2 lg:mb-3">
+              <span class="absolute top-1.5 left-1.5 lg:top-2 lg:left-2 z-10 bg-text-display text-on-primary text-label-sm font-label-sm px-1.5 lg:px-2 py-0.5 rounded font-bold shadow-xs">
+                Art Line f/1.2
+              </span>
+              <button aria-label="Save to Wishlist" class="wishlist-btn absolute top-1.5 right-1.5 lg:top-2 lg:right-2 z-10 w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-surface-card shadow-xs flex items-center justify-center text-text-muted hover:text-primary transition-colors" onclick="toggleWishlist(this, 'Sigma 35mm f/1.2 Art')">
+                <span class="material-symbols-outlined text-[16px] lg:text-[18px]">favorite_border</span>
+              </button>
+              <img alt="Sigma 35mm f1.2 DG DN Art Lens" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="https://lh3.googleusercontent.com/aida/AEtjO1Wt-6dCbD5IHsPDqk8Lhlvs8QsL_MNcyv5VAiNCfUL7CjM5N9hDI3BKhRR2X9ntK7WhuGx_J4CR5v3ihzkoNag6Of2_3THUgs1lT1DH9gBb6oveA1gaml0A1gxcO6iT-edMFF4eJ4wWpOnlgevYkDdgROeeSxWTasB04TOrmiYPNcc2GSaOLyJVS3KwIyvmCj52fIRy4mbkoDI30aXkjmwrZlSE6TYVJ0ugeHaaAYQKhsGlf4NJXd_5wzE"/>
+            </div>
+            <div class="flex items-center justify-between text-body-sm font-body-sm text-text-muted mb-1">
+              <span class="text-[11px]">Sony E-Mount</span>
+              <span class="flex items-center gap-1 text-[11px] text-stock-available font-bold"><span class="w-1.5 h-1.5 rounded-full bg-stock-available"></span> In Stock</span>
+            </div>
+            <h3 class="text-headline-sm font-headline-sm text-text-display line-clamp-1 mb-1 group-hover:text-primary transition-colors font-bold">
+              Sigma 35mm f/1.2 DG DN Art Lens
+            </h3>
+            <div class="flex items-baseline gap-1.5 mb-2">
+              <span class="text-price-headline font-price-headline text-price-tk font-bold">৳ ১৭৯,৯৯৯ TK</span>
+            </div>
+          </div>
+          <button onclick="addToCart('Sigma 35mm f/1.2 Art Lens', 179999, 'https://lh3.googleusercontent.com/aida/AEtjO1Wt-6dCbD5IHsPDqk8Lhlvs8QsL_MNcyv5VAiNCfUL7CjM5N9hDI3BKhRR2X9ntK7WhuGx_J4CR5v3ihzkoNag6Of2_3THUgs1lT1DH9gBb6oveA1gaml0A1gxcO6iT-edMFF4eJ4wWpOnlgevYkDdgROeeSxWTasB04TOrmiYPNcc2GSaOLyJVS3KwIyvmCj52fIRy4mbkoDI30aXkjmwrZlSE6TYVJ0ugeHaaAYQKhsGlf4NJXd_5wzE')" class="w-full bg-on-surface hover:bg-black text-surface font-headline-sm text-label-sm py-2 rounded-xl transition-colors flex items-center justify-center gap-1 font-bold">
+            <span class="material-symbols-outlined text-[15px]">add_shopping_cart</span>
+            <span>Add to Cart</span>
+          </button>
+        </div>
+
+        <!-- 8. DJI Mic Mini 2S -->
+        <div data-category="audio" class="product-card bg-surface-card rounded-2xl p-3 lg:p-4 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between group border border-surface-border">
+          <div>
+            <div class="relative bg-surface-base rounded-xl overflow-hidden p-3 lg:p-4 aspect-square flex items-center justify-center mb-2 lg:mb-3">
+              <span class="absolute top-1.5 left-1.5 lg:top-2 lg:left-2 z-10 bg-broadcast-teal text-on-primary text-label-sm font-label-sm px-1.5 lg:px-2 py-0.5 rounded font-bold shadow-xs">
+                Internal REC
+              </span>
+              <button aria-label="Save to Wishlist" class="wishlist-btn absolute top-1.5 right-1.5 lg:top-2 lg:right-2 z-10 w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-surface-card shadow-xs flex items-center justify-center text-text-muted hover:text-primary transition-colors" onclick="toggleWishlist(this, 'DJI Mic Mini 2S')">
+                <span class="material-symbols-outlined text-[16px] lg:text-[18px]">favorite_border</span>
+              </button>
+              <img alt="DJI Mic Mini 2S" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0 rounded-lg" src="https://lh3.googleusercontent.com/aida/AEtjO1XmNkWI8C_udGoM_Ad5UZfvhlHsAzzwSiaRoJ4RLG2vhj_6-tTZiyeCYYQv9L-KUW-0nZDTv3WqNgRpWy_RDfadA5IYU2uRJ18Ozbyq3wvnBX3aeV1AZGTzBUDIBri0t68SwhWvwBRlfuZnD_BUqgWaQWOG0XpxiYn82_4OjpLIPmCmGFQVSjKgUAk37iIOKKDB6FzQufQXxbn4P7wo22Qt2fyCC5U7YYeTb-wg57HBpX1nyJOu7x4UfD4"/>
+            </div>
+            <div class="flex items-center justify-between text-body-sm font-body-sm text-text-muted mb-1">
+              <span class="text-[11px]">Creator Audio</span>
+              <span class="flex items-center gap-1 text-[11px] text-stock-available font-bold"><span class="w-1.5 h-1.5 rounded-full bg-stock-available"></span> Ready Stock</span>
+            </div>
+            <h3 class="text-headline-sm font-headline-sm text-text-display line-clamp-1 mb-1 group-hover:text-primary transition-colors font-bold">
+              DJI Mic Mini 2S Wireless System
+            </h3>
+            <div class="flex items-baseline gap-1.5 mb-2">
+              <span class="text-price-headline font-price-headline text-price-tk font-bold">৳ ১২,৯৯০ TK</span>
+              <span class="text-price-strikethrough font-price-strikethrough text-text-muted line-through">৳ ১৩,৫০০</span>
+            </div>
+          </div>
+          <button onclick="addToCart('DJI Mic Mini 2S', 12990, 'https://lh3.googleusercontent.com/aida/AEtjO1XmNkWI8C_udGoM_Ad5UZfvhlHsAzzwSiaRoJ4RLG2vhj_6-tTZiyeCYYQv9L-KUW-0nZDTv3WqNgRpWy_RDfadA5IYU2uRJ18Ozbyq3wvnBX3aeV1AZGTzBUDIBri0t68SwhWvwBRlfuZnD_BUqgWaQWOG0XpxiYn82_4OjpLIPmCmGFQVSjKgUAk37iIOKKDB6FzQufQXxbn4P7wo22Qt2fyCC5U7YYeTb-wg57HBpX1nyJOu7x4UfD4')" class="w-full bg-rec-red-base hover:bg-rec-red-hover text-on-primary font-headline-sm text-label-sm py-2 rounded-xl transition-colors flex items-center justify-center gap-1 font-bold">
+            <span class="material-symbols-outlined text-[15px]">shopping_bag</span>
+            <span>Add to Cart</span>
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SECTION 6: BRAND SPOTLIGHT: HOLLYLAND AUDIO SHOWCASE -->
+    <!-- ========================================== -->
+    <section id="hollyland-audio" class="max-w-7xl mx-auto px-4 lg:px-6 pt-8 lg:pt-10 w-full">
+      <div class="bg-white rounded-3xl border border-[#c6eae1] p-4 sm:p-5 lg:p-6 shadow-xs">
+        
+        <!-- Top Header Strip -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-1">
+          <!-- Left Header Title & Badges -->
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <span class="bg-[#dcf3ed] text-[#006a61] text-[11px] font-extrabold uppercase px-2.5 py-0.5 rounded tracking-wider border border-[#bce8dd]">FEATURED</span>
+            <div class="h-4 w-[2px] bg-[#006a61] rounded-full"></div>
+            <h2 class="text-lg lg:text-xl font-bold text-[#102d28] font-headline-lg">Hollyland Microphone</h2>
+            <span class="flex items-center gap-1 text-[11px] font-bold text-[#006a61] uppercase tracking-wider bg-[#f0faf7] px-2 py-0.5 rounded border border-[#d2efe7]">
+              <span class="material-symbols-outlined text-[14px]">grid_view</span> SHOWCASE
+            </span>
+          </div>
+
+          <!-- Right Header Actions (Showing count, prev/next arrows, View all button) -->
+          <div class="flex items-center gap-2 self-end sm:self-auto">
+            <span class="text-xs text-gray-500 font-medium mr-1 hidden sm:inline-block" id="hollyland-showing-count">Showing 4 of 6 featured products</span>
+            <button id="hollyland-prev-btn" aria-label="Previous Products" class="w-8 h-8 rounded-full border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 flex items-center justify-center transition-all shadow-xs active:scale-90">
+              <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+            </button>
+            <button id="hollyland-next-btn" aria-label="Next Products" class="w-8 h-8 rounded-full border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 flex items-center justify-center transition-all shadow-xs active:scale-90">
+              <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+            </button>
+            <a href="#hollyland" class="border border-[#006a61] text-[#006a61] hover:bg-[#006a61] hover:text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 transition-all shadow-xs ml-1">
+              <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+              <span>View all</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Main Content: Left Banner + Right Product Cards -->
+        <div class="flex flex-col lg:flex-row gap-4 items-stretch">
+          
+          <!-- Left Vertical Poster Banner (~270px on Desktop) -->
+          <div class="w-full lg:w-[270px] xl:w-[290px] shrink-0 rounded-2xl overflow-hidden shadow-sm border border-gray-800 bg-[#0d1217] relative group flex flex-col justify-between p-6 text-white min-h-[380px] lg:min-h-[440px]">
+            <!-- Background graphics/glow -->
+            <div class="absolute inset-0 bg-gradient-to-b from-[#111922] via-[#0d1217] to-[#080b0e] z-0"></div>
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-[#006a61]/20 rounded-full blur-3xl pointer-events-none"></div>
+
+            <!-- Top Content: Hollyland Logo & Title -->
+            <div class="relative z-10 text-center flex flex-col items-center">
+              <div class="flex items-center gap-1.5 mb-3">
+                <div class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
+                  <span class="material-symbols-outlined text-white text-[16px]">graphic_eq</span>
+                </div>
+                <span class="text-xs font-extrabold tracking-widest text-white uppercase">HOLLYLAND</span>
+              </div>
+              <h3 class="text-lg xl:text-xl font-extrabold text-white leading-tight tracking-tight uppercase mb-1">
+                PURE SOUND. ZERO LIMITS.
+              </h3>
+              <p class="text-[11px] text-gray-400 font-medium mb-2">
+                Wireless Audio for Modern Creators
+              </p>
+              <div class="flex items-center justify-center gap-1 text-[9px] text-gray-400 font-medium tracking-wide">
+                <span>Wireless</span>
+                <span>•</span>
+                <span>Clear</span>
+                <span>•</span>
+                <span>Reliable</span>
+                <span>•</span>
+                <span>Portable</span>
+              </div>
+            </div>
+
+            <!-- Center Product Visual (Lark M2 Case and floating mics) -->
+            <div class="relative z-10 my-auto py-3 flex items-center justify-center">
+              <img src="https://lh3.googleusercontent.com/aida/AEtjO1X-nc7VZD9tYHp6qutS95cjA-Xk5pOOzJwdae3Vi5yg75ZaanA4-bPFLwz-qoo-JoQi5TkDwO71GgUsiHVOVo5x8y535Jg4E3WEA_VzQl9ZAdT5TVIR5gEoikhv-Z2gFvZvSkGbsxQIifYqIgqsF8YhYzvl6tPc6smePHKqrg_ApXKYK0N-E5a5oijUQjPNmBCEz6Eh9i35JKinBfJI9ZCuzzIm1KilnSKr1gZmzV4bCV9tLBN_Y3w1T5o" alt="Hollyland Audio" class="max-h-[170px] w-auto object-contain filter drop-shadow-[0_10px_20px_rgba(0,0,0,0.6)] group-hover:scale-105 transition-transform duration-500" />
+            </div>
+
+            <!-- Bottom Script: Capture What Matters -->
+            <div class="relative z-10 text-center">
+              <span class="text-[#d4af37] italic text-base font-serif tracking-wide block drop-shadow-sm font-light">
+                Capture What Matters
+              </span>
+            </div>
+          </div>
+
+          <!-- Right Product Cards Track (4 in View on Desktop, Horizontal Scroll on Mobile/Tablet) -->
+          <div class="flex-1 min-w-0 overflow-hidden relative">
+            <div id="hollyland-track" class="flex gap-3.5 overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar py-0.5 h-full items-stretch">
+              
+              <!-- Card 1: Hollyland LARK A1 Duo -->
+              <div class="w-[200px] sm:w-[210px] md:w-[220px] lg:w-[calc(25%-10.5px)] shrink-0 flex-none snap-start bg-white rounded-2xl border border-[#d8ece6] p-3.5 flex flex-col justify-between hover:shadow-md hover:border-[#006a61]/50 transition-all duration-200 group">
+                <div>
+                  <!-- Top Row: Blank/Badge + Wishlist -->
+                  <div class="flex items-center justify-between min-h-[22px] mb-1">
+                    <div></div>
+                    <button aria-label="Add to Wishlist" class="wishlist-btn text-gray-300 hover:text-red-500 transition-colors" onclick="toggleWishlist(this, 'Hollyland LARK A1 Duo')">
+                      <span class="material-symbols-outlined text-[18px]">favorite_border</span>
+                    </button>
+                  </div>
+
+                  <!-- Product Image -->
+                  <div class="w-full aspect-square flex items-center justify-center p-2 mb-1.5 overflow-hidden">
+                    <img src="https://lh3.googleusercontent.com/aida/AEtjO1XfQAISMRxlwh3cRyS9KXfszcuI4qtAFy_2nh2DqmJbf1h9fIqhykPXfmvCQPC7aAs7sD-uZZLkJlCoUht1hYo0qIbn69xOpn2u7GyeKxYEclHmMzw_0XIcGZWyRMQ9fIi06tPoJvPMfMAX1AkCrYahcdfYa0CwM0hrSgbhHX7i8N4NNpyTatjOsoC6vj6ETcEjtqGdgXkhfW4kMX-Qs5oVf0HgZib8aeU_OxB6aZMTaG3RO-u4OKD6i3U" alt="Hollyland LARK A1 Duo" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300" />
+                  </div>
+
+                  <!-- Carousel dot indicator -->
+                  <div class="flex items-center justify-center gap-1 mb-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#006a61]"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                  </div>
+
+                  <!-- Title -->
+                  <h4 class="text-xs sm:text-sm font-semibold text-[#18332f] line-clamp-2 leading-snug mb-1 group-hover:text-primary transition-colors">
+                    Hollyland LARK A1 Duo 2-Person Wireless...
+                  </h4>
+
+                  <!-- Rating -->
+                  <div class="flex items-center gap-1 text-[11px] mb-2">
+                    <span class="text-amber-400 font-bold tracking-tighter">★★★★★</span>
+                    <span class="text-gray-500 font-medium">5.0 (0)</span>
+                  </div>
+                </div>
+
+                <!-- Price & Discount Tag -->
+                <div class="pt-2 border-t border-gray-100">
+                  <div class="flex items-baseline gap-1.5 flex-wrap">
+                    <span class="text-sm sm:text-base font-bold text-[#102d28]">5,199 TK</span>
+                    <span class="text-xs text-gray-400 line-through">6,000 TK</span>
+                  </div>
+                  <div class="mt-1">
+                    <span class="inline-block bg-[#e6f7f2] text-[#006a61] text-[10px] font-bold px-1.5 py-0.5 rounded">
+                      Save 13%
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card 2: Hollyland LARK A1 Mini Duo -->
+              <div class="w-[200px] sm:w-[210px] md:w-[220px] lg:w-[calc(25%-10.5px)] shrink-0 flex-none snap-start bg-white rounded-2xl border border-[#d8ece6] p-3.5 flex flex-col justify-between hover:shadow-md hover:border-[#006a61]/50 transition-all duration-200 group">
+                <div>
+                  <div class="flex items-center justify-between min-h-[22px] mb-1">
+                    <div></div>
+                    <button aria-label="Add to Wishlist" class="wishlist-btn text-gray-300 hover:text-red-500 transition-colors" onclick="toggleWishlist(this, 'Hollyland LARK A1 Mini Duo')">
+                      <span class="material-symbols-outlined text-[18px]">favorite_border</span>
+                    </button>
+                  </div>
+
+                  <div class="w-full aspect-square flex items-center justify-center p-2 mb-1.5 overflow-hidden">
+                    <img src="https://lh3.googleusercontent.com/aida/AEtjO1XPwYIIhg9a1muAgaMUousyibN5k-jqlFusGc4sr_swEmegAhND0lNdlnrycM1pl1cNh70saySmpNdrSr26RFcoLcu4XT6iGpQ0P6od6wy69n5pZ7JdBHO2Ngi4dhuXGgmTU2b5Jegto50fjUHAX0WDXPNLWeNtKC-9Xb2G7_NwRAe1Fcm8M60OJZTU1a57Qw93DcsrYt3ZobC6SZVqpilWxedWN0ClldDcJUIq-5ICb4Ow9ijoVLuhyHE" alt="Hollyland LARK A1 Mini Duo" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300" />
+                  </div>
+
+                  <div class="flex items-center justify-center gap-1 mb-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#006a61]"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                  </div>
+
+                  <h4 class="text-xs sm:text-sm font-semibold text-[#18332f] line-clamp-2 leading-snug mb-1 group-hover:text-primary transition-colors">
+                    Hollyland LARK A1 Mini Duo 2-Person Wireless...
+                  </h4>
+
+                  <div class="flex items-center gap-1 text-[11px] mb-2">
+                    <span class="text-amber-400 font-bold tracking-tighter">★★★★★</span>
+                    <span class="text-gray-500 font-medium">5.0 (0)</span>
+                  </div>
+                </div>
+
+                <div class="pt-2 border-t border-gray-100">
+                  <div class="flex items-baseline gap-1.5 flex-wrap">
+                    <span class="text-sm sm:text-base font-bold text-[#102d28]">4,499 TK</span>
+                  </div>
+                  <div class="mt-1">
+                    <span class="inline-block bg-[#e6f7f2] text-[#006a61] text-[10px] font-bold px-1.5 py-0.5 rounded opacity-0">
+                      Save 0%
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card 3: Hollyland LARK M2S DUO (with HOT badge) -->
+              <div class="w-[200px] sm:w-[210px] md:w-[220px] lg:w-[calc(25%-10.5px)] shrink-0 flex-none snap-start bg-white rounded-2xl border border-[#d8ece6] p-3.5 flex flex-col justify-between hover:shadow-md hover:border-[#006a61]/50 transition-all duration-200 group">
+                <div>
+                  <div class="flex items-center justify-between min-h-[22px] mb-1">
+                    <span class="bg-[#00897b] text-white text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded shadow-xs">HOT</span>
+                    <button aria-label="Add to Wishlist" class="wishlist-btn text-gray-300 hover:text-red-500 transition-colors" onclick="toggleWishlist(this, 'Hollyland LARK M2S DUO')">
+                      <span class="material-symbols-outlined text-[18px]">favorite_border</span>
+                    </button>
+                  </div>
+
+                  <div class="w-full aspect-square flex items-center justify-center p-2 mb-1.5 overflow-hidden">
+                    <img src="https://lh3.googleusercontent.com/aida/AEtjO1VgxG8LbldPbmAC2p7GjkhsXZezPqdGbUe4_Qljpk1PmGB53zj3k9Tqucd0LkXB8XsWiVwCy-ANr4g6SzMy-JILbubzySN0uGtFrktwdHWSyxJKHkUAxgn34B4RB0lVT21D7sM7Img80dDn3bjeqPZykIb-R9rcpvP9RpZVl4htyNv568a1ADFg4FT5xj0CPlHDBTn5Ya0r2uvBYV2aQPtderGP88qABO3JU_aXu8YhYzgk7gsepJmk6mQ" alt="Hollyland LARK M2S DUO" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300" />
+                  </div>
+
+                  <div class="flex items-center justify-center gap-1 mb-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#006a61]"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                  </div>
+
+                  <h4 class="text-xs sm:text-sm font-semibold text-[#18332f] line-clamp-2 leading-snug mb-1 group-hover:text-primary transition-colors">
+                    Hollyland LARK M2S DUO 2-Person Wireless...
+                  </h4>
+
+                  <div class="flex items-center gap-1 text-[11px] mb-2">
+                    <span class="text-amber-400 font-bold tracking-tighter">★★★★★</span>
+                    <span class="text-gray-500 font-medium">5.0 (0)</span>
+                  </div>
+                </div>
+
+                <div class="pt-2 border-t border-gray-100">
+                  <div class="flex items-baseline gap-1.5 flex-wrap">
+                    <span class="text-sm sm:text-base font-bold text-[#102d28]">10,199 TK</span>
+                    <span class="text-xs text-gray-400 line-through">10,500 TK</span>
+                  </div>
+                  <div class="mt-1">
+                    <span class="inline-block bg-[#e6f7f2] text-[#006a61] text-[10px] font-bold px-1.5 py-0.5 rounded">
+                      Save 3%
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card 4: Hollyland LARK M2 DUO -->
+              <div class="w-[200px] sm:w-[210px] md:w-[220px] lg:w-[calc(25%-10.5px)] shrink-0 flex-none snap-start bg-white rounded-2xl border border-[#d8ece6] p-3.5 flex flex-col justify-between hover:shadow-md hover:border-[#006a61]/50 transition-all duration-200 group">
+                <div>
+                  <div class="flex items-center justify-between min-h-[22px] mb-1">
+                    <div></div>
+                    <button aria-label="Add to Wishlist" class="wishlist-btn text-gray-300 hover:text-red-500 transition-colors" onclick="toggleWishlist(this, 'Hollyland LARK M2 DUO')">
+                      <span class="material-symbols-outlined text-[18px]">favorite_border</span>
+                    </button>
+                  </div>
+
+                  <div class="w-full aspect-square flex items-center justify-center p-2 mb-1.5 overflow-hidden">
+                    <img src="https://lh3.googleusercontent.com/aida/AEtjO1X-nc7VZD9tYHp6qutS95cjA-Xk5pOOzJwdae3Vi5yg75ZaanA4-bPFLwz-qoo-JoQi5TkDwO71GgUsiHVOVo5x8y535Jg4E3WEA_VzQl9ZAdT5TVIR5gEoikhv-Z2gFvZvSkGbsxQIifYqIgqsF8YhYzvl6tPc6smePHKqrg_ApXKYK0N-E5a5oijUQjPNmBCEz6Eh9i35JKinBfJI9ZCuzzIm1KilnSKr1gZmzV4bCV9tLBN_Y3w1T5o" alt="Hollyland LARK M2 DUO" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300" />
+                  </div>
+
+                  <div class="flex items-center justify-center gap-1 mb-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#006a61]"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                  </div>
+
+                  <h4 class="text-xs sm:text-sm font-semibold text-[#18332f] line-clamp-2 leading-snug mb-1 group-hover:text-primary transition-colors">
+                    Hollyland LARK M2 DUO 2-Person Wireless...
+                  </h4>
+
+                  <div class="flex items-center gap-1 text-[11px] mb-2">
+                    <span class="text-amber-400 font-bold tracking-tighter">★★★★★</span>
+                    <span class="text-gray-500 font-medium">5.0 (0)</span>
+                  </div>
+                </div>
+
+                <div class="pt-2 border-t border-gray-100">
+                  <div class="flex items-baseline gap-1.5 flex-wrap">
+                    <span class="text-sm sm:text-base font-bold text-[#102d28]">10,499 TK</span>
+                    <span class="text-xs text-gray-400 line-through">11,000 TK</span>
+                  </div>
+                  <div class="mt-1">
+                    <span class="inline-block bg-[#e6f7f2] text-[#006a61] text-[10px] font-bold px-1.5 py-0.5 rounded">
+                      Save 5%
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card 5: Hollyland LARK MAX 2 Solo -->
+              <div class="w-[200px] sm:w-[210px] md:w-[220px] lg:w-[calc(25%-10.5px)] shrink-0 flex-none snap-start bg-white rounded-2xl border border-[#d8ece6] p-3.5 flex flex-col justify-between hover:shadow-md hover:border-[#006a61]/50 transition-all duration-200 group">
+                <div>
+                  <div class="flex items-center justify-between min-h-[22px] mb-1">
+                    <span class="bg-[#006a61] text-white text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded shadow-xs">STUDIO</span>
+                    <button aria-label="Add to Wishlist" class="wishlist-btn text-gray-300 hover:text-red-500 transition-colors" onclick="toggleWishlist(this, 'Hollyland LARK MAX 2 Solo')">
+                      <span class="material-symbols-outlined text-[18px]">favorite_border</span>
+                    </button>
+                  </div>
+
+                  <div class="w-full aspect-square flex items-center justify-center p-2 mb-1.5 overflow-hidden">
+                    <img src="https://lh3.googleusercontent.com/aida/AEtjO1XPwYIIhg9a1muAgaMUousyibN5k-jqlFusGc4sr_swEmegAhND0lNdlnrycM1pl1cNh70saySmpNdrSr26RFcoLcu4XT6iGpQ0P6od6wy69n5pZ7JdBHO2Ngi4dhuXGgmTU2b5Jegto50fjUHAX0WDXPNLWeNtKC-9Xb2G7_NwRAe1Fcm8M60OJZTU1a57Qw93DcsrYt3ZobC6SZVqpilWxedWN0ClldDcJUIq-5ICb4Ow9ijoVLuhyHE" alt="Hollyland LARK MAX 2 Solo" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300" />
+                  </div>
+
+                  <div class="flex items-center justify-center gap-1 mb-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#006a61]"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                  </div>
+
+                  <h4 class="text-xs sm:text-sm font-semibold text-[#18332f] line-clamp-2 leading-snug mb-1 group-hover:text-primary transition-colors">
+                    Hollyland LARK MAX 2 Solo Wireless Studio Mic...
+                  </h4>
+
+                  <div class="flex items-center gap-1 text-[11px] mb-2">
+                    <span class="text-amber-400 font-bold tracking-tighter">★★★★★</span>
+                    <span class="text-gray-500 font-medium">5.0 (12)</span>
+                  </div>
+                </div>
+
+                <div class="pt-2 border-t border-gray-100">
+                  <div class="flex items-baseline gap-1.5 flex-wrap">
+                    <span class="text-sm sm:text-base font-bold text-[#102d28]">15,999 TK</span>
+                    <span class="text-xs text-gray-400 line-through">17,000 TK</span>
+                  </div>
+                  <div class="mt-1">
+                    <span class="inline-block bg-[#e6f7f2] text-[#006a61] text-[10px] font-bold px-1.5 py-0.5 rounded">
+                      Save 6%
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card 6: Hollyland Pyro S 4K -->
+              <div class="w-[200px] sm:w-[210px] md:w-[220px] lg:w-[calc(25%-10.5px)] shrink-0 flex-none snap-start bg-white rounded-2xl border border-[#d8ece6] p-3.5 flex flex-col justify-between hover:shadow-md hover:border-[#006a61]/50 transition-all duration-200 group">
+                <div>
+                  <div class="flex items-center justify-between min-h-[22px] mb-1">
+                    <span class="bg-[#1e293b] text-white text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded shadow-xs">4K VIDEO</span>
+                    <button aria-label="Add to Wishlist" class="wishlist-btn text-gray-300 hover:text-red-500 transition-colors" onclick="toggleWishlist(this, 'Hollyland Pyro S 4K')">
+                      <span class="material-symbols-outlined text-[18px]">favorite_border</span>
+                    </button>
+                  </div>
+
+                  <div class="w-full aspect-square flex items-center justify-center p-2 mb-1.5 overflow-hidden">
+                    <img src="https://lh3.googleusercontent.com/aida/AEtjO1Wxc6l6vJG3z1KJ5VK9DO1ekQwhOOoriU_JjlTnZNYmGp6hzzcj-j6FPbiy-4H_NbEsLhO8SaYW0EZzI5ijY2a7LiDndk67sp1b7Yl7lLgzm0Q2hjFKm4zhRrCTmJ2o-n04BoJv_O6lCCWI0hV8o7vDyUzyIQZGyvZCgVCRmZhFzcaJzngRLJa-dZ40mp24JPgC5dz4YWVWsV_srZavpMWhtM2ZsNdAf4ityU2o15NnFWnoPbSYhEn955A" alt="Hollyland Pyro S 4K" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300" />
+                  </div>
+
+                  <div class="flex items-center justify-center gap-1 mb-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#006a61]"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                  </div>
+
+                  <h4 class="text-xs sm:text-sm font-semibold text-[#18332f] line-clamp-2 leading-snug mb-1 group-hover:text-primary transition-colors">
+                    Hollyland Pyro S 4K SDI/HDMI Transmission...
+                  </h4>
+
+                  <div class="flex items-center gap-1 text-[11px] mb-2">
+                    <span class="text-amber-400 font-bold tracking-tighter">★★★★★</span>
+                    <span class="text-gray-500 font-medium">5.0 (8)</span>
+                  </div>
+                </div>
+
+                <div class="pt-2 border-t border-gray-100">
+                  <div class="flex items-baseline gap-1.5 flex-wrap">
+                    <span class="text-sm sm:text-base font-bold text-[#102d28]">45,999 TK</span>
+                    <span class="text-xs text-gray-400 line-through">48,000 TK</span>
+                  </div>
+                  <div class="mt-1">
+                    <span class="inline-block bg-[#e6f7f2] text-[#006a61] text-[10px] font-bold px-1.5 py-0.5 rounded">
+                      Save 4%
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SECTION 7: STUDIO ESSENTIALS & POWER RIGS -->
+    <!-- ========================================== -->
+    <section id="studio-gear" class="max-w-7xl mx-auto px-4 lg:px-6 pt-8 lg:pt-10 w-full">
+      <div class="flex items-center justify-between mb-4 lg:mb-6">
+        <div>
+          <div class="flex items-center gap-1.5 mb-0.5">
+            <span class="w-2 h-2 rounded-full bg-secondary"></span>
+            <span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary font-bold">Top Rated Rigging</span>
+          </div>
+          <h2 class="text-headline-md lg:text-headline-lg font-headline-lg text-text-display font-bold">Studio Essentials & Power</h2>
+        </div>
+        <a class="text-label-sm lg:text-label-lg font-label-lg text-broadcast-teal lg:text-primary hover:text-rec-red-hover flex items-center gap-1 font-bold" href="#all-studio-accessories">
+          <span>All Rig Gear</span>
+          <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+        </a>
+      </div>
+
+      <!-- 2 Cols Mobile / 4 Cols Desktop Grid -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
+        
+        <!-- 1. VIJIM LS24 Boom Arm -->
+        <div class="bg-surface-card rounded-2xl p-3 lg:p-4 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between group border border-surface-border">
+          <div>
+            <div class="relative bg-surface-base rounded-xl overflow-hidden p-3 lg:p-4 aspect-square flex items-center justify-center mb-2 lg:mb-3">
+              <span class="absolute top-1.5 left-1.5 lg:top-2 lg:left-2 z-10 bg-rec-red-base text-on-primary text-label-sm font-label-sm px-1.5 lg:px-2 py-0.5 rounded font-bold shadow-xs">-4% Off</span>
+              <img alt="VIJIM LS24 Boom Arm" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="https://lh3.googleusercontent.com/aida/AEtjO1VcJVr6r3rsIATCL2kOJO-Ia8OwtjdZdMx2Btzr6b_l1PQK3ua6CP-UdgR0SzwiITOFaoUJgXr3yf_yOUwCsS4gdxkVKwshdDaIyh-S66jGqG_fDaX4HQk30IXGh74ekWWpGYm7l9M8DXe9jO8Tu9QVzo8TFdnYRiY7TZKIsO-HAZonFV_51bVVueBAC5WZB07SX8cjTeHAg_QnaTl6_BSqLjArImXIhYfCSo9Gte3TrvynbVXe4ulA4ew"/>
+            </div>
+            <div class="text-label-sm font-label-sm text-text-muted mb-0.5">VIJIM Studio Desk</div>
+            <h3 class="text-headline-sm font-headline-sm text-text-display line-clamp-2 mb-1 group-hover:text-primary transition-colors font-bold">
+              VIJIM LS24 Desktop Boom Arm
+            </h3>
+            <div class="flex items-baseline gap-1.5 mb-2">
+              <span class="text-price-headline font-price-headline text-price-tk font-bold">৳ ৪,২৯৯ TK</span>
+              <span class="text-price-strikethrough font-price-strikethrough text-text-muted line-through">৳ ৪,৫০০</span>
+            </div>
+          </div>
+          <button onclick="addToCart('VIJIM LS24 Boom Arm', 4299, 'https://lh3.googleusercontent.com/aida/AEtjO1VcJVr6r3rsIATCL2kOJO-Ia8OwtjdZdMx2Btzr6b_l1PQK3ua6CP-UdgR0SzwiITOFaoUJgXr3yf_yOUwCsS4gdxkVKwshdDaIyh-S66jGqG_fDaX4HQk30IXGh74ekWWpGYm7l9M8DXe9jO8Tu9QVzo8TFdnYRiY7TZKIsO-HAZonFV_51bVVueBAC5WZB07SX8cjTeHAg_QnaTl6_BSqLjArImXIhYfCSo9Gte3TrvynbVXe4ulA4ew')" class="w-full bg-surface-container hover:bg-primary hover:text-on-primary text-on-surface font-headline-sm text-label-sm py-2 rounded-xl transition-colors flex items-center justify-center gap-1 font-bold">
+            <span class="material-symbols-outlined text-[15px]">add_shopping_cart</span>
+            <span>Quick Add</span>
+          </button>
+        </div>
+
+        <!-- 2. Andbon AB-21C Dry Cabinet -->
+        <div class="bg-surface-card rounded-2xl p-3 lg:p-4 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between group border border-surface-border">
+          <div>
+            <div class="relative bg-surface-base rounded-xl overflow-hidden p-3 lg:p-4 aspect-square flex items-center justify-center mb-2 lg:mb-3">
+              <span class="absolute top-1.5 left-1.5 lg:top-2 lg:left-2 z-10 bg-broadcast-teal text-white text-label-sm font-label-sm px-1.5 lg:px-2 py-0.5 rounded font-bold shadow-xs">21L</span>
+              <img alt="Andbon AB-21C Dry Cabinet" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="https://lh3.googleusercontent.com/aida/AEtjO1X82XlCWaqpWON7BbQHk_ksUOYXFG-GXTHzwKjL59TyhlW72PO-VZFu-NCfXH1H-qFYuWV9RoaHcP5Fo3bzgoNUYipNGhAkGILO9syZ-0AhHte_Yfiiqu3G8L4jSHRnVy8EIcwZ4cRRx3YknCGCBljN4m0APwdXKY-kbQoPhiCd0jRyMLYL_R4VqUjnGkV7Ryju2WHgSXgZkkSEKDiy5_i2IuinpDKFB1lPHycynhCdCCHCubl6HMih2x4"/>
+            </div>
+            <div class="text-label-sm font-label-sm text-text-muted mb-0.5">Humidity Control</div>
+            <h3 class="text-headline-sm font-headline-sm text-text-display line-clamp-2 mb-1 group-hover:text-primary transition-colors font-bold">
+              Andbon AB-21C Dry Cabinet 21L
+            </h3>
+            <div class="flex items-baseline gap-1.5 mb-2">
+              <span class="text-price-headline font-price-headline text-price-tk font-bold">৳ ৮,০০০ TK</span>
+              <span class="font-label-sm text-[10px] text-stock-available font-bold block">● In Stock</span>
+            </div>
+          </div>
+          <button onclick="addToCart('Andbon AB-21C Dry Cabinet 21L', 8000, 'https://lh3.googleusercontent.com/aida/AEtjO1X82XlCWaqpWON7BbQHk_ksUOYXFG-GXTHzwKjL59TyhlW72PO-VZFu-NCfXH1H-qFYuWV9RoaHcP5Fo3bzgoNUYipNGhAkGILO9syZ-0AhHte_Yfiiqu3G8L4jSHRnVy8EIcwZ4cRRx3YknCGCBljN4m0APwdXKY-kbQoPhiCd0jRyMLYL_R4VqUjnGkV7Ryju2WHgSXgZkkSEKDiy5_i2IuinpDKFB1lPHycynhCdCCHCubl6HMih2x4')" class="w-full bg-surface-container hover:bg-primary hover:text-on-primary text-on-surface font-headline-sm text-label-sm py-2 rounded-xl transition-colors flex items-center justify-center gap-1 font-bold">
+            <span class="material-symbols-outlined text-[15px]">add_shopping_cart</span>
+            <span>Quick Add</span>
+          </button>
+        </div>
+
+        <!-- 3. Ulanzi BG-3 Power Handgrip -->
+        <div class="bg-surface-card rounded-2xl p-3 lg:p-4 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between group border border-surface-border">
+          <div>
+            <div class="relative bg-surface-base rounded-xl overflow-hidden p-3 lg:p-4 aspect-square flex items-center justify-center mb-2 lg:mb-3">
+              <span class="absolute top-1.5 left-1.5 lg:top-2 lg:left-2 z-10 bg-rec-red-base text-on-primary text-label-sm font-label-sm px-1.5 lg:px-2 py-0.5 rounded font-bold shadow-xs">-5% Off</span>
+              <img alt="Ulanzi BG-3 Power Handgrip" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="https://lh3.googleusercontent.com/aida/AEtjO1UUmXjDMJATiwVr3_Baxcx84BoXP4-KAijMg9IKXLKqyxBCLrYp9jQT1w9Wew80_ro0bFENqLQiKaUoHlCSx5kV7n38tNfRkWWLKAdY2YZvgEAlqkDfXYKkIPBhIWvjXSAjS0lOoRWTFmnv7W5CEkXFe7Ym3hZylbqJPN7dHUHgXGki1xGWDd0B5lBdFr6sHIYvFlDCGZ5EWpc556bcxEHTTUKPBgXnghgipj85H4G8DN4pIhaQ4g45_ek"/>
+            </div>
+            <div class="text-label-sm font-label-sm text-text-muted mb-0.5">Handgrip & Mini Tripod</div>
+            <h3 class="text-headline-sm font-headline-sm text-text-display line-clamp-2 mb-1 group-hover:text-primary transition-colors font-bold">
+              Ulanzi BG-3 10,000mAh Tripod
+            </h3>
+            <div class="flex items-baseline gap-1.5 mb-2">
+              <span class="text-price-headline font-price-headline text-price-tk font-bold">৳ ৩,৯৯৯ TK</span>
+              <span class="text-price-strikethrough font-price-strikethrough text-text-muted line-through">৳ ৪,২০০</span>
+            </div>
+          </div>
+          <button onclick="addToCart('Ulanzi BG-3 10000mAh Tripod', 3999, 'https://lh3.googleusercontent.com/aida/AEtjO1UUmXjDMJATiwVr3_Baxcx84BoXP4-KAijMg9IKXLKqyxBCLrYp9jQT1w9Wew80_ro0bFENqLQiKaUoHlCSx5kV7n38tNfRkWWLKAdY2YZvgEAlqkDfXYKkIPBhIWvjXSAjS0lOoRWTFmnv7W5CEkXFe7Ym3hZylbqJPN7dHUHgXGki1xGWDd0B5lBdFr6sHIYvFlDCGZ5EWpc556bcxEHTTUKPBgXnghgipj85H4G8DN4pIhaQ4g45_ek')" class="w-full bg-surface-container hover:bg-primary hover:text-on-primary text-on-surface font-headline-sm text-label-sm py-2 rounded-xl transition-colors flex items-center justify-center gap-1 font-bold">
+            <span class="material-symbols-outlined text-[15px]">add_shopping_cart</span>
+            <span>Quick Add</span>
+          </button>
+        </div>
+
+        <!-- 4. Blackmagic Design 12V Power -->
+        <div class="bg-surface-card rounded-2xl p-3 lg:p-4 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between group border border-surface-border">
+          <div>
+            <div class="relative bg-surface-base rounded-xl overflow-hidden p-3 lg:p-4 aspect-square flex items-center justify-center mb-2 lg:mb-3">
+              <span class="absolute top-1.5 left-1.5 lg:top-2 lg:left-2 z-10 bg-rec-red-base text-on-primary text-label-sm font-label-sm px-1.5 lg:px-2 py-0.5 rounded font-bold shadow-xs">-4% Off</span>
+              <img alt="Blackmagic Design 12V Power Supply" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="https://lh3.googleusercontent.com/aida/AEtjO1Xl5Wvyu34xKmArVLDPoziD1Sr0A_vWYoFSAj-EKKsJC8JyIZvTMwHIbyMhNRxl6v6Jgd0-eT8B57fg89WWh6HVVq2mciwuQgioVOuwBnoIJARoQ8gskLwzpSmMkI5NzooJv7QHKfVEDNBiJSG2xHzChw6JyC0FXqD_y-htWr8wdbA1lr7b6qcoB7h5PCnhDLAvzEwZ_UDBoC5xoUCQLglYr31x4GfWPqrxQUlkZV0UzYA0uyjmD7wq1uw"/>
+            </div>
+            <div class="text-label-sm font-label-sm text-text-muted mb-0.5">Cinema Rig Power</div>
+            <h3 class="text-headline-sm font-headline-sm text-text-display line-clamp-2 mb-1 group-hover:text-primary transition-colors font-bold">
+              Blackmagic 12V Locking Power
+            </h3>
+            <div class="flex items-baseline gap-1.5 mb-2">
+              <span class="text-price-headline font-price-headline text-price-tk font-bold">৳ ৪,৮৯০ TK</span>
+              <span class="text-price-strikethrough font-price-strikethrough text-text-muted line-through">৳ ৫,১০০</span>
+            </div>
+          </div>
+          <button onclick="addToCart('Blackmagic 12V Locking Power', 4890, 'https://lh3.googleusercontent.com/aida/AEtjO1Xl5Wvyu34xKmArVLDPoziD1Sr0A_vWYoFSAj-EKKsJC8JyIZvTMwHIbyMhNRxl6v6Jgd0-eT8B57fg89WWh6HVVq2mciwuQgioVOuwBnoIJARoQ8gskLwzpSmMkI5NzooJv7QHKfVEDNBiJSG2xHzChw6JyC0FXqD_y-htWr8wdbA1lr7b6qcoB7h5PCnhDLAvzEwZ_UDBoC5xoUCQLglYr31x4GfWPqrxQUlkZV0UzYA0uyjmD7wq1uw')" class="w-full bg-surface-container hover:bg-primary hover:text-on-primary text-on-surface font-headline-sm text-label-sm py-2 rounded-xl transition-colors flex items-center justify-center gap-1 font-bold">
+            <span class="material-symbols-outlined text-[15px]">add_shopping_cart</span>
+            <span>Quick Add</span>
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SECTION 8: BRAND PARTNERS & LABELS -->
+    <!-- ========================================== -->
+    <section id="brands" class="max-w-7xl mx-auto px-4 lg:px-6 pt-8 lg:pt-10 w-full">
+      <div class="bg-surface-card rounded-2xl p-4 lg:p-6 shadow-sm border border-surface-border">
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-4">
+          <div>
+            <span class="text-label-sm font-label-sm uppercase tracking-wider text-primary font-bold">Authorized Distribution House</span>
+            <h3 class="text-headline-md font-headline-md text-text-display font-bold">Official Brand Partners & Labels</h3>
+          </div>
+          <span class="text-label-md font-label-md text-broadcast-teal font-semibold">100% Genuine Serial Verification</span>
+        </div>
+        
+        <!-- Brand Grid -->
+        <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 gap-2.5 pt-2">
+          <div class="bg-surface-base hover:bg-surface-card p-3 rounded-xl flex items-center justify-center shadow-xs border border-surface-border transition-all cursor-pointer">
+            <span class="font-headline-sm text-label-md font-extrabold tracking-tight text-on-surface">SONY</span>
+          </div>
+          <div class="bg-surface-base hover:bg-surface-card p-3 rounded-xl flex items-center justify-center shadow-xs border border-surface-border transition-all cursor-pointer">
+            <span class="font-headline-sm text-label-md font-extrabold tracking-tight text-primary">Canon</span>
+          </div>
+          <div class="bg-surface-base hover:bg-surface-card p-3 rounded-xl flex items-center justify-center shadow-xs border border-surface-border transition-all cursor-pointer">
+            <span class="font-headline-sm text-label-md font-extrabold tracking-widest text-on-surface">DJI</span>
+          </div>
+          <div class="bg-surface-base hover:bg-surface-card p-3 rounded-xl flex items-center justify-center shadow-xs border border-surface-border transition-all cursor-pointer">
+            <span class="font-headline-sm text-label-md font-extrabold tracking-normal text-broadcast-teal">HOLLYLAND</span>
+          </div>
+          <div class="bg-surface-base hover:bg-surface-card p-3 rounded-xl flex items-center justify-center shadow-xs border border-surface-border transition-all cursor-pointer">
+            <span class="font-headline-sm text-label-md font-extrabold tracking-tight text-on-surface">Blackmagic</span>
+          </div>
+          <div class="bg-surface-base hover:bg-surface-card p-3 rounded-xl flex items-center justify-center shadow-xs border border-surface-border transition-all cursor-pointer">
+            <span class="font-headline-sm text-label-md font-extrabold tracking-wider text-on-surface">FUJIFILM</span>
+          </div>
+          <div class="bg-surface-base hover:bg-surface-card p-3 rounded-xl flex items-center justify-center shadow-xs border border-surface-border transition-all cursor-pointer">
+            <span class="font-headline-sm text-label-md font-extrabold tracking-normal text-primary">GODOX</span>
+          </div>
+          <div class="bg-surface-base hover:bg-surface-card p-3 rounded-xl flex items-center justify-center shadow-xs border border-surface-border transition-all cursor-pointer">
+            <span class="font-headline-sm text-label-md font-extrabold tracking-tight text-on-surface">datavideo</span>
+          </div>
+          <div class="bg-surface-base hover:bg-surface-card p-3 rounded-xl flex items-center justify-center shadow-xs border border-surface-border transition-all cursor-pointer">
+            <span class="font-headline-sm text-label-md font-extrabold tracking-tighter text-broadcast-teal">GoPro</span>
+          </div>
+          <div class="bg-surface-base hover:bg-surface-card p-3 rounded-xl flex items-center justify-center shadow-xs border border-surface-border transition-all cursor-pointer">
+            <span class="font-headline-sm text-label-md font-extrabold tracking-tight text-on-surface">Nikon</span>
+          </div>
+          <div class="bg-surface-base hover:bg-surface-card p-3 rounded-xl flex items-center justify-center shadow-xs border border-surface-border transition-all cursor-pointer">
+            <span class="font-headline-sm text-label-md font-extrabold tracking-normal text-on-surface">RØDE</span>
+          </div>
+          <div class="bg-surface-base hover:bg-surface-card p-3 rounded-xl flex items-center justify-center shadow-xs border border-surface-border transition-all cursor-pointer">
+            <span class="font-headline-sm text-label-md font-extrabold tracking-widest text-on-surface">Libec</span>
+          </div>
+          <div class="bg-surface-base hover:bg-surface-card p-3 rounded-xl flex items-center justify-center shadow-xs border border-surface-border transition-all cursor-pointer">
+            <span class="font-headline-sm text-label-md font-extrabold tracking-normal text-on-surface">SIGMA</span>
+          </div>
+          <div class="bg-surface-base hover:bg-surface-card p-3 rounded-xl flex items-center justify-center shadow-xs border border-surface-border transition-all cursor-pointer">
+            <span class="font-headline-sm text-label-md font-extrabold tracking-tight text-on-surface">SENNHEISER</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SECTION 9: PHYSICAL FLAGSHIP STORES IN DHAKA -->
+    <!-- ========================================== -->
+    <section id="flagship-stores" class="max-w-7xl mx-auto px-4 lg:px-6 pt-8 lg:pt-10 w-full">
+      <div class="flex items-center gap-1.5 mb-4">
+        <span class="material-symbols-outlined text-[20px] text-rec-red-base">location_on</span>
+        <h2 class="text-headline-md lg:text-headline-lg font-headline-lg text-text-display font-bold">Physical Flagship Stores in Dhaka</h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+        <!-- Store 1: Baitul Mukarram Flagship -->
+        <div class="bg-surface-card rounded-2xl p-4 lg:p-6 shadow-sm flex flex-col justify-between border border-surface-border">
+          <div class="flex items-start justify-between gap-4 mb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                <span class="material-symbols-outlined text-[26px]">storefront</span>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h4 class="text-headline-sm font-headline-sm text-text-display font-bold">Baitul Mukarram Flagship</h4>
+                  <span class="bg-emerald-50 text-stock-available text-label-sm font-label-sm px-2 py-0.5 rounded-full font-bold">Open Daily</span>
+                </div>
+                <p class="text-body-sm font-body-sm text-text-muted">Shop 55/A, Block # 3 Baitul Mukarram East Gate, Dhaka 1000</p>
+              </div>
+            </div>
+          </div>
+          <div class="space-y-1.5 mb-4 text-body-sm font-body-sm text-text-muted">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-[16px]">schedule</span>
+              <span>Sat – Thu: 10:00 AM – 8:30 PM (Friday Closed)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-[16px]">call</span>
+              <strong class="text-text-display">+880-1917-256-756 / +880-1712-445-566</strong>
+            </div>
+            <div class="flex items-center gap-2 text-broadcast-teal font-semibold">
+              <span class="material-symbols-outlined text-[16px]">verified</span>
+              <span>Live Studio Hands-on Lab & Sensor Cleaning Available</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 pt-2">
+            <a class="flex-1 bg-surface-container-high hover:bg-surface-container text-text-display text-label-md font-label-md py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5 font-bold" href="tel:+8801917256756">
+              <span class="material-symbols-outlined text-[16px] text-primary">call</span>
+              <span>Call Branch</span>
+            </a>
+            <a class="flex-1 bg-text-display hover:bg-black text-on-primary text-label-md font-label-md py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5 font-bold" href="https://maps.google.com" target="_blank">
+              <span class="material-symbols-outlined text-[16px]">directions</span>
+              <span>Directions</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Store 2: Bashundhara City Outlet -->
+        <div class="bg-surface-card rounded-2xl p-4 lg:p-6 shadow-sm flex flex-col justify-between border border-surface-border">
+          <div class="flex items-start justify-between gap-4 mb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-xl bg-broadcast-teal-subtle text-broadcast-teal flex items-center justify-center flex-shrink-0">
+                <span class="material-symbols-outlined text-[26px]">store</span>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h4 class="text-headline-sm font-headline-sm text-text-display font-bold">Bashundhara City Branch</h4>
+                  <span class="bg-emerald-50 text-stock-available text-label-sm font-label-sm px-2 py-0.5 rounded-full font-bold">Open Daily</span>
+                </div>
+                <p class="text-body-sm font-body-sm text-text-muted">Shop 27, Level 1, Block B, Bashundhara City Shopping Complex, Panthapath, Dhaka</p>
+              </div>
+            </div>
+          </div>
+          <div class="space-y-1.5 mb-4 text-body-sm font-body-sm text-text-muted">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-[16px]">schedule</span>
+              <span>Fri – Wed: 10:30 AM – 9:00 PM (Tuesday Closed)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-[16px]">call</span>
+              <strong class="text-text-display">+880-1712-445-566 / +880-1917-256-756</strong>
+            </div>
+            <div class="flex items-center gap-2 text-broadcast-teal font-semibold">
+              <span class="material-symbols-outlined text-[16px]">verified</span>
+              <span>Creator Experience Counter & Instant Drone Testing</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 pt-2">
+            <a class="flex-1 bg-surface-container-high hover:bg-surface-container text-text-display text-label-md font-label-md py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5 font-bold" href="tel:+8801712445566">
+              <span class="material-symbols-outlined text-[16px] text-primary">call</span>
+              <span>Call Branch</span>
+            </a>
+            <a class="flex-1 bg-text-display hover:bg-black text-on-primary text-label-md font-label-md py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5 font-bold" href="https://maps.google.com" target="_blank">
+              <span class="material-symbols-outlined text-[16px]">directions</span>
+              <span>Directions</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SECTION 10: VIP CREATOR NEWSLETTER -->
+    <!-- ========================================== -->
+    <section class="max-w-7xl mx-auto px-4 lg:px-6 pt-8 lg:pt-10 pb-6 w-full">
+      <div class="bg-surface-container-high rounded-2xl p-5 lg:p-8 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-6 border border-surface-border">
+        <div class="max-w-xl">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="bg-primary text-on-primary text-label-sm font-label-sm px-2.5 py-0.5 rounded-full uppercase tracking-wider font-bold">VIP Creator Club</span>
+            <span class="text-broadcast-teal font-label-md text-label-md font-bold">Exclusive Studio Offers</span>
+          </div>
+          <h3 class="font-headline-lg text-headline-lg text-text-display font-extrabold mb-1">Join Camera Bazar VIP Creator Network</h3>
+          <p class="font-body-md text-body-md text-text-muted">Instant price drops, firmware release alerts, and flat ৳ ১,৫০০ discount on your first professional purchase.</p>
+        </div>
+        <div class="flex w-full lg:w-auto items-center gap-2">
+          <input id="newsletter-email" class="bg-surface-card text-on-surface px-4 py-3 rounded-xl text-body-md font-body-md focus:outline-none w-full lg:w-80 shadow-inner border border-surface-border" placeholder="Enter your email address..." type="email"/>
+          <button onclick="handleSubscribe()" class="bg-rec-red-base hover:bg-rec-red-hover text-on-primary px-6 py-3 rounded-xl font-label-lg text-label-lg font-bold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap shadow-sm active:scale-95">
+            <span>Subscribe</span>
+            <span class="material-symbols-outlined text-[18px]">send</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- DESKTOP FOOTER (Visible on >= lg screens) -->
+  <!-- ========================================== -->
+  <footer class="hidden lg:block w-full bg-surface-card text-on-surface pt-14 pb-8 border-t border-surface-border">
+    <div class="max-w-7xl mx-auto px-6">
+      
+      <!-- 4 Columns Link Matrix -->
+      <div class="grid grid-cols-5 gap-10 mb-12">
+        <!-- Col 1 & 2: About -->
+        <div class="col-span-2 space-y-4">
+          <div class="flex items-center gap-3">
+            <img alt="Camera Bazar" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1WL3yj50eBzFp9pSaVx9W_q08fXnv9BRV8n0Z9KyGTpDx2Q2tYGIjq3Hg-sUP4SHnOjyBijq02lvUWUDQrRPEpvL7k30TGQ5V_2wdB60cZJSUYFtVZO33tn7Wye-xcMNBpu1sVLM17INZUbYzW2p195Ma55k9Ak4-DcPbFbSC_DESRlPURONuq-St3d_e0kN_tNadYTj8qwx0sC_jf_Jt7fTidQzeO14StrSB_FhudX13lu5p1ST1WQheo"/>
+            <span class="font-headline-md text-headline-md text-text-display uppercase font-extrabold">Camera Bazar</span>
+          </div>
+          <p class="font-body-md text-body-md text-text-muted leading-relaxed pr-6">
+            Established in 2000, Camera Bazar is Bangladesh's premier importer and authorized distribution house for optical, cinematography, and television broadcast solutions. Catering to national broadcasters, independent filmmakers, and creative pros.
+          </p>
+          <div class="flex items-center gap-3 pt-2">
+            <div class="px-3 py-1.5 bg-surface-container-low rounded-lg border border-surface-border">
+              <span class="font-label-sm text-label-sm text-text-muted">Heritage:</span> <strong class="text-text-display">SINCE 2000</strong>
+            </div>
+            <div class="px-3 py-1.5 bg-broadcast-teal-subtle text-broadcast-teal rounded-lg font-label-sm text-label-sm font-bold">
+              100% Authentic Optical Glass
+            </div>
+          </div>
+        </div>
+
+        <!-- Col 3: Flagship Stores -->
+        <div>
+          <h5 class="font-headline-sm text-headline-sm text-text-display mb-4 font-bold">Flagship Stores</h5>
+          <ul class="space-y-3 font-body-sm text-body-sm text-text-muted">
+            <li class="space-y-1">
+              <strong class="text-on-surface block font-label-md text-label-md">Baitul Mukarram Flagship</strong>
+              <span>Shop 24-27, Baitul Mukarram Complex, Dhaka-1000</span>
+              <span class="block text-primary font-bold">+880-1917-256-756</span>
+            </li>
+            <li class="space-y-1 pt-1">
+              <strong class="text-on-surface block font-label-md text-label-md">Bashundhara City Outlet</strong>
+              <span>Level 1, Block B, Shop 27, Panthapath, Dhaka</span>
+              <span class="block text-primary font-bold">+880-1712-445-566</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Col 4: Top Categories -->
+        <div>
+          <h5 class="font-headline-sm text-headline-sm text-text-display mb-4 font-bold">Top Categories</h5>
+          <ul class="space-y-2.5 font-body-md text-body-md text-text-muted">
+            <li><a class="hover:text-primary transition-colors" href="#cat-digital-cameras">Cinema Cameras & Rigs</a></li>
+            <li><a class="hover:text-primary transition-colors" href="#cat-lenses">Anamorphic & Cine Lenses</a></li>
+            <li><a class="hover:text-primary transition-colors" href="#hollyland-audio">Hollyland Wireless Audio</a></li>
+            <li><a class="hover:text-primary transition-colors" href="#cat-video-switchers">Live Production Switchers</a></li>
+            <li><a class="hover:text-primary transition-colors" href="#cat-tripods">Motorized Gimbals & Sliders</a></li>
+            <li><a class="hover:text-primary transition-colors" href="#cat-lighting">Professional LED COB Light</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 5: Customer Care -->
+        <div>
+          <h5 class="font-headline-sm text-headline-sm text-text-display mb-4 font-bold">Customer Care</h5>
+          <ul class="space-y-2.5 font-body-md text-body-md text-text-muted">
+            <li><a class="hover:text-primary transition-colors" href="#warranty">Official Warranty Claim</a></li>
+            <li><a class="hover:text-primary transition-colors" href="#emi">EMI Facilities (36 Banks)</a></li>
+            <li><a class="hover:text-primary transition-colors" href="#track">Track Live Consignment</a></li>
+            <li><a class="hover:text-primary transition-colors" href="#lab">Camera Sensor Service Lab</a></li>
+            <li><a class="hover:text-primary transition-colors" href="#consultation">Studio Consultation</a></li>
+            <li><a class="hover:text-primary transition-colors" href="#exchange">Exchange & Upgrade Policy</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Payment Gateways Row -->
+      <div class="bg-surface-container-low rounded-xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 border border-surface-border">
+        <div class="flex flex-wrap items-center gap-3 text-label-sm font-label-sm text-text-muted">
+          <span class="font-bold text-on-surface">Accepted Payment Gateways:</span>
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-1 bg-surface-card rounded text-on-surface font-bold text-[11px] shadow-sm border border-surface-border">bKash</span>
+            <span class="px-2.5 py-1 bg-surface-card rounded text-on-surface font-bold text-[11px] shadow-sm border border-surface-border">Nagad</span>
+            <span class="px-2.5 py-1 bg-surface-card rounded text-on-surface font-bold text-[11px] shadow-sm border border-surface-border">SSLCommerz</span>
+            <span class="px-2.5 py-1 bg-surface-card rounded text-on-surface font-bold text-[11px] shadow-sm border border-surface-border">VISA</span>
+            <span class="px-2.5 py-1 bg-surface-card rounded text-on-surface font-bold text-[11px] shadow-sm border border-surface-border">MasterCard</span>
+            <span class="px-2.5 py-1 bg-surface-card rounded text-on-surface font-bold text-[11px] shadow-sm border border-surface-border">City Bank EMI</span>
+          </div>
+        </div>
+        <div class="text-body-sm font-body-sm text-text-muted">
+          © 2000-2026 Camera Bazar Bangladesh. All rights reserved.
+        </div>
+      </div>
+
+      <!-- Bottom Legal Links -->
+      <div class="mt-6 flex flex-wrap items-center justify-between gap-4 text-label-sm font-label-sm text-text-muted">
+        <div class="flex items-center gap-6">
+          <a class="hover:text-on-surface" href="#privacy">Privacy Policy</a>
+          <a class="hover:text-on-surface" href="#terms">Terms of Service</a>
+          <a class="hover:text-on-surface" href="#warranty">Warranty Terms</a>
+          <a class="hover:text-on-surface" href="#sitemap">Site Map</a>
+        </div>
+        <span class="text-[11px] text-text-muted">Govt. Trade License No: TRAD/DNCC/023910/2021 | BIN: 001239845-0101</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ========================================== -->
+  <!-- MOBILE BOTTOM FIXED APP NAVIGATION BAR -->
+  <!-- ========================================== -->
+  <nav class="lg:hidden fixed bottom-0 w-full z-50 pb-safe bg-surface-card/95 backdrop-blur-xl shadow-[0_-2px_12px_rgba(15,23,42,0.06)] border-t border-surface-border">
+    <div class="flex justify-around items-center h-16 px-1" id="mobile-nav-bar">
+      <!-- Home -->
+      <a aria-current="page" onclick="setActiveNav(this)" class="mobile-nav-item flex flex-col items-center justify-center gap-0.5 w-14 h-14 transition-colors text-primary font-bold" href="#">
+        <span class="material-symbols-outlined text-[22px]">home</span>
+        <span class="font-label-sm text-[10px]">Home</span>
+      </a>
+      <!-- Shop / Catalog -->
+      <a onclick="setActiveNav(this)" class="mobile-nav-item flex flex-col items-center justify-center gap-0.5 w-14 h-14 text-text-muted hover:text-on-surface transition-colors" href="#all-categories">
+        <span class="material-symbols-outlined text-[22px]">grid_view</span>
+        <span class="font-label-sm text-[10px]">Shop</span>
+      </a>
+      <!-- Deals -->
+      <a onclick="setActiveNav(this)" class="mobile-nav-item flex flex-col items-center justify-center gap-0.5 w-14 h-14 text-text-muted hover:text-on-surface transition-colors" href="#hot-deals">
+        <span class="material-symbols-outlined text-[22px]">local_fire_department</span>
+        <span class="font-label-sm text-[10px]">Deals</span>
+      </a>
+      <!-- Orders -->
+      <a onclick="setActiveNav(this)" class="mobile-nav-item flex flex-col items-center justify-center gap-0.5 w-14 h-14 text-text-muted hover:text-on-surface transition-colors" href="#orders" onclick="showToast('Loading your order history...', 'info')">
+        <span class="material-symbols-outlined text-[22px]">package_2</span>
+        <span class="font-label-sm text-[10px]">Orders</span>
+      </a>
+      <!-- Account -->
+      <a onclick="setActiveNav(this)" class="mobile-nav-item flex flex-col items-center justify-center gap-0.5 w-14 h-14 text-text-muted hover:text-on-surface transition-colors" href="#account" onclick="showToast('Opening Cinematographer Profile...', 'info')">
+        <span class="material-symbols-outlined text-[22px]">account_circle</span>
+        <span class="font-label-sm text-[10px]">Account</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- ========================================== -->
+  <!-- JAVASCRIPT: CORE INTERACTIONS & STATE -->
+  <!-- ========================================== -->
+  <script>
+    // Cart & Wishlist State
+    let cartCount = 3;
+    let cartSubtotal = 318979;
+    let wishlistCount = 3;
+
+    // Toast Notification Dispatcher
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      const icon = type === 'success' ? 'check_circle' : (type === 'info' ? 'info' : 'error');
+      const bg = type === 'success' ? 'bg-slate-900 text-white' : (type === 'info' ? 'bg-broadcast-teal text-white' : 'bg-primary text-white');
+      
+      toast.className = `${bg} px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-body-sm font-bold animate-toast pointer-events-auto transition-all max-w-xs`;
+      toast.innerHTML = `
+        <span class="material-symbols-outlined text-[20px]">${icon}</span>
+        <span>${message}</span>
+      `;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-20px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 2500);
+    }
+
+    // Add To Cart Functionality
+    function addToCart(productName, price, imageUrl) {
+      cartCount++;
+      cartSubtotal += price;
+
+      // Update counters
+      const mobileBadge = document.getElementById('mobile-cart-badge');
+      const desktopBadge = document.getElementById('desktop-cart-badge');
+      const desktopTotal = document.getElementById('desktop-cart-total');
+      const drawerCount = document.getElementById('cart-drawer-count');
+      const drawerSubtotal = document.getElementById('cart-drawer-subtotal');
+
+      if (mobileBadge) mobileBadge.textContent = cartCount;
+      if (desktopBadge) desktopBadge.textContent = cartCount;
+      if (drawerCount) drawerCount.textContent = cartCount;
+      if (desktopTotal) desktopTotal.textContent = '৳ ' + cartSubtotal.toLocaleString('en-US');
+      if (drawerSubtotal) drawerSubtotal.textContent = '৳ ' + cartSubtotal.toLocaleString('en-US') + ' TK';
+
+      // Append to Cart Drawer Container
+      const cartContainer = document.getElementById('cart-items-container');
+      if (cartContainer) {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'flex gap-3 bg-surface-base p-3 rounded-xl border border-surface-border animate-toast';
+        itemDiv.innerHTML = `
+          <img class="w-16 h-16 object-contain bg-white rounded-lg p-1" src="${imageUrl}" alt="${productName}"/>
+          <div class="flex-1 min-w-0">
+            <h4 class="font-headline-sm text-body-md text-text-display truncate font-bold">${productName}</h4>
+            <span class="text-price-headline text-body-md text-price-tk font-bold">৳ ${price.toLocaleString('en-US')} TK</span>
+            <div class="flex items-center justify-between mt-1 text-label-sm">
+              <span class="text-text-muted">Qty: 1</span>
+              <button class="text-rec-red-base hover:underline font-bold" onclick="removeCartItem(this, ${price})">Remove</button>
+            </div>
+          </div>
+        `;
+        cartContainer.prepend(itemDiv);
+      }
+
+      showToast(`Added "${productName}" to bag!`, 'success');
+    }
+
+    // Remove Cart Item
+    function removeCartItem(btn, price) {
+      const card = btn.closest('.flex');
+      if (card) {
+        card.remove();
+        cartCount = Math.max(0, cartCount - 1);
+        cartSubtotal = Math.max(0, cartSubtotal - price);
+
+        document.getElementById('mobile-cart-badge').textContent = cartCount;
+        document.getElementById('desktop-cart-badge').textContent = cartCount;
+        document.getElementById('cart-drawer-count').textContent = cartCount;
+        document.getElementById('desktop-cart-total').textContent = '৳ ' + cartSubtotal.toLocaleString('en-US');
+        document.getElementById('cart-drawer-subtotal').textContent = '৳ ' + cartSubtotal.toLocaleString('en-US') + ' TK';
+
+        showToast('Item removed from cart', 'info');
+      }
+    }
+
+    // Toggle Cart Drawer
+    function toggleCartDrawer() {
+      const drawer = document.getElementById('cart-drawer');
+      const overlay = document.getElementById('cart-drawer-overlay');
+      if (drawer && overlay) {
+        if (drawer.classList.contains('translate-x-full')) {
+          drawer.classList.remove('translate-x-full');
+          overlay.classList.remove('hidden');
+        } else {
+          drawer.classList.add('translate-x-full');
+          overlay.classList.add('hidden');
+        }
+      }
+    }
+
+    // Toggle Wishlist
+    function toggleWishlist(btn, productName) {
+      const icon = btn.querySelector('.material-symbols-outlined');
+      if (icon) {
+        if (icon.textContent === 'favorite_border') {
+          icon.textContent = 'favorite';
+          icon.classList.add('text-primary');
+          wishlistCount++;
+          showToast(`"${productName}" added to Wishlist!`, 'success');
+        } else {
+          icon.textContent = 'favorite_border';
+          icon.classList.remove('text-primary');
+          wishlistCount = Math.max(0, wishlistCount - 1);
+          showToast(`"${productName}" removed from Wishlist`, 'info');
+        }
+        document.getElementById('mobile-wishlist-count').textContent = wishlistCount;
+        document.getElementById('desktop-wishlist-count').textContent = wishlistCount;
+      }
+    }
+
+    // Mobile Search Modal Handlers
+    const searchModal = document.getElementById('mobile-search-modal');
+    const searchBtn = document.getElementById('mobile-search-btn');
+    const searchClose = document.getElementById('mobile-search-close');
+
+    if (searchBtn && searchModal) {
+      searchBtn.addEventListener('click', () => {
+        searchModal.classList.remove('hidden');
+        searchModal.classList.add('flex');
+        document.getElementById('mobile-search-input').focus();
+      });
+    }
+
+    function closeMobileSearch() {
+      if (searchModal) {
+        searchModal.classList.add('hidden');
+        searchModal.classList.remove('flex');
+      }
+    }
+
+    if (searchClose) {
+      searchClose.addEventListener('click', closeMobileSearch);
+    }
+
+    function quickSearch(query) {
+      closeMobileSearch();
+      showToast(`Searching for "${query}"...`, 'info');
+    }
+
+    function handleDesktopSearch() {
+      const query = document.getElementById('desktop-search-input').value;
+      if (query.trim()) {
+        showToast(`Searching for "${query}"...`, 'info');
+      } else {
+        showToast('Please type a camera, lens, or audio system to search', 'info');
+      }
+    }
+
+    // Popular Cinema Filter Tabs
+    function filterCategory(category, activeBtn) {
+      const tabs = document.querySelectorAll('.cinema-tab');
+      tabs.forEach(t => {
+        t.className = 'cinema-tab px-3.5 py-1.5 rounded-lg text-label-md font-label-md text-text-muted hover:text-text-display transition-colors';
+      });
+      activeBtn.className = 'cinema-tab px-3.5 py-1.5 rounded-lg text-label-md font-label-md bg-primary text-on-primary font-bold shadow-xs';
+
+      const cards = document.querySelectorAll('.product-card');
+      cards.forEach(card => {
+        if (category === 'all' || card.getAttribute('data-category') === category) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    // Mobile Bottom Nav Active Switcher
+    function setActiveNav(element) {
+      document.querySelectorAll('.mobile-nav-item').forEach(item => {
+        item.className = 'mobile-nav-item flex flex-col items-center justify-center gap-0.5 w-14 h-14 text-text-muted hover:text-on-surface transition-colors';
+      });
+      element.className = 'mobile-nav-item flex flex-col items-center justify-center gap-0.5 w-14 h-14 transition-colors text-primary font-bold';
+    }
+
+    // Newsletter Subscription
+    function handleSubscribe() {
+      const input = document.getElementById('newsletter-email');
+      if (input && input.value.includes('@')) {
+        showToast('Welcome to Camera Bazar VIP! Flat ৳ 1,500 coupon sent to your inbox.', 'success');
+        input.value = '';
+      } else {
+        showToast('Please enter a valid email address.', 'error');
+      }
+    }
+
+    // Synchronized Live Countdown Timer (18 hours, 42 mins, 9 secs)
+    (function initCountdown() {
+      let hours = 18;
+      let mins = 42;
+      let secs = 9;
+
+      const hoursEls = document.querySelectorAll('.cd-hours');
+      const minsEls = document.querySelectorAll('.cd-mins');
+      const secsEls = document.querySelectorAll('.cd-secs');
+
+      setInterval(() => {
+        if (secs > 0) {
+          secs--;
+        } else {
+          secs = 59;
+          if (mins > 0) {
+            mins--;
+          } else {
+            mins = 59;
+            if (hours > 0) {
+              hours--;
+            }
+          }
+        }
+        const hStr = String(hours).padStart(2, '0');
+        const mStr = String(mins).padStart(2, '0');
+        const sStr = String(secs).padStart(2, '0');
+
+        hoursEls.forEach(el => el.textContent = hStr);
+        minsEls.forEach(el => el.textContent = mStr);
+        secsEls.forEach(el => el.textContent = sStr);
+      }, 1000);
+    })();
+
+    // Auto-Sliding Category Carousel
+    (function initCategorySlider() {
+      const track = document.getElementById('category-slider-track');
+      const prevBtn = document.getElementById('cat-slider-prev');
+      const nextBtn = document.getElementById('cat-slider-next');
+      if (!track) return;
+
+      let isPaused = false;
+      let autoSlideTimer = null;
+
+      const getScrollStep = () => {
+        const firstCard = track.querySelector('a');
+        if (firstCard) {
+          return firstCard.offsetWidth + 16; // width + gap
+        }
+        return 160;
+      };
+
+      const slideNext = () => {
+        const maxScroll = track.scrollWidth - track.clientWidth;
+        if (track.scrollLeft >= maxScroll - 15) {
+          track.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          track.scrollBy({ left: getScrollStep(), behavior: 'smooth' });
+        }
+      };
+
+      const slidePrev = () => {
+        if (track.scrollLeft <= 15) {
+          track.scrollTo({ left: track.scrollWidth, behavior: 'smooth' });
+        } else {
+          track.scrollBy({ left: -getScrollStep(), behavior: 'smooth' });
+        }
+      };
+
+      const startAutoSlide = () => {
+        if (autoSlideTimer) clearInterval(autoSlideTimer);
+        autoSlideTimer = setInterval(() => {
+          if (!isPaused) {
+            slideNext();
+          }
+        }, 2500);
+      };
+
+      track.addEventListener('mouseenter', () => { isPaused = true; });
+      track.addEventListener('mouseleave', () => { isPaused = false; });
+      track.addEventListener('touchstart', () => { isPaused = true; }, { passive: true });
+      track.addEventListener('touchend', () => { 
+        setTimeout(() => { isPaused = false; }, 2000); 
+      }, { passive: true });
+
+      if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+          slideNext();
+        });
+      }
+      if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+          slidePrev();
+        });
+      }
+
+      startAutoSlide();
+    })();
+
+    // Hollyland Showcase Slider Controls
+    (function initHollylandSlider() {
+      const hlTrack = document.getElementById('hollyland-track');
+      const hlPrev = document.getElementById('hollyland-prev-btn');
+      const hlNext = document.getElementById('hollyland-next-btn');
+      const hlCount = document.getElementById('hollyland-showing-count');
+      if (!hlTrack) return;
+
+      const getStep = () => {
+        const card = hlTrack.querySelector('div.snap-start');
+        return card ? (card.offsetWidth + 14) * 2 : 440;
+      };
+
+      if (hlNext) {
+        hlNext.addEventListener('click', () => {
+          hlTrack.scrollBy({ left: getStep(), behavior: 'smooth' });
+        });
+      }
+
+      if (hlPrev) {
+        hlPrev.addEventListener('click', () => {
+          hlTrack.scrollBy({ left: -getStep(), behavior: 'smooth' });
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

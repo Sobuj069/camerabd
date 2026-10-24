@@ -1,0 +1,489 @@
+@extends('frontend.layouts.master')
+
+@section('title', 'Secure Checkout - ' . ($siteName ?? 'CAMERA BD'))
+
+@section('content')
+<div class="max-w-7xl mx-auto px-4 lg:px-6 pt-4 lg:pt-6 pb-16 w-full">
+
+  <!-- Breadcrumbs -->
+  <nav class="flex items-center gap-2 text-xs text-text-muted mb-6">
+    <a href="{{ url('/') }}" class="hover:text-primary transition-colors flex items-center gap-1">
+      <span class="material-symbols-outlined text-[15px]">home</span> Home
+    </a>
+    <span>/</span>
+    <a href="{{ route('frontend.cart') }}" class="hover:text-primary transition-colors">Cart</a>
+    <span>/</span>
+    <span class="text-on-surface font-semibold">Checkout</span>
+  </nav>
+
+  <div class="mb-6">
+    <h1 class="text-2xl lg:text-3xl font-bold text-text-display">Checkout & Delivery Information</h1>
+    <p class="text-xs text-text-muted mt-1">Provide your delivery address and choose your preferred payment method</p>
+  </div>
+
+  @if(session('error'))
+    <div class="mb-6 p-4 bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+      <div class="flex items-start sm:items-center gap-2.5">
+        <span class="material-symbols-outlined text-[22px] text-amber-600 shrink-0">warning</span>
+        <span class="leading-relaxed">{{ session('error') }}</span>
+      </div>
+      @if(session('whatsapp_url'))
+        <a href="{{ session('whatsapp_url') }}" target="_blank" class="px-4 py-2.5 bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold rounded-xl flex items-center gap-1.5 shadow-xs whitespace-nowrap shrink-0 transition-transform active:scale-95 text-xs">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M17.472 14.382c-.301-.15-1.78-.878-2.056-.978-.275-.1-.476-.15-.676.15-.2.301-.776.978-.952 1.179-.175.2-.351.226-.652.075-.301-.15-1.27-.468-2.42-1.493-.894-.798-1.498-1.784-1.674-2.085-.175-.301-.019-.464.132-.614.136-.135.301-.351.452-.527.15-.175.2-.301.3-.501.1-.2.05-.376-.025-.526-.075-.15-.676-1.63-1.002-2.233-.25-.6-.5-.526-.676-.526-.175 0-.376-.025-.576-.025-.2 0-.526.075-.802.376-.276.301-1.053 1.028-1.053 2.508 0 1.48 1.078 2.909 1.229 3.11.15.2 2.122 3.24 5.141 4.544.718.31 1.279.496 1.716.635.721.23 1.377.197 1.896.12.578-.087 1.78-.727 2.03-1.43.25-.702.25-1.303.175-1.43-.075-.125-.276-.2-.576-.35zM12.04 21.78c-1.74 0-3.41-.46-4.88-1.33l-.35-.21-3.63.95.97-3.54-.23-.37a9.78 9.78 0 0 1-1.5-5.24c0-5.43 4.42-9.85 9.85-9.85 2.63 0 5.1 1.02 6.96 2.88a9.8 9.8 0 0 1 2.88 6.97c0 5.43-4.42 9.84-9.85 9.84zm0-17.84a7.99 7.99 0 0 0-8 8c0 1.58.46 3.1 1.33 4.41l.21.32-.57 2.08 2.13-.56.31.18c1.28.76 2.76 1.17 4.29 1.17 4.41 0 8-3.59 8-8s-3.59-8-8-8z"/></svg>
+          <span>Chat on WhatsApp</span>
+        </a>
+      @endif
+    </div>
+  @endif
+
+  <form action="{{ route('frontend.process-checkout') }}" method="POST" id="checkout-form">
+    @csrf
+    
+    <!-- Hidden payload inputs for Cart, Shipping, Discount -->
+    <input type="hidden" name="cart_items" id="cart-items-input" value="[]" />
+    <input type="hidden" name="shipping_cost" id="shipping-cost-input" value="0" />
+    <input type="hidden" name="discount" id="discount-input" value="0" />
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <!-- LEFT COLUMN: Shipping Info & Payment Methods (7 Cols) -->
+      <div class="lg:col-span-7 space-y-6">
+        
+        <!-- Section 1: Customer Contact Details -->
+        <div class="bg-surface-card rounded-3xl p-5 md:p-6 border border-surface-border shadow-xs">
+          <div class="flex items-center gap-2.5 pb-3 border-b border-surface-border mb-4">
+            <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold">1</div>
+            <h2 class="text-base font-bold text-text-display">Customer & Contact Information</h2>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <label class="block font-bold text-on-surface mb-1.5">Full Name *</label>
+              <input type="text" name="customer_name" required value="{{ old('customer_name') }}" placeholder="e.g. Tanvir Ahmed" class="w-full bg-surface-container rounded-xl p-3 border border-surface-border text-xs focus:outline-none focus:border-primary font-medium" />
+            </div>
+
+            <div>
+              <label class="block font-bold text-on-surface mb-1.5">Phone Number (For Order Confirmation & Delivery) *</label>
+              <input type="tel" name="phone" required value="{{ old('phone') }}" placeholder="01XXXXXXXXX" class="w-full bg-surface-container rounded-xl p-3 border border-surface-border text-xs focus:outline-none focus:border-primary font-medium" />
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="block font-bold text-on-surface mb-1.5">Email Address (Optional, for Invoice Copy)</label>
+              <input type="email" name="email" value="{{ old('email') }}" placeholder="name@example.com" class="w-full bg-surface-container rounded-xl p-3 border border-surface-border text-xs focus:outline-none focus:border-primary font-medium" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Delivery Address -->
+        <div class="bg-surface-card rounded-3xl p-5 md:p-6 border border-surface-border shadow-xs">
+          <div class="flex items-center gap-2.5 pb-3 border-b border-surface-border mb-4">
+            <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold">2</div>
+            <h2 class="text-base font-bold text-text-display">Delivery Address in Bangladesh</h2>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <label class="block font-bold text-on-surface mb-1.5">Division *</label>
+              <select name="division" id="division-select" class="w-full bg-surface-container rounded-xl p-3 border border-surface-border text-xs focus:outline-none focus:border-primary font-medium">
+                <option value="Dhaka Division" {{ old('division') == 'Dhaka Division' ? 'selected' : '' }}>Dhaka Division</option>
+                <option value="Chittagong Division" {{ old('division') == 'Chittagong Division' ? 'selected' : '' }}>Chittagong Division</option>
+                <option value="Sylhet Division" {{ old('division') == 'Sylhet Division' ? 'selected' : '' }}>Sylhet Division</option>
+                <option value="Rajshahi Division" {{ old('division') == 'Rajshahi Division' ? 'selected' : '' }}>Rajshahi Division</option>
+                <option value="Khulna Division" {{ old('division') == 'Khulna Division' ? 'selected' : '' }}>Khulna Division</option>
+                <option value="Barishal Division" {{ old('division') == 'Barishal Division' ? 'selected' : '' }}>Barishal Division</option>
+                <option value="Rangpur Division" {{ old('division') == 'Rangpur Division' ? 'selected' : '' }}>Rangpur Division</option>
+                <option value="Mymensingh Division" {{ old('division') == 'Mymensingh Division' ? 'selected' : '' }}>Mymensingh Division</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block font-bold text-on-surface mb-1.5">District / City *</label>
+              <input type="text" name="city" id="city-input" required value="{{ old('city', 'Dhaka') }}" placeholder="e.g. Dhaka, Chittagong, Sylhet, Gazipur" class="w-full bg-surface-container rounded-xl p-3 border border-surface-border text-xs focus:outline-none focus:border-primary font-medium" />
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="block font-bold text-on-surface mb-1.5">Complete Delivery Address *</label>
+              <textarea name="delivery_address" id="address-input" rows="2" required placeholder="House, Road, Area, Thana/Police Station..." class="w-full bg-surface-container rounded-xl p-3 border border-surface-border text-xs focus:outline-none focus:border-primary font-medium">{{ old('delivery_address') }}</textarea>
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="block font-bold text-on-surface mb-1.5">Special Order Notes / Instructions (Optional)</label>
+              <input type="text" name="order_notes" value="{{ old('order_notes') }}" placeholder="e.g. Please test calibration before dispatch" class="w-full bg-surface-container rounded-xl p-3 border border-surface-border text-xs focus:outline-none focus:border-primary font-medium" />
+            </div>
+
+            <!-- Auto-Calculated Delivery Rate Info Strip -->
+            <div class="md:col-span-2 pt-1">
+              <input type="hidden" name="delivery_method" id="delivery-method-input" value="Express Home Delivery (Inside Dhaka)" />
+              <input type="hidden" name="payment_method" value="Cash On Delivery" />
+              <div class="p-3 bg-surface-container rounded-xl border border-surface-border text-xs text-text-muted flex items-center justify-between flex-wrap gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-primary text-[18px]">local_shipping</span>
+                  <span>Delivery Charge: <strong class="text-on-surface font-bold" id="delivery-info-rate">Inside Dhaka ৳ 80 TK</strong></span>
+                </div>
+                <span id="delivery-auto-badge" class="text-[11px] font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[13px]">verified</span>
+                  <span id="delivery-auto-text">Auto Applied by Location</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: Order Review & Submit (5 Cols) -->
+      <div class="lg:col-span-5 bg-surface-card rounded-3xl p-5 md:p-6 border border-surface-border shadow-xs sticky top-28 space-y-5">
+        
+        <h3 class="text-base font-bold text-text-display pb-3 border-b border-surface-border">
+          Order Summary (<span id="checkout-item-count">0 Items</span>)
+        </h3>
+
+        <!-- Dynamic Mini items list -->
+        <div class="space-y-3 max-h-64 overflow-y-auto pr-1 divide-y divide-surface-border/50" id="checkout-items-list">
+          <!-- Rendered dynamically by renderCheckoutSummary() -->
+        </div>
+
+        <!-- Calculations -->
+        <div class="space-y-2.5 pt-4 border-t border-surface-border text-xs">
+          <div class="flex items-center justify-between text-text-muted">
+            <span>Subtotal:</span>
+            <span class="font-bold text-on-surface" id="checkout-subtotal">৳ 0 TK</span>
+          </div>
+          <div class="flex items-center justify-between text-text-muted">
+            <span>Shipping Charge:</span>
+            <span class="font-bold text-on-surface" id="checkout-shipping">৳ 80 TK</span>
+          </div>
+          <div class="flex items-center justify-between text-text-muted">
+            <span>Estimated VAT/AIT:</span>
+            <span class="text-on-surface font-medium">Included</span>
+          </div>
+          <div class="pt-3 border-t border-surface-border flex items-baseline justify-between">
+            <span class="text-sm font-bold text-text-display">Payable Amount:</span>
+            <span class="text-xl font-extrabold text-primary" id="checkout-total">৳ 0 TK</span>
+          </div>
+        </div>
+
+        <!-- Terms Agreement -->
+        <div class="pt-2">
+          <label class="flex items-start gap-2 text-[11px] text-text-muted cursor-pointer">
+            <input type="checkbox" checked required class="mt-0.5 rounded text-primary focus:ring-primary" />
+            <span>I have read and agree to the <a href="#terms" class="text-primary underline">Terms & Conditions</a> and warranty policy of {{ $siteName ?? 'CAMERA BD' }}.</span>
+          </label>
+        </div>
+
+        <!-- Confirm & Place Order Button -->
+        <button type="submit" id="submit-order-btn" class="w-full bg-primary hover:bg-primary-hover text-white font-extrabold text-base py-4 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer">
+          <span class="material-symbols-outlined text-[20px]">check_circle</span>
+          <span>Confirm & Place Order</span>
+        </button>
+
+        <!-- Guarantee Icons -->
+        <div class="p-3 bg-surface-container rounded-xl border border-surface-border text-[11px] text-text-muted space-y-1">
+          <div class="flex items-center gap-1.5 text-stock-available font-bold">
+            <span class="material-symbols-outlined text-[15px]">verified</span> 100% Genuine Importer Product
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[15px] text-primary">speed</span> Dispatch within 24 Hours
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </form>
+
+</div>
+@endsection
+
+@push('scripts')
+<script>
+  let currentShippingCost = 80;
+
+  function updateShippingDisplay() {
+    const shipEl = document.getElementById('checkout-shipping');
+    const infoRateEl = document.getElementById('delivery-info-rate');
+    const autoBadgeText = document.getElementById('delivery-auto-text');
+    const deliveryMethodInput = document.getElementById('delivery-method-input');
+
+    if (currentShippingCost === 80) {
+      if (shipEl) {
+        shipEl.textContent = '৳ 80 TK';
+        shipEl.className = 'font-bold text-on-surface';
+      }
+      if (infoRateEl) infoRateEl.textContent = 'Inside Dhaka ৳ 80 TK';
+      if (autoBadgeText) autoBadgeText.textContent = 'Inside Dhaka (৳80)';
+      if (deliveryMethodInput) deliveryMethodInput.value = 'Express Home Delivery (Inside Dhaka)';
+    } else {
+      if (shipEl) {
+        shipEl.textContent = '৳ 130 TK';
+        shipEl.className = 'font-bold text-on-surface';
+      }
+      if (infoRateEl) infoRateEl.textContent = 'Outside Dhaka ৳ 130 TK';
+      if (autoBadgeText) autoBadgeText.textContent = 'Outside Dhaka (৳130)';
+      if (deliveryMethodInput) deliveryMethodInput.value = 'Courier Delivery (Outside Dhaka)';
+    }
+  }
+
+  function autoDetectDeliveryZone() {
+    const divisionSelect = document.getElementById('division-select');
+    const cityInput = document.getElementById('city-input');
+    const addressInput = document.getElementById('address-input');
+
+    const division = divisionSelect ? divisionSelect.value.toLowerCase().trim() : '';
+    const city = cityInput ? cityInput.value.toLowerCase().trim() : '';
+    const address = addressInput ? addressInput.value.toLowerCase().trim() : '';
+
+    // Check if Inside Dhaka
+    const isDhakaDivision = division.includes('dhaka');
+    
+    // Check if city / address mentions other major districts outside dhaka
+    const outsideDistricts = [
+      'chittagong', 'chattogram', 'sylhet', 'rajshahi', 'khulna', 'barishal', 'barisal',
+      'rangpur', 'mymensingh', 'cumilla', 'comilla', 'bogra', 'bogura', 'jessore', 'jashore',
+      'cox', 'cox\'s bazar', 'noakhali', 'feni', 'dinajpur', 'tangail', 'brahmanbaria',
+      'kushtia', 'pabna', 'sirajganj', 'jamalpur', 'faridpur', 'naogaon', 'habiganj',
+      'moulvibazar', 'sunamganj', 'patuakhali', 'bhola', 'chandpur', 'lakshmipur', 'kishoreganj',
+      'netrokona', 'sherpur', 'narsingdi', 'manikganj', 'munshiganj', 'gopalganj', 'madaripur',
+      'shariatpur', 'rajbari', 'magura', 'narail', 'bagerhat', 'satkhira', 'chuadanga',
+      'meherpur', 'jhinaidah', 'jhenaidah', 'joypurhat', 'chapainawabganj', 'nawabganj',
+      'kurigram', 'gaibandha', 'lalmonirhat', 'nilphamari', 'panchagarh', 'thakurgaon',
+      'barguna', 'jhalokati', 'pirojpur', 'bandarban', 'khagrachhari', 'rangamati'
+    ];
+
+    const hasOutsideKeyword = outsideDistricts.some(dist => city.includes(dist) || address.includes(dist));
+    const isExplicitlyDhaka = city.includes('dhaka') || address.includes('dhaka') || city.includes('uttara') || city.includes('mirpur') || city.includes('gulshan') || city.includes('banani') || city.includes('dhanmondi') || city.includes('motijheel') || city.includes('mohammadpur') || city.includes('badda');
+
+    if (!isDhakaDivision || (hasOutsideKeyword && !isExplicitlyDhaka)) {
+      currentShippingCost = 130;
+    } else {
+      currentShippingCost = 80;
+    }
+
+    updateShippingDisplay();
+    renderCheckoutSummary();
+  }
+
+  function renderCheckoutSummary() {
+    const items = window.CameraCart ? CameraCart.get() : [];
+    const count = window.CameraCart ? CameraCart.getCount() : 0;
+    const subtotal = window.CameraCart ? CameraCart.getSubtotal() : 0;
+
+    const listEl = document.getElementById('checkout-items-list');
+    const countEl = document.getElementById('checkout-item-count');
+    const subtotalEl = document.getElementById('checkout-subtotal');
+    const totalEl = document.getElementById('checkout-total');
+    const cartInput = document.getElementById('cart-items-input');
+    const shippingInput = document.getElementById('shipping-cost-input');
+    const submitBtn = document.getElementById('submit-order-btn');
+
+    if (countEl) countEl.textContent = `${count} Item${count > 1 ? 's' : ''}`;
+    if (subtotalEl) subtotalEl.textContent = `৳ ${Math.round(subtotal).toLocaleString('en-US')} TK`;
+
+    // Set hidden inputs
+    if (cartInput) cartInput.value = JSON.stringify(items);
+    if (shippingInput) shippingInput.value = currentShippingCost;
+
+    const grandTotal = subtotal + currentShippingCost;
+    if (totalEl) totalEl.textContent = `৳ ${Math.round(grandTotal).toLocaleString('en-US')} TK`;
+
+    if (!items || items.length === 0) {
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-50', 'pointer-events-none');
+      }
+      if (listEl) {
+        listEl.innerHTML = `
+          <div class="py-8 text-center text-xs text-text-muted">
+            <span class="material-symbols-outlined text-[36px] text-slate-300 block mb-1">shopping_bag</span>
+            <p class="font-bold text-slate-700">No items in your cart</p>
+            <a href="{{ url('/') }}" class="text-primary font-bold hover:underline mt-2 inline-block">Start shopping now →</a>
+          </div>
+        `;
+      }
+      return;
+    }
+
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('opacity-50', 'pointer-events-none');
+    }
+
+    if (listEl) {
+      let html = '';
+      items.forEach(item => {
+        const unitPrice = parseFloat(item.price) || 0;
+        const qty = parseInt(item.qty) || 1;
+        const lineTotal = unitPrice * qty;
+
+        const imgHtml = item.image
+          ? `<img src="${item.image}" alt="${item.name}" class="w-12 h-12 object-contain bg-surface-base rounded-lg p-1 border border-surface-border shrink-0" />`
+          : `<div class="w-12 h-12 rounded-lg bg-surface-base border border-surface-border flex items-center justify-center text-primary shrink-0"><span class="material-symbols-outlined text-[20px]">videocam</span></div>`;
+
+        html += `
+          <div class="flex items-center gap-3 text-xs pt-2.5 first:pt-0">
+            ${imgHtml}
+            <div class="flex-1 min-w-0">
+              <h4 class="font-bold text-on-surface truncate">${item.name}</h4>
+              <span class="text-text-muted text-[11px]">Qty: ${qty} × ৳ ${Math.round(unitPrice).toLocaleString('en-US')}</span>
+            </div>
+            <span class="font-bold text-primary whitespace-nowrap">৳ ${Math.round(lineTotal).toLocaleString('en-US')}</span>
+          </div>
+        `;
+      });
+      listEl.innerHTML = html;
+    }
+  }
+
+  // Track Division, City & Address for Real-time Zone Auto-Detection
+  const divisionSelect = document.getElementById('division-select');
+  const cityInput = document.getElementById('city-input');
+  const addressInput = document.getElementById('address-input');
+
+  if (divisionSelect) {
+    divisionSelect.addEventListener('change', autoDetectDeliveryZone);
+  }
+
+  if (cityInput) {
+    cityInput.addEventListener('input', autoDetectDeliveryZone);
+  }
+
+  if (addressInput) {
+    addressInput.addEventListener('input', autoDetectDeliveryZone);
+  }
+
+  // Form submit check with double-click guard
+  let isCheckoutSubmitting = false;
+  document.getElementById('checkout-form').addEventListener('submit', function(e) {
+    if (isCheckoutSubmitting) {
+      e.preventDefault();
+      return false;
+    }
+
+    const items = window.CameraCart ? CameraCart.get() : [];
+    if (!items || items.length === 0) {
+      e.preventDefault();
+      alert('Your cart is empty! Please add products before checking out.');
+      return false;
+    }
+    const cartInput = document.getElementById('cart-items-input');
+    if (cartInput) {
+      cartInput.value = JSON.stringify(items);
+    }
+    const shippingInput = document.getElementById('shipping-cost-input');
+    if (shippingInput) {
+      shippingInput.value = currentShippingCost;
+    }
+
+    isCheckoutSubmitting = true;
+    const submitBtn = document.getElementById('submit-order-btn');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.classList.add('opacity-75', 'cursor-not-allowed', 'pointer-events-none');
+      submitBtn.innerHTML = `
+        <span class="inline-block animate-spin mr-1">⏳</span>
+        <span>Processing Order... Please wait</span>
+      `;
+    }
+  });
+
+  // Listen for live cart events
+  window.addEventListener('cameracart:updated', function() {
+    renderCheckoutSummary();
+  });
+
+  // GA4 / GTM DataLayer BeginCheckout Event Tracking
+  function trackDataLayerBeginCheckout() {
+    try {
+      if (typeof window.pushToDataLayer !== 'function') return;
+      const items = window.CameraCart ? CameraCart.get() : [];
+      if (!items || items.length === 0) return;
+
+      const subtotal = window.CameraCart ? CameraCart.getSubtotal() : 0;
+      const dlCheckoutItems = items.map(function(item, idx) {
+        return {
+          item_id: String(item.id || item.barcode || item.name),
+          item_name: item.name || 'Cinema Product',
+          affiliation: '{{ addslashes($siteName ?? "CAMERA BD") }}',
+          currency: 'BDT',
+          price: parseFloat(item.price) || 0,
+          quantity: parseInt(item.qty) || 1,
+          index: idx + 1
+        };
+      });
+
+      window.pushToDataLayer('begin_checkout', {
+        currency: 'BDT',
+        value: parseFloat(subtotal) || 0,
+        items: dlCheckoutItems
+      });
+    } catch(e) {
+      console.warn('[DataLayer] BeginCheckout error:', e);
+    }
+  }
+
+  // Meta Pixel InitiateCheckout Event Tracking (Browser + Server CAPI)
+  function trackMetaPixelInitiateCheckout() {
+    try {
+      const items = window.CameraCart ? CameraCart.get() : [];
+      if (!items || items.length === 0) {
+        return; // Do not fire InitiateCheckout if cart is empty
+      }
+
+      const subtotal = window.CameraCart ? CameraCart.getSubtotal() : 0;
+      const count = window.CameraCart ? CameraCart.getCount() : 0;
+
+      const contentIds = items.map(i => String(i.id || i.barcode || i.name)).filter(Boolean);
+      const contents = items.map(i => ({
+        id: String(i.id || i.barcode || i.name),
+        quantity: parseInt(i.qty) || 1,
+        item_price: parseFloat(i.price) || 0
+      }));
+
+      const eventId = 'initiate_checkout_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+      const customPayload = {
+        content_name: 'Checkout Page',
+        content_category: 'E-commerce Checkout',
+        content_ids: contentIds.length > 0 ? contentIds : ['CHECKOUT'],
+        contents: contents,
+        content_type: 'product',
+        value: parseFloat(subtotal) || 0,
+        num_items: count || 1,
+        currency: 'BDT'
+      };
+
+      // 1. Browser Event
+      if (typeof fbq === 'function') {
+        fbq('track', 'InitiateCheckout', customPayload, { eventID: eventId });
+      }
+
+      // 2. Server Event (CAPI via Background Endpoint)
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+      fetch('{{ route("meta-capi.track") }}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': csrfToken,
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          event_name: 'InitiateCheckout',
+          event_id: eventId,
+          custom_data: customPayload,
+          source_url: window.location.href
+        })
+      }).catch(e => console.debug('CAPI async notice:', e));
+
+    } catch(err) {
+      console.warn('Meta Pixel InitiateCheckout error:', err);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    autoDetectDeliveryZone();
+    renderCheckoutSummary();
+    trackDataLayerBeginCheckout();
+    trackMetaPixelInitiateCheckout();
+  });
+</script>
+@endpush
+
