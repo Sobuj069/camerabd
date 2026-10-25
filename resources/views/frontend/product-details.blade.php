@@ -90,8 +90,38 @@
         </div>
       @endif
 
-      <!-- Official Guarantee Perks -->
-      <div class="grid grid-cols-2 gap-3 pt-4 border-t border-surface-border">
+      <!-- Quantity and Action Buttons (Add to Cart & Order Now) -->
+      <div class="space-y-3 pt-3">
+        <div class="flex items-center gap-3">
+          <!-- Quantity Counter -->
+          <div class="flex items-center border border-surface-border bg-surface-container rounded-xl p-1 shrink-0">
+            <button type="button" onclick="decrementQty()" class="w-8 h-8 rounded-lg bg-surface-card flex items-center justify-center text-on-surface hover:bg-primary hover:text-white transition-colors font-bold select-none cursor-pointer">-</button>
+            <input type="number" value="1" min="1" max="10" class="product-qty-input w-12 text-center text-sm font-bold bg-transparent focus:outline-none" oninput="syncQty(this.value)" />
+            <button type="button" onclick="incrementQty()" class="w-8 h-8 rounded-lg bg-surface-card flex items-center justify-center text-on-surface hover:bg-primary hover:text-white transition-colors font-bold select-none cursor-pointer">+</button>
+          </div>
+
+          <!-- Add to Cart -->
+          <button type="button" onclick="handleAddToCart()" class="flex-1 bg-primary hover:bg-primary-hover text-white font-bold text-sm py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 cursor-pointer">
+            <span class="material-symbols-outlined text-[18px]">shopping_bag</span>
+            <span>Add to Cart</span>
+          </button>
+        </div>
+
+        <!-- Direct Order Now & Hotline -->
+        <div class="flex gap-2">
+          <button type="button" onclick="handleBuyNow()" class="flex-1 bg-rec-red-base hover:bg-rec-red-hover text-white font-bold text-sm py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 text-center cursor-pointer">
+            <span class="material-symbols-outlined text-[18px]">bolt</span>
+            <span>Order Now</span>
+          </button>
+          <a href="tel:{{ $whatsappDigits ?? '8801917256756' }}" class="px-4 py-3 bg-surface-container hover:bg-surface-container-low border border-surface-border rounded-xl text-xs font-bold text-on-surface flex items-center justify-center gap-1.5 transition-colors shrink-0">
+            <span class="material-symbols-outlined text-primary text-[18px]">support_agent</span>
+            <span>Call Hotline</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Official Guarantee Perks (Moved Below Action Buttons) -->
+      <div class="grid grid-cols-2 gap-3 pt-3 border-t border-surface-border">
         <div class="flex items-center gap-2.5 p-3 rounded-xl bg-surface-container-low border border-surface-border">
           <span class="material-symbols-outlined text-primary text-[24px]">verified</span>
           <div>
@@ -207,28 +237,28 @@
           </div>
         </div>
 
-        <!-- Quantity and Action Buttons -->
-        <div class="space-y-3 pt-2">
+        <!-- Desktop Action Buttons (Right Column) -->
+        <div class="hidden lg:block space-y-3 pt-2">
           <div class="flex items-center gap-3">
             <!-- Quantity Counter -->
-            <div class="flex items-center border border-surface-border bg-surface-container rounded-xl p-1">
-              <button onclick="decrementQty()" class="w-8 h-8 rounded-lg bg-surface-card flex items-center justify-center text-on-surface hover:bg-primary hover:text-white transition-colors font-bold">-</button>
-              <input id="product-qty" type="number" value="1" min="1" max="10" class="w-12 text-center text-sm font-bold bg-transparent focus:outline-none" />
-              <button onclick="incrementQty()" class="w-8 h-8 rounded-lg bg-surface-card flex items-center justify-center text-on-surface hover:bg-primary hover:text-white transition-colors font-bold">+</button>
+            <div class="flex items-center border border-surface-border bg-surface-container rounded-xl p-1 shrink-0">
+              <button type="button" onclick="decrementQty()" class="w-8 h-8 rounded-lg bg-surface-card flex items-center justify-center text-on-surface hover:bg-primary hover:text-white transition-colors font-bold select-none cursor-pointer">-</button>
+              <input type="number" value="1" min="1" max="10" class="product-qty-input w-12 text-center text-sm font-bold bg-transparent focus:outline-none" oninput="syncQty(this.value)" />
+              <button type="button" onclick="incrementQty()" class="w-8 h-8 rounded-lg bg-surface-card flex items-center justify-center text-on-surface hover:bg-primary hover:text-white transition-colors font-bold select-none cursor-pointer">+</button>
             </div>
 
             <!-- Add to Cart -->
-            <button onclick="handleAddToCart()" class="flex-1 bg-primary hover:bg-primary-hover text-white font-bold text-sm py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 cursor-pointer">
+            <button type="button" onclick="handleAddToCart()" class="flex-1 bg-primary hover:bg-primary-hover text-white font-bold text-sm py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 cursor-pointer">
               <span class="material-symbols-outlined text-[18px]">shopping_bag</span>
               <span>Add to Cart</span>
             </button>
           </div>
 
-          <!-- Direct Buy Now & Hotline -->
+          <!-- Direct Order Now & Hotline -->
           <div class="flex gap-2">
-            <button onclick="handleBuyNow()" class="flex-1 bg-rec-red-base hover:bg-rec-red-hover text-white font-bold text-sm py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 text-center cursor-pointer">
+            <button type="button" onclick="handleBuyNow()" class="flex-1 bg-rec-red-base hover:bg-rec-red-hover text-white font-bold text-sm py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 text-center cursor-pointer">
               <span class="material-symbols-outlined text-[18px]">bolt</span>
-              <span>Buy Now (Instant Checkout)</span>
+              <span>Order Now</span>
             </button>
             <a href="tel:{{ $whatsappDigits ?? '8801917256756' }}" class="px-4 py-3 bg-surface-container hover:bg-surface-container-low border border-surface-border rounded-xl text-xs font-bold text-on-surface flex items-center justify-center gap-1.5 transition-colors">
               <span class="material-symbols-outlined text-primary text-[18px]">support_agent</span>
@@ -405,14 +435,27 @@
     btn.classList.remove('border-surface-border');
   }
 
+  function syncQty(val) {
+    const parsed = parseInt(val) || 1;
+    document.querySelectorAll('.product-qty-input').forEach(input => {
+      input.value = Math.max(1, Math.min(10, parsed));
+    });
+  }
+
   function incrementQty() {
-    const qty = document.getElementById('product-qty');
-    if (qty) qty.value = parseInt(qty.value || 1) + 1;
+    const first = document.querySelector('.product-qty-input');
+    const cur = parseInt(first?.value || 1);
+    if (cur < 10) {
+      syncQty(cur + 1);
+    }
   }
 
   function decrementQty() {
-    const qty = document.getElementById('product-qty');
-    if (qty && parseInt(qty.value) > 1) qty.value = parseInt(qty.value) - 1;
+    const first = document.querySelector('.product-qty-input');
+    const cur = parseInt(first?.value || 1);
+    if (cur > 1) {
+      syncQty(cur - 1);
+    }
   }
 
   function switchTab(tabId, btn) {
@@ -428,7 +471,8 @@
   }
 
   function handleAddToCart() {
-    const qty = parseInt(document.getElementById('product-qty')?.value || 1);
+    const qtyInput = document.querySelector('.product-qty-input');
+    const qty = parseInt(qtyInput?.value || 1);
     if (window.CameraCart) {
       CameraCart.add({
         id: '{{ $product['id'] ?? null }}',
@@ -443,7 +487,8 @@
   }
 
   function handleBuyNow() {
-    const qty = parseInt(document.getElementById('product-qty')?.value || 1);
+    const qtyInput = document.querySelector('.product-qty-input');
+    const qty = parseInt(qtyInput?.value || 1);
     if (window.CameraCart) {
       CameraCart.add({
         id: '{{ $product['id'] ?? null }}',
