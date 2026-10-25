@@ -272,6 +272,20 @@
                     </div>
                 </div>
 
+                <p class="section-label mt-6">{{ __('Online Order Policy (অনলাইন অর্ডার সীমাবদ্ধতা)') }}</p>
+
+                <div class="field-grid grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="field">
+                        <label>{{ __('24-Hour Single Order Restriction (একই নম্বর থেকে অর্ডার সীমা)') }}</label>
+                        <input type="hidden" name="types[]" value="enable_24h_order_restriction">
+                        <select name="enable_24h_order_restriction" class="select2">
+                            <option value="0" {{ get_setting('enable_24h_order_restriction') != '1' ? 'selected' : '' }}>{{ __('Disabled / বন্ধ (যে কেউ যতবার ইচ্ছা অর্ডার করতে পারবে) [Default]') }}</option>
+                            <option value="1" {{ get_setting('enable_24h_order_restriction') == '1' ? 'selected' : '' }}>{{ __('Enabled / চালু (একই নম্বর থেকে ২৪ ঘণ্টায় কেবল ১টি অর্ডার)') }}</option>
+                        </select>
+                        <small class="text-muted">{{ __('বন্ধ রাখলে কাস্টমার একই ফোন নম্বর ব্যবহার করে ২৪ ঘণ্টার মধ্যেও যতবার ইচ্ছা অর্ডার করতে পারবে।') }}</small>
+                    </div>
+                </div>
+
                 <div class="footer-row">
                     <button type="submit" class="save-btn flex items-center justify-center gap-2">
                         <span class="btn-text">{{ __('Apply settings') }}</span>

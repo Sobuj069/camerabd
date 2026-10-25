@@ -607,62 +607,67 @@ class FrontendController extends Controller
         ]);
 
         // -------------------------------------------------------------
-        // 24-Hour Single Order Policy & 3-Attempt WhatsApp Redirection
+        // 24-Hour Single Order Policy (Default: Disabled)
+        // Set 'enable_24h_order_restriction' to 1 in Settings if ever needed
         // -------------------------------------------------------------
-        $cleanPhone = preg_replace('/[^0-9]/', '', $validated['phone']);
-        $phoneSuffix = strlen($cleanPhone) >= 10 ? substr($cleanPhone, -10) : $cleanPhone;
-        $twentyFourHoursAgo = now()->subHours(24);
+        $is24hOrderRestrictionEnabled = function_exists('get_setting') && (get_setting('enable_24h_order_restriction') === '1' || get_setting('enable_24h_order_restriction') === 'true');
 
-        $existingOrder = WebsiteOrder::where('created_at', '>=', $twentyFourHoursAgo)
-            ->where(function($q) use ($phoneSuffix, $cleanPhone) {
-                $q->where('phone', 'like', "%{$phoneSuffix}")
-                  ->orWhere('phone', $cleanPhone);
-            })
-            ->latest('id')
-            ->first();
+        if ($is24hOrderRestrictionEnabled) {
+            $cleanPhone = preg_replace('/[^0-9]/', '', $validated['phone']);
+            $phoneSuffix = strlen($cleanPhone) >= 10 ? substr($cleanPhone, -10) : $cleanPhone;
+            $twentyFourHoursAgo = now()->subHours(24);
 
-        $existingOrderNo = $existingOrder ? $existingOrder->order_no : null;
-
-        if (!$existingOrder) {
-            $existingInvoice = Invoice::where('created_at', '>=', $twentyFourHoursAgo)
-                ->whereHas('customer', function($q) use ($phoneSuffix, $cleanPhone) {
+            $existingOrder = WebsiteOrder::where('created_at', '>=', $twentyFourHoursAgo)
+                ->where(function($q) use ($phoneSuffix, $cleanPhone) {
                     $q->where('phone', 'like', "%{$phoneSuffix}")
                       ->orWhere('phone', $cleanPhone);
                 })
                 ->latest('id')
                 ->first();
-            if ($existingInvoice) {
-                $existingOrderNo = $existingInvoice->invoice_no;
-            }
-        }
 
-        if ($existingOrderNo) {
-            $cacheKey = 'order_attempts_' . $phoneSuffix;
-            $attempts = (int) Cache::get($cacheKey, 0) + 1;
-            Cache::put($cacheKey, $attempts, now()->addHours(24));
+            $existingOrderNo = $existingOrder ? $existingOrder->order_no : null;
 
-            $rawPhone = function_exists('get_setting') ? get_setting('com_phone') : null;
-            $digits = preg_replace('/[^0-9]/', '', $rawPhone ?: '01352146344');
-            $whatsappDigits = str_starts_with($digits, '880') ? $digits : (str_starts_with($digits, '0') ? ('88' . $digits) : ('880' . $digits));
-            $siteName = function_exists('get_setting') && get_setting('com_name') ? get_setting('com_name') : 'CAMERA BD';
-
-            $waMessage = "Hello {$siteName}! I have already placed Order #{$existingOrderNo} within the last 24 hours, and I want to order additional products or need assistance.";
-            $whatsappUrl = "https://wa.me/{$whatsappDigits}?text=" . urlencode($waMessage);
-
-            if ($attempts >= 3) {
-                // 3rd attempt within 24h: Redirect immediately to WhatsApp
-                return redirect()->away($whatsappUrl);
+            if (!$existingOrder) {
+                $existingInvoice = Invoice::where('created_at', '>=', $twentyFourHoursAgo)
+                    ->whereHas('customer', function($q) use ($phoneSuffix, $cleanPhone) {
+                        $q->where('phone', 'like', "%{$phoneSuffix}")
+                          ->orWhere('phone', $cleanPhone);
+                    })
+                    ->latest('id')
+                    ->first();
+                if ($existingInvoice) {
+                    $existingOrderNo = $existingInvoice->invoice_no;
+                }
             }
 
-            $remaining = 3 - $attempts;
-            $errorMsg = "আপনি গত ২৪ ঘণ্টার মধ্যে ইতিমধ্যে একটি অর্ডার প্লেস করেছেন (অর্ডার নং: #{$existingOrderNo})। একজন গ্রাহক ২৪ ঘণ্টায় কেবল ১টি অনলাইন অর্ডার করতে পারবেন। জরুরি প্রয়োজনে WhatsApp-এ যোগাযোগ করুন। (আর {$remaining} বার চেষ্টা করলে সরাসরি WhatsApp-এ রিডাইরেক্ট হবে)";
+            if ($existingOrderNo) {
+                $cacheKey = 'order_attempts_' . $phoneSuffix;
+                $attempts = (int) Cache::get($cacheKey, 0) + 1;
+                Cache::put($cacheKey, $attempts, now()->addHours(24));
 
-            return redirect()->back()
-                ->withInput()
-                ->with('error', $errorMsg)
-                ->with('whatsapp_url', $whatsappUrl)
-                ->with('existing_order_no', $existingOrderNo)
-                ->with('attempts_count', $attempts);
+                $rawPhone = function_exists('get_setting') ? get_setting('com_phone') : null;
+                $digits = preg_replace('/[^0-9]/', '', $rawPhone ?: '01352146344');
+                $whatsappDigits = str_starts_with($digits, '880') ? $digits : (str_starts_with($digits, '0') ? ('88' . $digits) : ('880' . $digits));
+                $siteName = function_exists('get_setting') && get_setting('com_name') ? get_setting('com_name') : 'CAMERA BD';
+
+                $waMessage = "Hello {$siteName}! I have already placed Order #{$existingOrderNo} within the last 24 hours, and I want to order additional products or need assistance.";
+                $whatsappUrl = "https://wa.me/{$whatsappDigits}?text=" . urlencode($waMessage);
+
+                if ($attempts >= 3) {
+                    // 3rd attempt within 24h: Redirect immediately to WhatsApp
+                    return redirect()->away($whatsappUrl);
+                }
+
+                $remaining = 3 - $attempts;
+                $errorMsg = "আপনি গত ২৪ ঘণ্টার মধ্যে ইতিমধ্যে একটি অর্ডার প্লেস করেছেন (অর্ডার নং: #{$existingOrderNo})। একজন গ্রাহক ২৪ ঘণ্টায় কেবল ১টি অনলাইন অর্ডার করতে পারবেন। জরুরি প্রয়োজনে WhatsApp-এ যোগাযোগ করুন। (আর {$remaining} বার চেষ্টা করলে সরাসরি WhatsApp-এ রিডাইরেক্ট হবে)";
+
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', $errorMsg)
+                    ->with('whatsapp_url', $whatsappUrl)
+                    ->with('existing_order_no', $existingOrderNo)
+                    ->with('attempts_count', $attempts);
+            }
         }
 
         $cartItems = [];
