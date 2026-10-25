@@ -1531,9 +1531,61 @@
 
         // Send single invoice to courier
         function sendSingleToCourier(invoiceId) {
-            if (confirm("Send this invoice to Steadfast Courier API?")) {
-                alert("Order #" + invoiceId + " sent to Steadfast Courier!");
+            if (!invoiceId) return;
+            if (!confirm("Send this invoice to Steadfast Courier API?")) {
+                return;
             }
+
+            var btn = (window.event && window.event.target) ? window.event.target.closest('button') : null;
+            var originalHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="feather icon-loader fa-spin mr-1"></i> Sending...';
+            }
+
+            fetch(`{{ route('invoice.online.send-courier') }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    invoice_id: invoiceId
+                })
+            })
+            .then(async res => {
+                const data = await res.json().catch(() => ({}));
+                return { ok: res.ok, status: res.status, data: data };
+            })
+            .then(({ ok, data }) => {
+                if (ok && data.success) {
+                    if (typeof toastr !== 'undefined') {
+                        toastr.success(data.message || 'Invoice sent to Steadfast Courier successfully!');
+                    } else {
+                        alert(data.message || 'Invoice sent to Steadfast Courier successfully!');
+                    }
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    var errMsg = data.message || (data.errors && data.errors.length ? data.errors.join("\n") : 'Failed to send to courier.');
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error(errMsg);
+                    } else {
+                        alert(errMsg);
+                    }
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = originalHtml;
+                    }
+                }
+            })
+            .catch(err => {
+                alert('Network error while sending to courier: ' + err);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            });
         }
 
         // Send selected invoices to courier
@@ -1544,21 +1596,120 @@
                 alert('Please select at least one order to send to courier.');
                 return;
             }
-            if (confirm("Send " + selectedIds.length + " selected order(s) to Steadfast Courier?")) {
-                alert(selectedIds.length + " orders dispatched to Steadfast Courier successfully!");
+            if (!confirm("Send " + selectedIds.length + " selected order(s) to Steadfast Courier?")) {
+                return;
             }
+
+            var btn = document.querySelector('.btn-action-orange');
+            var originalHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="feather icon-loader fa-spin mr-1"></i> <span>Sending...</span>';
+            }
+
+            fetch(`{{ route('invoice.online.send-courier') }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    invoice_ids: selectedIds
+                })
+            })
+            .then(async res => {
+                const data = await res.json().catch(() => ({}));
+                return { ok: res.ok, status: res.status, data: data };
+            })
+            .then(({ ok, data }) => {
+                if (ok && data.success) {
+                    if (typeof toastr !== 'undefined') {
+                        toastr.success(data.message || (selectedIds.length + ' orders dispatched to courier successfully!'));
+                    } else {
+                        alert(data.message || (selectedIds.length + ' orders dispatched to courier successfully!'));
+                    }
+                    setTimeout(() => location.reload(), 1200);
+                } else {
+                    var errMsg = data.message || (data.errors && data.errors.length ? data.errors.join("\n") : 'Courier placement failed.');
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error(errMsg);
+                    } else {
+                        alert(errMsg);
+                    }
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = originalHtml;
+                    }
+                }
+            })
+            .catch(err => {
+                alert('Network error while sending to courier: ' + err);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            });
         }
 
         // Sync courier status
         function syncCourierStatus() {
-            if (confirm("Sync live courier delivery status for all orders?")) {
-                if (typeof toastr !== 'undefined') {
-                    toastr.info('Syncing status with Steadfast & Pathao APIs...');
-                } else {
-                    alert('Syncing status with Courier APIs...');
-                }
-                setTimeout(() => location.reload(), 1000);
+            var selectedIds = [];
+            document.querySelectorAll('.invoiceCheckbox:checked').forEach(cb => selectedIds.push(cb.value));
+
+            var confirmMsg = selectedIds.length > 0 
+                ? "Sync live courier delivery status for " + selectedIds.length + " selected order(s)?"
+                : "Sync live courier delivery status for all orders?";
+
+            if (!confirm(confirmMsg)) {
+                return;
             }
+
+            var btn = document.querySelector('.btn-action-cyan');
+            var originalHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="feather icon-loader fa-spin mr-1"></i> <span>Syncing...</span>';
+            }
+
+            fetch(`{{ route('invoice.online.sync-courier') }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    invoice_ids: selectedIds.length > 0 ? selectedIds : null
+                })
+            })
+            .then(async res => {
+                const data = await res.json().catch(() => ({}));
+                return { ok: res.ok, status: res.status, data: data };
+            })
+            .then(({ ok, data }) => {
+                if (ok && data.success) {
+                    if (typeof toastr !== 'undefined') {
+                        toastr.success(data.message || 'Courier status synced successfully!');
+                    } else {
+                        alert(data.message || 'Courier status synced successfully!');
+                    }
+                    setTimeout(() => location.reload(), 1200);
+                } else {
+                    alert(data.message || 'Courier sync failed.');
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = originalHtml;
+                    }
+                }
+            })
+            .catch(err => {
+                alert('Network error during sync: ' + err);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            });
         }
     </script>
 @endpush

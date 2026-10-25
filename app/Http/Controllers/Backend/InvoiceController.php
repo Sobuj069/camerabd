@@ -2418,26 +2418,60 @@ class InvoiceController extends Controller
         }
 
         $customer_info = $inv->customer;
-        if (!$customer_info || $inv->customer_id == 1 || strtolower(trim($customer_info->name ?? '')) == 'walk-in customer') {
+        $custName = trim($customer_info->name ?? '');
+        $custPhone = trim($customer_info->phone ?? '');
+        $custAddress = trim($customer_info->address ?? '');
+
+        // Fallback to linked WebsiteOrder if customer info is missing or walk-in customer
+        if (empty($custAddress) || empty($custPhone) || $inv->customer_id == 1 || strtolower($custName) == 'walk-in customer') {
+            $webOrder = null;
+            if (!empty($inv->source_link)) {
+                $webOrder = \App\Models\WebsiteOrder::where('order_no', $inv->source_link)->first();
+            }
+            if (!$webOrder && !empty($inv->note)) {
+                if (preg_match('/Website Order #([A-Za-z0-9_-]+)/i', $inv->note, $m)) {
+                    $webOrder = \App\Models\WebsiteOrder::where('order_no', $m[1])->first();
+                }
+            }
+            if ($webOrder) {
+                if (empty($custName) || strtolower($custName) == 'walk-in customer') {
+                    $custName = $webOrder->customer_name ?: 'Customer';
+                }
+                if (empty($custPhone)) {
+                    $custPhone = $webOrder->customer_phone ?: $webOrder->phone ?: '';
+                }
+                if (empty($custAddress)) {
+                    $custAddress = $webOrder->customer_address ?: $webOrder->delivery_address ?: '';
+                }
+            }
+        }
+
+        if (empty($custName) || strtolower($custName) == 'walk-in customer') {
             return [
                 'success' => false,
-                'message' => "Invoice #{$inv->invoice_no}: Cannot send courier order for Walk-in Customer. Please register customer details."
+                'message' => "Invoice #{$inv->invoice_no}: Cannot send courier order for Walk-in Customer without customer name."
             ];
         }
 
-        $cleanPhone = preg_replace('/[^0-9]/', '', $customer_info->phone ?? '');
+        $cleanPhone = preg_replace('/[^0-9]/', '', $custPhone);
+        if (strlen($cleanPhone) === 13 && str_starts_with($cleanPhone, '8801')) {
+            $cleanPhone = substr($cleanPhone, 2);
+        }
         if (empty($cleanPhone) || strlen($cleanPhone) < 11) {
             return [
                 'success' => false,
-                'message' => "Invoice #{$inv->invoice_no}: Customer phone number must be at least 11 digits."
+                'message' => "Invoice #{$inv->invoice_no}: Customer phone number must be at least 11 digits (Found: '{$custPhone}')."
             ];
         }
 
-        if (empty(trim($customer_info->address ?? ''))) {
+        if (empty($custAddress)) {
             return [
                 'success' => false,
                 'message' => "Invoice #{$inv->invoice_no}: Missing delivery address."
             ];
+        }
+        if (strlen($custAddress) < 10) {
+            $custAddress = $custAddress . ', Bangladesh';
         }
 
         $rawCourier = strtolower(trim($inv->courier_type ?? ''));
@@ -2453,7 +2487,7 @@ class InvoiceController extends Controller
         $codAmount = (int)($inv->total_due > 0 ? $inv->total_due : $inv->total_amount);
 
         if ($courierType === 'steadfast') {
-            $res = placeOrder($inv->invoice_no, $customer_info->name, $customer_info->phone, $customer_info->address, $codAmount, $inv->note);
+            $res = placeOrder($inv->invoice_no, $custName, $cleanPhone, $custAddress, $codAmount, $inv->note);
             if (isset($res['status']) && $res['status'] == 200 && !empty($res['consignment'])) {
                 $inv->consignment_id = $res['consignment']['consignment_id'] ?? '';
                 // Keep the existing order_status (e.g. RTS) unchanged until user manually changes it
@@ -2470,7 +2504,17 @@ class InvoiceController extends Controller
                     'message' => "Invoice #{$inv->invoice_no} sent to Steadfast (Consignment: {$inv->consignment_id})"
                 ];
             } else {
-                $errMsg = $res['message'] ?? 'Steadfast API placement failed';
+                $errMsg = '';
+                if (!empty($res['errors']) && is_array($res['errors'])) {
+                    $flatErrors = [];
+                    foreach ($res['errors'] as $field => $errList) {
+                        $flatErrors[] = is_array($errList) ? implode(', ', $errList) : $errList;
+                    }
+                    $errMsg = implode('; ', $flatErrors);
+                }
+                if (empty($errMsg)) {
+                    $errMsg = $res['message'] ?? 'Steadfast API placement failed';
+                }
                 return [
                     'success' => false,
                     'message' => "Invoice #{$inv->invoice_no} (Steadfast): {$errMsg}"
@@ -2596,6 +2640,12 @@ class InvoiceController extends Controller
         }
 
         if (empty($ids)) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('Please select at least one invoice to send to courier.')
+                ], 422);
+            }
             session()->flash('error', __('Please select at least one invoice to send to courier.'));
             return redirect()->back();
         }
@@ -2621,8 +2671,24 @@ class InvoiceController extends Controller
             } else {
                 session()->flash('success', $msg);
             }
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $msg,
+                    'count' => $successCount,
+                    'errors' => $errors
+                ]);
+            }
         } else {
-            session()->flash('error', __('Courier placement failed: ') . implode(' | ', $errors));
+            $errMsg = __('Courier placement failed: ') . implode(' | ', $errors);
+            session()->flash('error', $errMsg);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $errMsg,
+                    'errors' => $errors
+                ], 422);
+            }
         }
 
         return redirect()->back();
