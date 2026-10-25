@@ -963,27 +963,129 @@ class FrontendController extends Controller
     }
 
     /**
+     * Apply common catalog filters, sorting, and pagination to a Product query.
+     */
+    private function applyCatalogFiltersAndPaginate(Request $request, $baseQuery, $perPage = 12)
+    {
+        // 1. Calculate price bounds on unfiltered base query
+        $boundQuery = clone $baseQuery;
+        $priceMinBound = (int)($boundQuery->min('selling_price') ?? 0);
+        $priceMaxBound = (int)($boundQuery->max('selling_price') ?? 100000);
+        if ($priceMaxBound <= $priceMinBound) {
+            $priceMaxBound = $priceMinBound + 10000;
+        }
+
+        // 2. Discover available brands with product counts in this category scope
+        $brandCountsQuery = (clone $baseQuery)
+            ->selectRaw('brand_id, count(*) as count')
+            ->whereNotNull('brand_id')
+            ->groupBy('brand_id')
+            ->pluck('count', 'brand_id');
+
+        $availableBrands = collect();
+        if ($brandCountsQuery->isNotEmpty()) {
+            $availableBrands = Brand::whereIn('id', $brandCountsQuery->keys())
+                ->get()
+                ->map(function($b) use ($brandCountsQuery) {
+                    $b->products_count = $brandCountsQuery[$b->id] ?? 0;
+                    return $b;
+                })
+                ->sortByDesc('products_count')
+                ->values();
+        }
+
+        // 3. Apply request filters to query
+        $filteredQuery = clone $baseQuery;
+
+        // Brand filter
+        $selectedBrands = (array)$request->input('brand', []);
+        $selectedBrands = array_filter($selectedBrands, fn($b) => $b !== '' && $b !== null);
+        if (!empty($selectedBrands)) {
+            $filteredQuery->where(function($bq) use ($selectedBrands) {
+                $bq->whereIn('brand_id', $selectedBrands)
+                   ->orWhereHas('brand', function($sub) use ($selectedBrands) {
+                       $sub->whereIn('name', $selectedBrands);
+                   });
+            });
+        }
+
+        // Subcategory filter (if present)
+        $selectedSubCats = (array)$request->input('sub_category', []);
+        $selectedSubCats = array_filter($selectedSubCats, fn($s) => $s !== '' && $s !== null);
+        if (!empty($selectedSubCats)) {
+            $filteredQuery->where(function($sq) use ($selectedSubCats) {
+                $sq->whereIn('sub_category_id', $selectedSubCats)
+                   ->orWhereHas('subCategory', function($sub) use ($selectedSubCats) {
+                       $sub->whereIn('name', $selectedSubCats);
+                   });
+            });
+        }
+
+        // Price filter
+        if ($request->filled('max_price')) {
+            $filteredQuery->where('selling_price', '<=', (float)$request->input('max_price'));
+        }
+        if ($request->filled('min_price')) {
+            $filteredQuery->where('selling_price', '>=', (float)$request->input('min_price'));
+        }
+
+        // Stock status filter
+        $selectedStock = $request->input('stock', 'all');
+        if ($selectedStock === 'in_stock') {
+            $filteredQuery->where('main_qty', '>', 0);
+        } elseif ($selectedStock === 'pre_order') {
+            $filteredQuery->where(function($sq) {
+                $sq->whereNull('main_qty')->orWhere('main_qty', '<=', 0);
+            });
+        }
+
+        // Sorting
+        $selectedSort = $request->input('sort', 'featured');
+        switch ($selectedSort) {
+            case 'price_low':
+                $filteredQuery->orderBy('selling_price', 'asc');
+                break;
+            case 'price_high':
+                $filteredQuery->orderBy('selling_price', 'desc');
+                break;
+            case 'name':
+                $filteredQuery->orderBy('name', 'asc');
+                break;
+            case 'newest':
+            case 'featured':
+            default:
+                $filteredQuery->latest('id');
+                break;
+        }
+
+        // 4. Paginate and transform
+        $paginated = $filteredQuery->paginate($perPage)->withQueryString();
+        $products = $paginated->through(fn($p) => $this->formatDbProduct($p));
+
+        return [
+            'products' => $products,
+            'availableBrands' => $availableBrands,
+            'priceMinBound' => $priceMinBound,
+            'priceMaxBound' => $priceMaxBound,
+            'selectedBrands' => $selectedBrands,
+            'selectedStock' => $selectedStock,
+            'selectedSort' => $selectedSort,
+            'selectedMaxPrice' => $request->input('max_price', $priceMaxBound),
+        ];
+    }
+
+    /**
      * All Categories / Main Categories Index
      */
-    public function allCategories()
+    public function allCategories(Request $request)
     {
         $navCategories = CategoryNavService::getMegaMenuCategories();
-        
-        $dbProducts = Product::with(['brand', 'category', 'subCategory', 'warranty'])
-            ->where('is_service', 0)
-            ->where('show_on_website', 1)
-            ->latest('id')
-            ->take(36)
-            ->get();
 
-        if ($dbProducts->isNotEmpty()) {
-            $products = $dbProducts->map(function($p) {
-                return $this->formatDbProduct($p);
-            })->filter()->values()->toArray();
-        } else {
-            $catalog = $this->getCatalog();
-            $products = array_values($catalog);
-        }
+        $baseQuery = Product::with(['brand', 'category', 'subCategory', 'warranty'])
+            ->where('is_service', 0)
+            ->where('show_on_website', 1);
+
+        $filterData = $this->applyCatalogFiltersAndPaginate($request, $baseQuery, 12);
 
         $currentCategory = [
             'name' => 'All Production Gear Categories',
@@ -1000,7 +1102,7 @@ class FrontendController extends Controller
             }, $navCategories)
         ];
 
-        return view('frontend.category', compact('currentCategory', 'products'));
+        return view('frontend.category', array_merge(['currentCategory' => $currentCategory], $filterData));
     }
 
     /**
@@ -1078,32 +1180,23 @@ class FrontendController extends Controller
         }
 
         // Query database products for this category
-        $query = Product::with(['brand', 'category', 'subCategory', 'warranty'])->where('is_service', 0)->where('show_on_website', 1);
+        $baseQuery = Product::with(['brand', 'category', 'subCategory', 'warranty'])->where('is_service', 0)->where('show_on_website', 1);
         if ($dbCat) {
-            $query->where('category_id', $dbCat->id);
+            $baseQuery->where('category_id', $dbCat->id);
         } elseif ($found && !empty($found['id'])) {
-            $query->where('category_id', $found['id']);
+            $baseQuery->where('category_id', $found['id']);
         } else {
             $cleanName = str_replace('-', ' ', $slug);
-            $query->where(function($q) use ($cleanName) {
+            $baseQuery->where(function($q) use ($cleanName) {
                 $q->whereHas('category', function($cq) use ($cleanName) {
                     $cq->where('name', 'LIKE', "%{$cleanName}%");
                 })->orWhere('name', 'LIKE', "%{$cleanName}%");
             });
         }
 
-        $dbProducts = $query->latest('id')->get();
+        $filterData = $this->applyCatalogFiltersAndPaginate($request, $baseQuery, 12);
 
-        if ($dbProducts->isNotEmpty()) {
-            $products = $dbProducts->map(function($p) {
-                return $this->formatDbProduct($p);
-            })->filter()->values()->toArray();
-        } else {
-            $catalog = $this->getCatalog();
-            $products = array_values($catalog);
-        }
-
-        return view('frontend.category', compact('currentCategory', 'products'));
+        return view('frontend.category', array_merge(['currentCategory' => $currentCategory], $filterData));
     }
 
     /**
@@ -1169,30 +1262,24 @@ class FrontendController extends Controller
         }
 
         // Query database products
-        $query = Product::with(['brand', 'category', 'subCategory', 'warranty'])->where('is_service', 0)->where('show_on_website', 1);
+        $baseQuery = Product::with(['brand', 'category', 'subCategory', 'warranty'])->where('is_service', 0)->where('show_on_website', 1);
         if ($dbSubCatId) {
-            $query->where('sub_category_id', $dbSubCatId);
+            $baseQuery->where('sub_category_id', $dbSubCatId);
         } else {
             $cleanSubName = str_replace('-', ' ', $subcategory_slug);
-            $query->where(function($q) use ($cleanSubName) {
+            $baseQuery->where(function($q) use ($cleanSubName) {
                 $q->whereHas('subCategory', function($sq) use ($cleanSubName) {
                     $sq->where('name', 'LIKE', "%{$cleanSubName}%");
                 })->orWhere('name', 'LIKE', "%{$cleanSubName}%");
             });
         }
 
-        $dbProducts = $query->latest('id')->get();
+        $filterData = $this->applyCatalogFiltersAndPaginate($request, $baseQuery, 12);
 
-        if ($dbProducts->isNotEmpty()) {
-            $products = $dbProducts->map(function($p) {
-                return $this->formatDbProduct($p);
-            })->filter()->values()->toArray();
-        } else {
-            $catalog = $this->getCatalog();
-            $products = array_values($catalog);
-        }
-
-        return view('frontend.subcategory', compact('currentCategory', 'currentSubcategory', 'products'));
+        return view('frontend.subcategory', array_merge([
+            'currentCategory' => $currentCategory,
+            'currentSubcategory' => $currentSubcategory
+        ], $filterData));
     }
 
     /**
