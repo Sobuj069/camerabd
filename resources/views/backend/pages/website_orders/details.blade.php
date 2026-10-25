@@ -1612,8 +1612,11 @@ $('#orderStatusForm').on('submit', function(e) {
                     } else {
                         window.dataLayer = window.dataLayer || [];
                         window.dataLayer.push({ ecommerce: null });
-                        window.dataLayer.push(Object.assign({}, res.order_datalayer, { event: 'order confrom' }));
-                        window.dataLayer.push(Object.assign({}, res.order_datalayer, { event: 'order_confirm' }));
+                        window.dataLayer.push(Object.assign({}, res.order_datalayer, {
+                            event: 'order confrom',
+                            status: 'approved',
+                            order_status: 'Approved'
+                        }));
                     }
                 }
                 alert(res.message || ('Order status updated to ' + newStatus));

@@ -1107,8 +1107,11 @@
                     } else {
                         window.dataLayer = window.dataLayer || [];
                         window.dataLayer.push({ ecommerce: null });
-                        window.dataLayer.push(Object.assign({}, body.order_datalayer, { event: 'order confrom' }));
-                        window.dataLayer.push(Object.assign({}, body.order_datalayer, { event: 'order_confirm' }));
+                        window.dataLayer.push(Object.assign({}, body.order_datalayer, {
+                            event: 'order confrom',
+                            status: 'approved',
+                            order_status: 'Approved'
+                        }));
                     }
                     console.log('%c✅ [DataLayer] "order confrom" event fired successfully!', 'background: #10b981; color: white; font-weight: bold; padding: 6px 12px; font-size: 14px; border-radius: 4px;', body.order_datalayer);
                 }

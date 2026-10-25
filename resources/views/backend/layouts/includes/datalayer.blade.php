@@ -34,55 +34,56 @@
     }
   };
 
+  window._backendDispatchedOrders = window._backendDispatchedOrders || {};
+
   /**
-   * Helper function to dispatch order confrom event with customer data and status
+   * Helper function to dispatch order confrom event with customer data and status (strictly once)
    */
   window.dispatchOrderConfirmDataLayer = function(payload) {
     if (!payload) return;
+    var orderKey = String(payload.order_id || payload.transaction_id || 'default');
+    if (window._backendDispatchedOrders[orderKey]) {
+      return;
+    }
+    window._backendDispatchedOrders[orderKey] = true;
+
     try {
       window.dataLayer = window.dataLayer || [];
       window.dataLayer.push({ ecommerce: null });
 
       var fullPayload = Object.assign({}, payload, {
+        event: 'order confrom',
         status: 'approved',
         order_status: 'Approved'
       });
 
-      // 1. Primary event name specified by user: 'order confrom'
-      window.dataLayer.push(Object.assign({}, fullPayload, { event: 'order confrom' }));
+      // Strictly ONE single event push
+      window.dataLayer.push(fullPayload);
 
-      // 2. Standard snake_case alias: 'order_confirm'
-      window.dataLayer.push(Object.assign({}, fullPayload, { event: 'order_confirm' }));
-
-      // 3. Optional enhanced ecommerce push via helper
-      if (typeof window.pushToDataLayer === 'function') {
-        window.pushToDataLayer('order confrom', fullPayload.ecommerce, fullPayload);
-        window.pushToDataLayer('order_confirm', fullPayload.ecommerce, fullPayload);
-      }
-      console.log('✅ [DataLayer] "order confrom" event fired for Approved Order #' + (fullPayload.order_id || fullPayload.transaction_id), fullPayload);
+      console.log('✅ [DataLayer] Single "order confrom" event fired for Approved Order #' + orderKey, fullPayload);
     } catch(err) {
       console.warn('[DataLayer] Error dispatching order confrom:', err);
     }
   };
 
-  // Check localStorage for pending order_confirm events across page reloads (persists for 15 minutes)
+  // Check localStorage for pending order_confirm events across page reloads
   (function() {
     try {
       var storedSingle = localStorage.getItem('cb_approved_order_datalayer');
       if (storedSingle) {
         var parsed = JSON.parse(storedSingle);
+        localStorage.removeItem('cb_approved_order_datalayer');
         if (parsed && (!parsed._pushed_at || (Date.now() - parsed._pushed_at < 15 * 60 * 1000))) {
           window.approvedOrderDataLayer = parsed;
           if (typeof window.dispatchOrderConfirmDataLayer === 'function') {
             window.dispatchOrderConfirmDataLayer(parsed);
           }
-        } else {
-          localStorage.removeItem('cb_approved_order_datalayer');
         }
       }
       var storedMulti = localStorage.getItem('cb_approved_orders_datalayer');
       if (storedMulti) {
         var parsedMulti = JSON.parse(storedMulti);
+        localStorage.removeItem('cb_approved_orders_datalayer');
         if (Array.isArray(parsedMulti) && typeof window.dispatchOrderConfirmDataLayer === 'function') {
           parsedMulti.forEach(function(o) {
             window.dispatchOrderConfirmDataLayer(o);

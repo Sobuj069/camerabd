@@ -40,20 +40,26 @@
   // Cross-tab check for approved order dataLayer dispatch
   (function() {
     try {
+      // Skip on order-confirmation page to prevent duplicate events
+      if (window.location.pathname.indexOf('order-confirmation') !== -1) {
+        return;
+      }
       var stored = localStorage.getItem('cb_approved_order_datalayer');
       if (stored) {
         var p = JSON.parse(stored);
-        if (p && (!p._pushed_at || (Date.now() - p._pushed_at < 15 * 60 * 1000))) {
+        if (p && !p._gtm_dispatched && (!p._pushed_at || (Date.now() - p._pushed_at < 15 * 60 * 1000))) {
+          // Immediately mark and clear to prevent duplicate firing on page reloads
+          localStorage.removeItem('cb_approved_order_datalayer');
+
           window.dataLayer = window.dataLayer || [];
           window.dataLayer.push({ ecommerce: null });
-          var ev = Object.assign({}, p, { status: 'approved', order_status: 'Approved' });
-          window.dataLayer.push(Object.assign({}, ev, { event: 'order confrom' }));
-          window.dataLayer.push(Object.assign({}, ev, { event: 'order_confirm' }));
-          if (typeof window.pushToDataLayer === 'function') {
-            window.pushToDataLayer('order confrom', ev.ecommerce, ev);
-            window.pushToDataLayer('order_confirm', ev.ecommerce, ev);
-          }
-          console.log('%c🚀 [DataLayer] Frontend GTM Dispatched "order confrom" for Approved Order #' + (p.order_id || p.transaction_id), 'background: #047857; color: #fff; font-weight: bold; padding: 4px 8px; border-radius: 4px;', ev);
+          var ev = Object.assign({}, p, {
+            event: 'order confrom',
+            status: 'approved',
+            order_status: 'Approved'
+          });
+          window.dataLayer.push(ev);
+          console.log('%c🚀 [DataLayer] Frontend GTM Dispatched single "order confrom" for Approved Order #' + (p.order_id || p.transaction_id), 'background: #047857; color: #fff; font-weight: bold; padding: 4px 8px; border-radius: 4px;', ev);
         }
       }
     } catch(e) {}

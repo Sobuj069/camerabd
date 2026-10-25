@@ -311,28 +311,34 @@
       window.pushToDataLayer('purchase', purchaseEcommerce, purchaseExtra);
     }
 
+    // Deduplication tracker to guarantee strictly ONE single "order confrom" event
+    window._dispatchedApprovedOrders = window._dispatchedApprovedOrders || {};
+
     // Function to dispatch order confrom into dataLayer with full customer data & approved status
     function dispatchApprovedOrderConfirm(payload) {
       if (!payload) return;
+      var orderKey = String(payload.order_id || payload.transaction_id || '{{ $orderNumber }}');
+      if (window._dispatchedApprovedOrders[orderKey]) {
+        console.log('[DataLayer] "order confrom" already dispatched for Order #' + orderKey + ', skipping duplicate.');
+        return;
+      }
+      window._dispatchedApprovedOrders[orderKey] = true;
+
       try {
         window.dataLayer = window.dataLayer || [];
+        // Clear previous ecommerce object per Google standard
         window.dataLayer.push({ ecommerce: null });
 
         var ev = Object.assign({}, payload, {
+          event: 'order confrom',
           status: 'approved',
           order_status: 'Approved'
         });
 
-        // 1. Primary event name requested: "order confrom"
-        window.dataLayer.push(Object.assign({}, ev, { event: 'order confrom' }));
-        // 2. Standard alias: "order_confirm"
-        window.dataLayer.push(Object.assign({}, ev, { event: 'order_confirm' }));
+        // Strictly ONE single event push
+        window.dataLayer.push(ev);
 
-        if (typeof window.pushToDataLayer === 'function') {
-          window.pushToDataLayer('order confrom', ev.ecommerce, ev);
-          window.pushToDataLayer('order_confirm', ev.ecommerce, ev);
-        }
-        console.log('%c✅ [DataLayer] "order confrom" event fired! Status: APPROVED', 'background: #10b981; color: white; font-weight: bold; padding: 6px 12px; border-radius: 4px;', ev);
+        console.log('%c✅ [DataLayer] Single "order confrom" event fired! Status: APPROVED', 'background: #10b981; color: white; font-weight: bold; padding: 6px 12px; border-radius: 4px;', ev);
       } catch(err) {
         console.warn('[DataLayer] Error firing order confrom:', err);
       }
