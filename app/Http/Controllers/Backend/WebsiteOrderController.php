@@ -226,9 +226,10 @@ class WebsiteOrderController extends Controller
      */
     public function updateStatus(Request $request, $id)
     {
-        $request->validate([
-            'status' => 'required|string',
-        ]);
+        try {
+            $request->validate([
+                'status' => 'required|string',
+            ]);
 
         $order = WebsiteOrder::with(['items.product', 'items.variation'])->findOrFail($id);
         $newStatus = strtolower(trim($request->status));
@@ -451,8 +452,8 @@ class WebsiteOrderController extends Controller
                     ->with('success', $successMsg)
                     ->with('approved_order_datalayer', $orderDataLayer);
 
-            } catch (\Exception $e) {
-                Log::error("Error approving website order #{$order->id}: " . $e->getMessage());
+            } catch (\Throwable $e) {
+                Log::error("Error approving website order #{$order->id}: " . $e->getMessage() . "\n" . $e->getTraceAsString());
                 $errMsg = "অনুমোদন ব্যর্থ হয়েছে: " . $e->getMessage();
                 if ($request->ajax() || $request->wantsJson()) {
                     return response()->json(['success' => false, 'message' => $errMsg], 500);
@@ -490,6 +491,15 @@ class WebsiteOrderController extends Controller
         }
 
         return redirect()->back()->with('success', $msg);
+
+        } catch (\Throwable $e) {
+            Log::error("Error in updateStatus website order #{$id}: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+            $errMsg = "স্ট্যাটাস পরিবর্তন ব্যর্থ হয়েছে: " . $e->getMessage();
+            if ($request->ajax() || $request->wantsJson() || $request->expectsJson() || $request->isJson()) {
+                return response()->json(['success' => false, 'message' => $errMsg], 500);
+            }
+            return redirect()->back()->with('error', $errMsg);
+        }
     }
 
     /**
@@ -628,8 +638,8 @@ class WebsiteOrderController extends Controller
      */
     public function approveOrder(Request $request, $id)
     {
-        $subRequest = new Request(['status' => 'approved']);
-        return $this->updateStatus($subRequest, $id);
+        $request->merge(['status' => 'approved']);
+        return $this->updateStatus($request, $id);
     }
 
     /**

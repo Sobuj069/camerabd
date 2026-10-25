@@ -1603,6 +1603,19 @@ $('#orderStatusForm').on('submit', function(e) {
         success: function(res) {
             $btn.prop('disabled', false).html('Update');
             if (res.success) {
+                if (res.order_datalayer) {
+                    try {
+                        localStorage.setItem('cb_approved_order_datalayer', JSON.stringify(res.order_datalayer));
+                    } catch(e) {}
+                    if (typeof window.dispatchOrderConfirmDataLayer === 'function') {
+                        window.dispatchOrderConfirmDataLayer(res.order_datalayer);
+                    } else {
+                        window.dataLayer = window.dataLayer || [];
+                        window.dataLayer.push({ ecommerce: null });
+                        window.dataLayer.push(Object.assign({}, res.order_datalayer, { event: 'order confrom' }));
+                        window.dataLayer.push(Object.assign({}, res.order_datalayer, { event: 'order_confirm' }));
+                    }
+                }
                 alert(res.message || ('Order status updated to ' + newStatus));
                 location.reload();
             } else {

@@ -42,6 +42,12 @@ class BranchCheck
                     !$request->routeIs('branch.set') &&
                     !$request->routeIs('logout')) {
                     
+                    if ($request->expectsJson() || $request->ajax() || $request->wantsJson() || $request->isJson()) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Please select a branch first.'
+                        ], 403);
+                    }
                     return redirect()->route('branch.select');
                 }
             }

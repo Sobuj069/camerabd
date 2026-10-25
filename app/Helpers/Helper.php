@@ -101,8 +101,11 @@ function get_route_list()
 
 function check_permission($routeName)
 {
-    if (auth()->check() && auth()->user()->isSuperAdmin()) {
-        return true;
+    if (auth()->check()) {
+        $user = auth()->user();
+        if ($user->isSuperAdmin() || $user->role_id == 1 || (isset($user->role) && $user->role->slug === 'admin')) {
+            return true;
+        }
     }
     $routeName = explode('.', $routeName);
     if (!isset($routeName[1])) return true;
@@ -123,6 +126,20 @@ function check_permission($routeName)
     }
     $authUserPermissions = auth()->user()->role->permission;
     $authUserPermissions = json_decode($authUserPermissions, true);
+
+    // Special handling for website-orders module
+    if ($routeName[0] === 'website-orders') {
+        if (isset($authUserPermissions['website-orders'][$routeName[1]])) {
+            return (bool) $authUserPermissions['website-orders'][$routeName[1]];
+        }
+        // Fallback for roles configured before website-orders was introduced:
+        // grant access if role can manage woocommerce or invoices
+        if (isset($authUserPermissions['woocommerce']) || isset($authUserPermissions['invoice'])) {
+            return true;
+        }
+        return false;
+    }
+
     if (isset($authUserPermissions[$routeName[0]][$routeName[1]])) {
         if ($authUserPermissions[$routeName[0]][$routeName[1]] == true) {
             return true;
@@ -136,14 +153,32 @@ function check_permission($routeName)
 
 function main_menu_permission($menuName)
 {
-    if (auth()->check() && auth()->user()->isSuperAdmin()) {
-        return true;
+    if (auth()->check()) {
+        $user = auth()->user();
+        if ($user->isSuperAdmin() || $user->role_id == 1 || (isset($user->role) && $user->role->slug === 'admin')) {
+            return true;
+        }
     }
     if (!auth()->user()->role) {
         return false;
     }
     $authUserPermissions = auth()->user()->role->permission;
     $authUserPermissions = json_decode($authUserPermissions, true);
+
+    if ($menuName === 'website-orders') {
+        if (isset($authUserPermissions['website-orders'])) {
+            foreach ($authUserPermissions['website-orders'] as $key => $value) {
+                if ($value == true) {
+                    return true;
+                }
+            }
+        }
+        if (isset($authUserPermissions['woocommerce']) || isset($authUserPermissions['invoice'])) {
+            return true;
+        }
+        return false;
+    }
+
     if (isset($authUserPermissions[$menuName])) {
         foreach ($authUserPermissions[$menuName] as $key => $value) {
             if ($value == true) {
@@ -1695,10 +1730,11 @@ function calculateUnitPriceUsingFIFO($productId, $requiredQty, $variationId = nu
 
                 $item->update(['stock_qty' => $availableQty - $usedQty]);
 
-                if ($product->unit->related_unit == null) {
-                    $totalCost += $usedQty * $item->rate;
+                if ($product && $product->unit && $product->unit->related_unit != null) {
+                    $relatedVal = (float) ($product->unit->related_value ?: 1);
+                    $totalCost += ($usedQty / $relatedVal) * $item->rate;
                 } else {
-                    $totalCost += ($usedQty / $product->unit->related_value) * $item->rate;
+                    $totalCost += $usedQty * $item->rate;
                 }
 
                 $remainingQty -= $usedQty;

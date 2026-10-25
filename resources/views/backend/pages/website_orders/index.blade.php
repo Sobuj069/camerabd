@@ -1031,7 +1031,10 @@
                 },
                 body: JSON.stringify({ note: newNote })
             })
-            .then(res => res.json())
+            .then(async res => {
+                const ct = res.headers.get('content-type') || '';
+                return ct.includes('application/json') ? await res.json() : { success: false, message: 'Server error (' + res.status + ')' };
+            })
             .then(data => {
                 if (data.success) {
                     location.reload();
@@ -1073,7 +1076,23 @@
             },
             body: JSON.stringify({ status: newStatus })
         })
-        .then(res => res.json().then(data => ({ status: res.status, body: data })))
+        .then(async res => {
+            const ct = res.headers.get('content-type') || '';
+            let data = null;
+            if (ct.includes('application/json')) {
+                data = await res.json();
+            } else {
+                data = {
+                    success: false,
+                    message: res.status === 419 
+                        ? 'Session expired. Please refresh the page and try again.' 
+                        : (res.status === 403 
+                            ? 'Permission denied. You do not have permission for this action.' 
+                            : 'Server error (' + res.status + '). Please check error log.')
+                };
+            }
+            return { status: res.status, body: data };
+        })
         .then(({ status, body }) => {
             if (status === 200 && body.success) {
                 // Instantly dispatch dataLayer order confrom event
@@ -1249,7 +1268,10 @@
             },
             body: JSON.stringify({ action: action, order_ids: orderIds })
         })
-        .then(res => res.json())
+        .then(async res => {
+            const ct = res.headers.get('content-type') || '';
+            return ct.includes('application/json') ? await res.json() : { success: false, message: 'Server error (' + res.status + ')' };
+        })
         .then(data => {
             if (data.success) {
                 if (data.approved_orders_datalayer && Array.isArray(data.approved_orders_datalayer)) {
@@ -1299,7 +1321,10 @@
                 send_to_courier_api: sendApi
             })
         })
-        .then(res => res.json())
+        .then(async res => {
+            const ct = res.headers.get('content-type') || '';
+            return ct.includes('application/json') ? await res.json() : { success: false, message: 'Server error (' + res.status + ')' };
+        })
         .then(data => {
             if (data.success) {
                 if (data.approved_orders_datalayer && Array.isArray(data.approved_orders_datalayer)) {
