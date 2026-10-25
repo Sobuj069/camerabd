@@ -596,8 +596,9 @@ class FrontendController extends Controller
             'customer_name' => 'required|string|max:255',
             'phone' => 'required|string|max:30',
             'delivery_address' => 'required|string|max:500',
-            'city' => 'required|string|max:100',
-            'payment_method' => 'required|string|max:50',
+            'delivery_zone' => 'nullable|string|in:inside_dhaka,outside_dhaka',
+            'city' => 'nullable|string|max:100',
+            'payment_method' => 'nullable|string|max:50',
             'division' => 'nullable|string|max:100',
             'email' => 'nullable|email|max:150',
             'order_notes' => 'nullable|string|max:1000',
@@ -692,14 +693,27 @@ class FrontendController extends Controller
             $subtotal += ($unitPrice * $qty);
         }
 
-        $shippingCost = floatval($request->input('shipping_cost', 80));
-        $deliveryMethod = $request->input('delivery_method', 'express_dhaka');
-        if ($deliveryMethod === 'courier_outside' && $shippingCost <= 0) {
-            $shippingCost = 130.00;
-        } elseif ($deliveryMethod === 'express_dhaka' && $shippingCost <= 0) {
-            $shippingCost = 80.00;
-        } elseif ($deliveryMethod === 'store_pickup') {
-            $shippingCost = 0.00;
+        $deliveryZone = $request->input('delivery_zone', 'inside_dhaka');
+        $shippingCost = floatval($request->input('shipping_cost', 0));
+        if ($shippingCost <= 0) {
+            $shippingCost = ($deliveryZone === 'outside_dhaka') ? 150.00 : 100.00;
+        }
+
+        $deliveryMethod = $request->input('delivery_method');
+        if (empty($deliveryMethod)) {
+            $deliveryMethod = ($deliveryZone === 'outside_dhaka' || $shippingCost == 150)
+                ? 'Courier Delivery (Outside Dhaka)'
+                : 'Express Home Delivery (Inside Dhaka)';
+        }
+
+        $city = $request->input('city');
+        if (empty($city)) {
+            $city = ($deliveryZone === 'outside_dhaka' || $shippingCost == 150) ? 'Outside Dhaka' : 'Dhaka';
+        }
+
+        $division = $request->input('division');
+        if (empty($division)) {
+            $division = ($deliveryZone === 'outside_dhaka' || $shippingCost == 150) ? 'Outside Dhaka' : 'Dhaka Division';
         }
 
         $discount = floatval($request->input('discount', 0));
@@ -738,8 +752,8 @@ class FrontendController extends Controller
                 'customer_name' => $validated['customer_name'],
                 'phone' => $validated['phone'],
                 'email' => $request->input('email'),
-                'division' => $request->input('division', 'Dhaka Division'),
-                'city' => $validated['city'],
+                'division' => $division,
+                'city' => $city,
                 'delivery_address' => $validated['delivery_address'],
                 'order_notes' => $request->input('order_notes'),
                 'delivery_method' => $deliveryMethod,
@@ -747,7 +761,7 @@ class FrontendController extends Controller
                 'subtotal' => $subtotal,
                 'discount' => $discount,
                 'total_amount' => $totalAmount,
-                'payment_method' => $validated['payment_method'],
+                'payment_method' => $request->input('payment_method', 'Cash On Delivery'),
                 'payment_status' => 'unpaid',
                 'order_status' => 'Processing',
                 'status' => 'processing',

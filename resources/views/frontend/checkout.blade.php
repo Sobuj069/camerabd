@@ -46,87 +46,98 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
       
-      <!-- LEFT COLUMN: Shipping Info & Payment Methods (7 Cols) -->
-      <div class="lg:col-span-7 space-y-6">
+      <!-- LEFT COLUMN: Customer & Delivery Details (7 Cols) -->
+      <div class="lg:col-span-7 space-y-5">
         
-        <!-- Section 1: Customer Contact Details -->
+        <!-- Section 1: Customer Details & Address -->
         <div class="bg-surface-card rounded-3xl p-5 md:p-6 border border-surface-border shadow-xs">
           <div class="flex items-center gap-2.5 pb-3 border-b border-surface-border mb-4">
             <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold">1</div>
-            <h2 class="text-base font-bold text-text-display">Customer & Contact Information</h2>
+            <h2 class="text-base font-bold text-text-display">Customer & Delivery Information</h2>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div class="space-y-4 text-xs">
+            <!-- Full Name -->
             <div>
-              <label class="block font-bold text-on-surface mb-1.5">Full Name *</label>
-              <input type="text" name="customer_name" required value="{{ old('customer_name') }}" placeholder="e.g. Tanvir Ahmed" class="w-full bg-surface-container rounded-xl p-3 border border-surface-border text-xs focus:outline-none focus:border-primary font-medium" />
+              <label class="block font-bold text-on-surface mb-1.5">
+                Full Name / আপনার নাম <span class="text-primary font-bold">*</span>
+              </label>
+              <input type="text" name="customer_name" required value="{{ old('customer_name') }}" placeholder="আপনার নাম লিখুন (e.g. Tanvir Ahmed)" class="w-full bg-surface-container rounded-xl p-3.5 border border-surface-border text-xs focus:outline-none focus:border-primary font-medium" />
             </div>
 
+            <!-- Phone Number -->
             <div>
-              <label class="block font-bold text-on-surface mb-1.5">Phone Number (For Order Confirmation & Delivery) *</label>
-              <input type="tel" name="phone" required value="{{ old('phone') }}" placeholder="01XXXXXXXXX" class="w-full bg-surface-container rounded-xl p-3 border border-surface-border text-xs focus:outline-none focus:border-primary font-medium" />
+              <label class="block font-bold text-on-surface mb-1.5">
+                Mobile Number / মোবাইল নাম্বার <span class="text-primary font-bold">*</span>
+              </label>
+              <input type="tel" name="phone" required value="{{ old('phone') }}" placeholder="01XXXXXXXXX" class="w-full bg-surface-container rounded-xl p-3.5 border border-surface-border text-xs focus:outline-none focus:border-primary font-medium" />
             </div>
 
-            <div class="md:col-span-2">
-              <label class="block font-bold text-on-surface mb-1.5">Email Address (Optional, for Invoice Copy)</label>
-              <input type="email" name="email" value="{{ old('email') }}" placeholder="name@example.com" class="w-full bg-surface-container rounded-xl p-3 border border-surface-border text-xs focus:outline-none focus:border-primary font-medium" />
+            <!-- Delivery Address -->
+            <div>
+              <label class="block font-bold text-on-surface mb-1.5">
+                Full Address / সম্পূর্ণ ডেলিভারি ঠিকানা <span class="text-primary font-bold">*</span>
+              </label>
+              <textarea name="delivery_address" id="address-input" rows="3" required placeholder="বাসা নং, রোড নং, এলাকা, থানা ও জেলার নাম লিখুন..." class="w-full bg-surface-container rounded-xl p-3.5 border border-surface-border text-xs focus:outline-none focus:border-primary font-medium">{{ old('delivery_address') }}</textarea>
             </div>
+
+            <!-- Hidden consistency fields for Backend & Courier Processing -->
+            <input type="hidden" name="city" id="city-input" value="{{ old('city', 'Dhaka') }}" />
+            <input type="hidden" name="division" id="division-input" value="{{ old('division', 'Dhaka Division') }}" />
+            <input type="hidden" name="email" value="" />
+            <input type="hidden" name="order_notes" value="" />
           </div>
         </div>
 
-        <!-- Section 2: Delivery Address -->
+        <!-- Section 2: Delivery Area & Charge -->
         <div class="bg-surface-card rounded-3xl p-5 md:p-6 border border-surface-border shadow-xs">
           <div class="flex items-center gap-2.5 pb-3 border-b border-surface-border mb-4">
             <div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold">2</div>
-            <h2 class="text-base font-bold text-text-display">Delivery Address in Bangladesh</h2>
+            <h2 class="text-base font-bold text-text-display">ডেলিভারি এলাকা ও চার্জ (Delivery Charge)</h2>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-            <div>
-              <label class="block font-bold text-on-surface mb-1.5">Division *</label>
-              <select name="division" id="division-select" class="w-full bg-surface-container rounded-xl p-3 border border-surface-border text-xs focus:outline-none focus:border-primary font-medium">
-                <option value="Dhaka Division" {{ old('division') == 'Dhaka Division' ? 'selected' : '' }}>Dhaka Division</option>
-                <option value="Chittagong Division" {{ old('division') == 'Chittagong Division' ? 'selected' : '' }}>Chittagong Division</option>
-                <option value="Sylhet Division" {{ old('division') == 'Sylhet Division' ? 'selected' : '' }}>Sylhet Division</option>
-                <option value="Rajshahi Division" {{ old('division') == 'Rajshahi Division' ? 'selected' : '' }}>Rajshahi Division</option>
-                <option value="Khulna Division" {{ old('division') == 'Khulna Division' ? 'selected' : '' }}>Khulna Division</option>
-                <option value="Barishal Division" {{ old('division') == 'Barishal Division' ? 'selected' : '' }}>Barishal Division</option>
-                <option value="Rangpur Division" {{ old('division') == 'Rangpur Division' ? 'selected' : '' }}>Rangpur Division</option>
-                <option value="Mymensingh Division" {{ old('division') == 'Mymensingh Division' ? 'selected' : '' }}>Mymensingh Division</option>
-              </select>
-            </div>
-
-            <div>
-              <label class="block font-bold text-on-surface mb-1.5">District / City *</label>
-              <input type="text" name="city" id="city-input" required value="{{ old('city', 'Dhaka') }}" placeholder="e.g. Dhaka, Chittagong, Sylhet, Gazipur" class="w-full bg-surface-container rounded-xl p-3 border border-surface-border text-xs focus:outline-none focus:border-primary font-medium" />
-            </div>
-
-            <div class="md:col-span-2">
-              <label class="block font-bold text-on-surface mb-1.5">Complete Delivery Address *</label>
-              <textarea name="delivery_address" id="address-input" rows="2" required placeholder="House, Road, Area, Thana/Police Station..." class="w-full bg-surface-container rounded-xl p-3 border border-surface-border text-xs focus:outline-none focus:border-primary font-medium">{{ old('delivery_address') }}</textarea>
-            </div>
-
-            <div class="md:col-span-2">
-              <label class="block font-bold text-on-surface mb-1.5">Special Order Notes / Instructions (Optional)</label>
-              <input type="text" name="order_notes" value="{{ old('order_notes') }}" placeholder="e.g. Please test calibration before dispatch" class="w-full bg-surface-container rounded-xl p-3 border border-surface-border text-xs focus:outline-none focus:border-primary font-medium" />
-            </div>
-
-            <!-- Auto-Calculated Delivery Rate Info Strip -->
-            <div class="md:col-span-2 pt-1">
-              <input type="hidden" name="delivery_method" id="delivery-method-input" value="Express Home Delivery (Inside Dhaka)" />
-              <input type="hidden" name="payment_method" value="Cash On Delivery" />
-              <div class="p-3 bg-surface-container rounded-xl border border-surface-border text-xs text-text-muted flex items-center justify-between flex-wrap gap-2">
-                <div class="flex items-center gap-2">
-                  <span class="material-symbols-outlined text-primary text-[18px]">local_shipping</span>
-                  <span>Delivery Charge: <strong class="text-on-surface font-bold" id="delivery-info-rate">Inside Dhaka ৳ 80 TK</strong></span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <!-- Inside Dhaka: ৳ 100 -->
+            <label id="zone-card-inside" onclick="setDeliveryZone('inside_dhaka')" class="relative flex items-center justify-between p-4 rounded-2xl border-2 border-primary bg-primary/5 cursor-pointer transition-all">
+              <div class="flex items-center gap-3">
+                <input type="radio" name="delivery_zone" value="inside_dhaka" checked class="w-4 h-4 text-primary focus:ring-primary pointer-events-none" />
+                <div>
+                  <span class="font-extrabold text-on-surface text-sm block">Inside Dhaka (ঢাকা সিটি)</span>
+                  <span class="text-text-muted text-[11px]">১-২ দিনে দ্রুত হোম ডেলিভারি</span>
                 </div>
-                <span id="delivery-auto-badge" class="text-[11px] font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                  <span class="material-symbols-outlined text-[13px]">verified</span>
-                  <span id="delivery-auto-text">Auto Applied by Location</span>
-                </span>
               </div>
+              <span class="font-extrabold text-primary text-sm whitespace-nowrap bg-white px-2.5 py-1 rounded-lg border border-primary/20 shadow-xs">৳ 100 TK</span>
+            </label>
+
+            <!-- Outside Dhaka: ৳ 150 -->
+            <label id="zone-card-outside" onclick="setDeliveryZone('outside_dhaka')" class="relative flex items-center justify-between p-4 rounded-2xl border border-surface-border bg-surface-container/60 cursor-pointer transition-all hover:border-primary">
+              <div class="flex items-center gap-3">
+                <input type="radio" name="delivery_zone" value="outside_dhaka" class="w-4 h-4 text-primary focus:ring-primary pointer-events-none" />
+                <div>
+                  <span class="font-extrabold text-on-surface text-sm block">Outside Dhaka (ঢাকার বাইরে)</span>
+                  <span class="text-text-muted text-[11px]">সারা বাংলাদেশে কুরিয়ার ডেলিভারি</span>
+                </div>
+              </div>
+              <span class="font-extrabold text-on-surface text-sm whitespace-nowrap bg-white px-2.5 py-1 rounded-lg border border-surface-border shadow-xs">৳ 150 TK</span>
+            </label>
+          </div>
+
+          <input type="hidden" name="delivery_method" id="delivery-method-input" value="Express Home Delivery (Inside Dhaka)" />
+          <input type="hidden" name="payment_method" value="Cash On Delivery" />
+        </div>
+
+        <!-- Section 3: Cash On Delivery Badge -->
+        <div class="bg-surface-card rounded-2xl p-4 border border-surface-border shadow-xs flex items-center justify-between gap-3 text-xs">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+              <span class="material-symbols-outlined text-[22px]">payments</span>
+            </div>
+            <div>
+              <span class="font-bold text-on-surface text-xs block">Cash On Delivery (ক্যাশ অন ডেলিভারি)</span>
+              <span class="text-text-muted text-[11px]">পণ্য হাতে পেয়ে চেক করে সম্পূর্ণ মূল্য পরিশোধ করুন</span>
             </div>
           </div>
+          <span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 text-[11px] font-bold rounded-lg whitespace-nowrap">Cash On Delivery</span>
         </div>
 
       </div>
@@ -151,7 +162,7 @@
           </div>
           <div class="flex items-center justify-between text-text-muted">
             <span>Shipping Charge:</span>
-            <span class="font-bold text-on-surface" id="checkout-shipping">৳ 80 TK</span>
+            <span class="font-bold text-on-surface" id="checkout-shipping">৳ 100 TK</span>
           </div>
           <div class="flex items-center justify-between text-text-muted">
             <span>Estimated VAT/AIT:</span>
@@ -197,47 +208,73 @@
 
 @push('scripts')
 <script>
-  let currentShippingCost = 80;
+  let currentShippingCost = 100;
+  let currentZone = 'inside_dhaka';
 
-  function updateShippingDisplay() {
+  function setDeliveryZone(zone, triggerFromUser = true) {
+    currentZone = zone;
+    const cardInside = document.getElementById('zone-card-inside');
+    const cardOutside = document.getElementById('zone-card-outside');
+    const radioInside = document.querySelector('input[name="delivery_zone"][value="inside_dhaka"]');
+    const radioOutside = document.querySelector('input[name="delivery_zone"][value="outside_dhaka"]');
     const shipEl = document.getElementById('checkout-shipping');
-    const infoRateEl = document.getElementById('delivery-info-rate');
-    const autoBadgeText = document.getElementById('delivery-auto-text');
     const deliveryMethodInput = document.getElementById('delivery-method-input');
+    const cityInput = document.getElementById('city-input');
+    const divisionInput = document.getElementById('division-input');
 
-    if (currentShippingCost === 80) {
-      if (shipEl) {
-        shipEl.textContent = '৳ 80 TK';
-        shipEl.className = 'font-bold text-on-surface';
+    if (zone === 'outside_dhaka') {
+      currentShippingCost = 150;
+      if (radioOutside) radioOutside.checked = true;
+      if (radioInside) radioInside.checked = false;
+      if (cardOutside) {
+        cardOutside.className = 'relative flex items-center justify-between p-4 rounded-2xl border-2 border-primary bg-primary/5 cursor-pointer transition-all';
+        const badge = cardOutside.querySelector('span:last-child');
+        if (badge) badge.className = 'font-extrabold text-primary text-sm whitespace-nowrap bg-white px-2.5 py-1 rounded-lg border border-primary/20 shadow-xs';
       }
-      if (infoRateEl) infoRateEl.textContent = 'Inside Dhaka ৳ 80 TK';
-      if (autoBadgeText) autoBadgeText.textContent = 'Inside Dhaka (৳80)';
-      if (deliveryMethodInput) deliveryMethodInput.value = 'Express Home Delivery (Inside Dhaka)';
-    } else {
-      if (shipEl) {
-        shipEl.textContent = '৳ 130 TK';
-        shipEl.className = 'font-bold text-on-surface';
+      if (cardInside) {
+        cardInside.className = 'relative flex items-center justify-between p-4 rounded-2xl border border-surface-border bg-surface-container/60 cursor-pointer transition-all hover:border-primary';
+        const badge = cardInside.querySelector('span:last-child');
+        if (badge) badge.className = 'font-extrabold text-on-surface text-sm whitespace-nowrap bg-white px-2.5 py-1 rounded-lg border border-surface-border shadow-xs';
       }
-      if (infoRateEl) infoRateEl.textContent = 'Outside Dhaka ৳ 130 TK';
-      if (autoBadgeText) autoBadgeText.textContent = 'Outside Dhaka (৳130)';
+      if (shipEl) shipEl.textContent = '৳ 150 TK';
       if (deliveryMethodInput) deliveryMethodInput.value = 'Courier Delivery (Outside Dhaka)';
+      if (cityInput) cityInput.value = 'Outside Dhaka';
+      if (divisionInput) divisionInput.value = 'Outside Dhaka';
+    } else {
+      currentShippingCost = 100;
+      if (radioInside) radioInside.checked = true;
+      if (radioOutside) radioOutside.checked = false;
+      if (cardInside) {
+        cardInside.className = 'relative flex items-center justify-between p-4 rounded-2xl border-2 border-primary bg-primary/5 cursor-pointer transition-all';
+        const badge = cardInside.querySelector('span:last-child');
+        if (badge) badge.className = 'font-extrabold text-primary text-sm whitespace-nowrap bg-white px-2.5 py-1 rounded-lg border border-primary/20 shadow-xs';
+      }
+      if (cardOutside) {
+        cardOutside.className = 'relative flex items-center justify-between p-4 rounded-2xl border border-surface-border bg-surface-container/60 cursor-pointer transition-all hover:border-primary';
+        const badge = cardOutside.querySelector('span:last-child');
+        if (badge) badge.className = 'font-extrabold text-on-surface text-sm whitespace-nowrap bg-white px-2.5 py-1 rounded-lg border border-surface-border shadow-xs';
+      }
+      if (shipEl) shipEl.textContent = '৳ 100 TK';
+      if (deliveryMethodInput) deliveryMethodInput.value = 'Express Home Delivery (Inside Dhaka)';
+      if (cityInput) cityInput.value = 'Dhaka';
+      if (divisionInput) divisionInput.value = 'Dhaka Division';
+    }
+
+    renderCheckoutSummary();
+
+    if (triggerFromUser) {
+      trackDataLayerAddShippingInfo();
+      pushCustomerInfoToDataLayer('customer_info_updated');
     }
   }
 
-  function autoDetectDeliveryZone() {
-    const divisionSelect = document.getElementById('division-select');
-    const cityInput = document.getElementById('city-input');
+  function autoDetectDeliveryZoneFromAddress() {
     const addressInput = document.getElementById('address-input');
+    if (!addressInput) return;
+    const text = addressInput.value.toLowerCase().trim();
+    if (!text || text.length < 3) return;
 
-    const division = divisionSelect ? divisionSelect.value.toLowerCase().trim() : '';
-    const city = cityInput ? cityInput.value.toLowerCase().trim() : '';
-    const address = addressInput ? addressInput.value.toLowerCase().trim() : '';
-
-    // Check if Inside Dhaka
-    const isDhakaDivision = division.includes('dhaka');
-    
-    // Check if city / address mentions other major districts outside dhaka
-    const outsideDistricts = [
+    const outsideKeywords = [
       'chittagong', 'chattogram', 'sylhet', 'rajshahi', 'khulna', 'barishal', 'barisal',
       'rangpur', 'mymensingh', 'cumilla', 'comilla', 'bogra', 'bogura', 'jessore', 'jashore',
       'cox', 'cox\'s bazar', 'noakhali', 'feni', 'dinajpur', 'tangail', 'brahmanbaria',
@@ -247,20 +284,18 @@
       'shariatpur', 'rajbari', 'magura', 'narail', 'bagerhat', 'satkhira', 'chuadanga',
       'meherpur', 'jhinaidah', 'jhenaidah', 'joypurhat', 'chapainawabganj', 'nawabganj',
       'kurigram', 'gaibandha', 'lalmonirhat', 'nilphamari', 'panchagarh', 'thakurgaon',
-      'barguna', 'jhalokati', 'pirojpur', 'bandarban', 'khagrachhari', 'rangamati'
+      'barguna', 'jhalokati', 'pirojpur', 'bandarban', 'khagrachhari', 'rangamati',
+      'চট্টগ্রাম', 'সিলেট', 'রাজশাহী', 'খুলনা', 'বরিশাল', 'রংপুর', 'ময়মনসিংহ', 'কুমিল্লা', 'বগুড়া', 'যশোর', 'কক্সবাজার'
     ];
 
-    const hasOutsideKeyword = outsideDistricts.some(dist => city.includes(dist) || address.includes(dist));
-    const isExplicitlyDhaka = city.includes('dhaka') || address.includes('dhaka') || city.includes('uttara') || city.includes('mirpur') || city.includes('gulshan') || city.includes('banani') || city.includes('dhanmondi') || city.includes('motijheel') || city.includes('mohammadpur') || city.includes('badda');
+    const isDhakaExplicit = text.includes('dhaka') || text.includes('ঢাকা') || text.includes('uttara') || text.includes('mirpur') || text.includes('gulshan') || text.includes('banani') || text.includes('dhanmondi') || text.includes('motijheel') || text.includes('mohammadpur') || text.includes('badda') || text.includes('উত্তরা') || text.includes('মিরপুর') || text.includes('গুলশান') || text.includes('ধানমন্ডি');
 
-    if (!isDhakaDivision || (hasOutsideKeyword && !isExplicitlyDhaka)) {
-      currentShippingCost = 130;
-    } else {
-      currentShippingCost = 80;
+    const matchesOutside = outsideKeywords.some(w => text.includes(w));
+    if (matchesOutside && !isDhakaExplicit) {
+      if (currentZone !== 'outside_dhaka') {
+        setDeliveryZone('outside_dhaka', false);
+      }
     }
-
-    updateShippingDisplay();
-    renderCheckoutSummary();
   }
 
   function renderCheckoutSummary() {
@@ -334,21 +369,10 @@
     }
   }
 
-  // Track Division, City & Address for Real-time Zone Auto-Detection
-  const divisionSelect = document.getElementById('division-select');
-  const cityInput = document.getElementById('city-input');
+  // Real-time Address Input for Smart Zone Detection
   const addressInput = document.getElementById('address-input');
-
-  if (divisionSelect) {
-    divisionSelect.addEventListener('change', autoDetectDeliveryZone);
-  }
-
-  if (cityInput) {
-    cityInput.addEventListener('input', autoDetectDeliveryZone);
-  }
-
   if (addressInput) {
-    addressInput.addEventListener('input', autoDetectDeliveryZone);
+    addressInput.addEventListener('input', autoDetectDeliveryZoneFromAddress);
   }
 
   // -------------------------------------------------------------
@@ -471,7 +495,7 @@
 
   // Attach event listeners to all customer input fields
   function setupCustomerInputListeners() {
-    const selector = 'input[name="customer_name"], input[name="phone"], input[name="email"], select[name="division"], input[name="city"], textarea[name="delivery_address"], input[name="order_notes"]';
+    const selector = 'input[name="customer_name"], input[name="phone"], textarea[name="delivery_address"], input[name="delivery_zone"]';
     const inputs = document.querySelectorAll(selector);
 
     inputs.forEach(function(input) {
@@ -505,7 +529,7 @@
       const grandTotal = subtotal + currentShippingCost;
       const cust = getCustomerData();
       const deliveryMethodInput = document.getElementById('delivery-method-input');
-      const shippingTier = deliveryMethodInput ? deliveryMethodInput.value : (currentShippingCost === 80 ? 'Express Home Delivery (Inside Dhaka)' : 'Courier Delivery (Outside Dhaka)');
+      const shippingTier = deliveryMethodInput ? deliveryMethodInput.value : (currentShippingCost === 100 ? 'Express Home Delivery (Inside Dhaka)' : 'Courier Delivery (Outside Dhaka)');
 
       if (lastTrackedShippingTier === shippingTier && !cust.customer_name && !cust.customer_phone) return;
       lastTrackedShippingTier = shippingTier;
@@ -739,7 +763,7 @@
   }
 
   document.addEventListener('DOMContentLoaded', function() {
-    autoDetectDeliveryZone();
+    setDeliveryZone('inside_dhaka', false);
     renderCheckoutSummary();
     setupCustomerInputListeners();
     pushCustomerInfoToDataLayer('customer_info_updated');
