@@ -90,67 +90,7 @@
         </div>
       @endif
 
-      <!-- Quantity and Action Buttons (Add to Cart & Order Now) -->
-      <div class="space-y-3 pt-3">
-        <div class="flex items-center gap-3">
-          <!-- Quantity Counter -->
-          <div class="flex items-center border border-surface-border bg-surface-container rounded-xl p-1 shrink-0">
-            <button type="button" onclick="decrementQty()" class="w-8 h-8 rounded-lg bg-surface-card flex items-center justify-center text-on-surface hover:bg-primary hover:text-white transition-colors font-bold select-none cursor-pointer">-</button>
-            <input type="number" value="1" min="1" max="10" class="product-qty-input w-12 text-center text-sm font-bold bg-transparent focus:outline-none" oninput="syncQty(this.value)" />
-            <button type="button" onclick="incrementQty()" class="w-8 h-8 rounded-lg bg-surface-card flex items-center justify-center text-on-surface hover:bg-primary hover:text-white transition-colors font-bold select-none cursor-pointer">+</button>
-          </div>
 
-          <!-- Add to Cart -->
-          <button type="button" onclick="handleAddToCart()" class="flex-1 bg-primary hover:bg-primary-hover text-white font-bold text-sm py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 cursor-pointer">
-            <span class="material-symbols-outlined text-[18px]">shopping_bag</span>
-            <span>Add to Cart</span>
-          </button>
-        </div>
-
-        <!-- Direct Order Now & Hotline -->
-        <div class="flex gap-2">
-          <button type="button" onclick="handleBuyNow()" class="flex-1 bg-rec-red-base hover:bg-rec-red-hover text-white font-bold text-sm py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 text-center cursor-pointer">
-            <span class="material-symbols-outlined text-[18px]">bolt</span>
-            <span>Order Now</span>
-          </button>
-          <a href="tel:{{ $whatsappDigits ?? '8801917256756' }}" class="px-4 py-3 bg-surface-container hover:bg-surface-container-low border border-surface-border rounded-xl text-xs font-bold text-on-surface flex items-center justify-center gap-1.5 transition-colors shrink-0">
-            <span class="material-symbols-outlined text-primary text-[18px]">support_agent</span>
-            <span>Call Hotline</span>
-          </a>
-        </div>
-      </div>
-
-      <!-- Official Guarantee Perks (Moved Below Action Buttons) -->
-      <div class="grid grid-cols-2 gap-3 pt-3 border-t border-surface-border">
-        <div class="flex items-center gap-2.5 p-3 rounded-xl bg-surface-container-low border border-surface-border">
-          <span class="material-symbols-outlined text-primary text-[24px]">verified</span>
-          <div>
-            <h5 class="text-xs font-bold text-on-surface">100% Genuine</h5>
-            <p class="text-[11px] text-text-muted">Official Channel Warranty</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-2.5 p-3 rounded-xl bg-surface-container-low border border-surface-border">
-          <span class="material-symbols-outlined text-primary text-[24px]">local_shipping</span>
-          <div>
-            <h5 class="text-xs font-bold text-on-surface">Express Delivery</h5>
-            <p class="text-[11px] text-text-muted">1-3 Days Nationwide</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-2.5 p-3 rounded-xl bg-surface-container-low border border-surface-border">
-          <span class="material-symbols-outlined text-primary text-[24px]">credit_card</span>
-          <div>
-            <h5 class="text-xs font-bold text-on-surface">0% EMI Available</h5>
-            <p class="text-[11px] text-text-muted">36 Partner Banks</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-2.5 p-3 rounded-xl bg-surface-container-low border border-surface-border">
-          <span class="material-symbols-outlined text-primary text-[24px]">published_with_changes</span>
-          <div>
-            <h5 class="text-xs font-bold text-on-surface">7 Days Replacement</h5>
-            <p class="text-[11px] text-text-muted">For Hardware Defects</p>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- RIGHT COLUMN: Product Details & Purchase Controls -->
@@ -237,13 +177,13 @@
           </div>
         </div>
 
-        <!-- Desktop Action Buttons (Right Column) -->
-        <div class="hidden lg:block space-y-3 pt-2">
+        <!-- Action Buttons (Add to Cart & Order Now) -->
+        <div class="space-y-3 pt-2">
           <div class="flex items-center gap-3">
             <!-- Quantity Counter -->
             <div class="flex items-center border border-surface-border bg-surface-container rounded-xl p-1 shrink-0">
               <button type="button" onclick="decrementQty()" class="w-8 h-8 rounded-lg bg-surface-card flex items-center justify-center text-on-surface hover:bg-primary hover:text-white transition-colors font-bold select-none cursor-pointer">-</button>
-              <input type="number" value="1" min="1" max="10" class="product-qty-input w-12 text-center text-sm font-bold bg-transparent focus:outline-none" oninput="syncQty(this.value)" />
+              <input id="product-qty" type="number" value="1" min="1" max="10" class="w-12 text-center text-sm font-bold bg-transparent focus:outline-none" />
               <button type="button" onclick="incrementQty()" class="w-8 h-8 rounded-lg bg-surface-card flex items-center justify-center text-on-surface hover:bg-primary hover:text-white transition-colors font-bold select-none cursor-pointer">+</button>
             </div>
 
@@ -256,14 +196,46 @@
 
           <!-- Direct Order Now & Hotline -->
           <div class="flex gap-2">
-            <button type="button" onclick="handleBuyNow()" class="flex-1 bg-rec-red-base hover:bg-rec-red-hover text-white font-bold text-sm py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 text-center cursor-pointer">
+            <button type="button" onclick="handleBuyNow()" class="flex-1 bg-rec-red-base hover:bg-rec-red-hover text-white font-bold text-sm py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 text-center cursor-pointer">
               <span class="material-symbols-outlined text-[18px]">bolt</span>
               <span>Order Now</span>
             </button>
-            <a href="tel:{{ $whatsappDigits ?? '8801917256756' }}" class="px-4 py-3 bg-surface-container hover:bg-surface-container-low border border-surface-border rounded-xl text-xs font-bold text-on-surface flex items-center justify-center gap-1.5 transition-colors">
+            <a href="tel:{{ $whatsappDigits ?? '8801917256756' }}" class="px-4 py-3 bg-surface-container hover:bg-surface-container-low border border-surface-border rounded-xl text-xs font-bold text-on-surface flex items-center justify-center gap-1.5 transition-colors shrink-0">
               <span class="material-symbols-outlined text-primary text-[18px]">support_agent</span>
               <span>Call Hotline</span>
             </a>
+          </div>
+        </div>
+
+        <!-- Official Guarantee Perks (Moved Down Below Action Buttons) -->
+        <div class="grid grid-cols-2 gap-3 pt-5 border-t border-surface-border mt-5">
+          <div class="flex items-center gap-2.5 p-3 rounded-xl bg-surface-container-low border border-surface-border">
+            <span class="material-symbols-outlined text-primary text-[24px]">verified</span>
+            <div>
+              <h5 class="text-xs font-bold text-on-surface">100% Genuine</h5>
+              <p class="text-[11px] text-text-muted">Official Channel Warranty</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2.5 p-3 rounded-xl bg-surface-container-low border border-surface-border">
+            <span class="material-symbols-outlined text-primary text-[24px]">local_shipping</span>
+            <div>
+              <h5 class="text-xs font-bold text-on-surface">Express Delivery</h5>
+              <p class="text-[11px] text-text-muted">1-3 Days Nationwide</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2.5 p-3 rounded-xl bg-surface-container-low border border-surface-border">
+            <span class="material-symbols-outlined text-primary text-[24px]">credit_card</span>
+            <div>
+              <h5 class="text-xs font-bold text-on-surface">0% EMI Available</h5>
+              <p class="text-[11px] text-text-muted">36 Partner Banks</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2.5 p-3 rounded-xl bg-surface-container-low border border-surface-border">
+            <span class="material-symbols-outlined text-primary text-[24px]">published_with_changes</span>
+            <div>
+              <h5 class="text-xs font-bold text-on-surface">7 Days Replacement</h5>
+              <p class="text-[11px] text-text-muted">For Hardware Defects</p>
+            </div>
           </div>
         </div>
 
@@ -435,27 +407,14 @@
     btn.classList.remove('border-surface-border');
   }
 
-  function syncQty(val) {
-    const parsed = parseInt(val) || 1;
-    document.querySelectorAll('.product-qty-input').forEach(input => {
-      input.value = Math.max(1, Math.min(10, parsed));
-    });
-  }
-
   function incrementQty() {
-    const first = document.querySelector('.product-qty-input');
-    const cur = parseInt(first?.value || 1);
-    if (cur < 10) {
-      syncQty(cur + 1);
-    }
+    const qty = document.getElementById('product-qty');
+    if (qty && parseInt(qty.value || 1) < 10) qty.value = parseInt(qty.value || 1) + 1;
   }
 
   function decrementQty() {
-    const first = document.querySelector('.product-qty-input');
-    const cur = parseInt(first?.value || 1);
-    if (cur > 1) {
-      syncQty(cur - 1);
-    }
+    const qty = document.getElementById('product-qty');
+    if (qty && parseInt(qty.value || 1) > 1) qty.value = parseInt(qty.value || 1) - 1;
   }
 
   function switchTab(tabId, btn) {
@@ -471,8 +430,7 @@
   }
 
   function handleAddToCart() {
-    const qtyInput = document.querySelector('.product-qty-input');
-    const qty = parseInt(qtyInput?.value || 1);
+    const qty = parseInt(document.getElementById('product-qty')?.value || 1);
     if (window.CameraCart) {
       CameraCart.add({
         id: '{{ $product['id'] ?? null }}',
@@ -487,8 +445,7 @@
   }
 
   function handleBuyNow() {
-    const qtyInput = document.querySelector('.product-qty-input');
-    const qty = parseInt(qtyInput?.value || 1);
+    const qty = parseInt(document.getElementById('product-qty')?.value || 1);
     if (window.CameraCart) {
       CameraCart.add({
         id: '{{ $product['id'] ?? null }}',
