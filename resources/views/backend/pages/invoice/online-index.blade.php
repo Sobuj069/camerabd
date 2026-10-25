@@ -1432,9 +1432,19 @@
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                     'Accept': 'application/json'
                 },
-                body: JSON.stringify({ order_status: newStatus })
+                body: JSON.stringify({ 
+                    order_status: newStatus,
+                    status: newStatus 
+                })
             })
-            .then(res => res.json())
+            .then(async res => {
+                const ct = res.headers.get('content-type') || '';
+                if (ct.includes('application/json')) {
+                    return await res.json();
+                } else {
+                    return { success: res.ok, message: res.ok ? 'Status updated successfully' : 'Server error (' + res.status + ')' };
+                }
+            })
             .then(data => {
                 if (data.success) {
                     if (typeof toastr !== 'undefined') {
@@ -1478,10 +1488,18 @@
                 },
                 body: JSON.stringify({
                     invoice_ids: selectedIds,
-                    order_status: newStatus
+                    order_status: newStatus,
+                    status: newStatus
                 })
             })
-            .then(res => res.json())
+            .then(async res => {
+                const ct = res.headers.get('content-type') || '';
+                if (ct.includes('application/json')) {
+                    return await res.json();
+                } else {
+                    return { success: res.ok, message: res.ok ? 'Status updated successfully' : 'Server error (' + res.status + ')' };
+                }
+            })
             .then(data => {
                 if (data.success) {
                     alert(data.message);

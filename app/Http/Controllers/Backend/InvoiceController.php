@@ -402,122 +402,155 @@ class InvoiceController extends Controller
 
     public function updateOrderStatus(Request $request, $id = null)
     {
-        $rawIds = $request->input('invoice_ids');
-        $status = $request->input('status', $request->input('order_status', 'Processing'));
+        try {
+            $rawIds = $request->input('invoice_ids');
 
-        $ids = [];
-        if (!empty($id)) {
-            $ids = [$id];
-        } else
-        if ($request->input('select_all_pages') == 1 || $request->input('select_all_pages') === 'true' || $request->input('select_all_pages') === '1') {
-            $ids = $this->buildOnlineSaleFilteredQuery($request)->pluck('id')->toArray();
-        } elseif (is_array($rawIds)) {
-            $ids = $rawIds;
-        } elseif (is_string($rawIds)) {
-            $ids = json_decode($rawIds, true) ?? array_filter(explode(',', $rawIds));
-        } elseif ($request->filled('invoice_id')) {
-            $ids = [$request->input('invoice_id')];
-        }
-
-        if (empty($ids)) {
-            session()->flash('error', __('Please select at least one invoice to update status.'));
-            return redirect()->back();
-        }
-
-        $validStatusesMap = [
-            'processing' => 'Processing',
-            'rts' => 'RTS',
-            'in review' => 'In Review',
-            'in_review' => 'In Review',
-            'pending' => 'Pending',
-            'in transit' => 'In Transit',
-            'in_transit' => 'In Transit',
-            'on hold' => 'On Hold',
-            'on_hold' => 'On Hold',
-            'no response' => 'No Response',
-            'no_response' => 'No Response',
-            'in courier' => 'In Courier',
-            'in_courier' => 'In Courier',
-            'delivered' => 'Delivered',
-            'pending return' => 'Pending Return',
-            'pending_return' => 'Pending Return',
-            'returned' => 'Returned',
-            'partial' => 'Partial',
-            'cancelled' => 'Cancelled',
-        ];
-        $statusKey = strtolower(trim($request->input('status', 'Processing')));
-        $status = $validStatusesMap[$statusKey] ?? mapCourierStatus($statusKey);
-
-
-        $invoices = Invoice::with('customer')->whereIn('id', $ids)->get();
-        $count = 0;
-
-        $isNewReturnedOrCancelled = in_array($status, ['Returned', 'Cancelled']);
-
-        $errors = [];
-
-        foreach ($invoices as $inv) {
-            $oldStatus = $inv->order_status;
-            $wasReturnedOrCancelled = in_array($oldStatus, ['Returned', 'returned', 'Cancelled', 'cancelled']);
-
-            // Lock Delivered Invoices: Status cannot be changed once Delivered!
-            if (in_array(strtolower(trim($oldStatus ?? '')), ['delivered'])) {
-                $errors[] = "Invoice #{$inv->invoice_no} is already Delivered and its status cannot be changed.";
-                continue;
+            $ids = [];
+            if (!empty($id)) {
+                $ids = [$id];
+            } else if ($request->input('select_all_pages') == 1 || $request->input('select_all_pages') === 'true' || $request->input('select_all_pages') === '1') {
+                $ids = $this->buildOnlineSaleFilteredQuery($request)->pluck('id')->toArray();
+            } elseif (is_array($rawIds)) {
+                $ids = $rawIds;
+            } elseif (is_string($rawIds)) {
+                $ids = json_decode($rawIds, true) ?? array_filter(explode(',', $rawIds));
+            } elseif ($request->filled('invoice_id')) {
+                $ids = [$request->input('invoice_id')];
             }
 
-            // Synchronize inventory stock and IMEI serials on status change
-            syncInvoiceStockForStatusChange($inv, $status, $oldStatus);
-
-            // Note update if provided
-            if ($request->filled('note')) {
-                $trimmedNote = trim($request->input('note'));
-                $dateStr = date('d M Y, h:i A');
-                $existingNote = !empty($inv->note) ? $inv->note . "\n" : "";
-                $inv->note = $existingNote . "[{$status} - {$dateStr}]: {$trimmedNote}";
+            if (empty($ids)) {
+                $msg = __('Please select at least one invoice to update status.');
+                if ($request->ajax() || $request->wantsJson() || $request->expectsJson() || $request->isJson()) {
+                    return response()->json(['success' => false, 'message' => $msg], 422);
+                }
+                session()->flash('error', $msg);
+                return redirect()->back();
             }
 
-            // If status is updated to 'In Courier', dispatch to courier API if not already sent
-            if (in_array(strtolower(trim($status)), ['in courier', 'in_courier'])) {
-                if (empty($inv->consignment_id)) {
-                    $dispatchResult = $this->dispatchInvoiceToCourier($inv);
-                    if ($dispatchResult['success']) {
-                        logActivity('Send to Courier', "Invoice #{$inv->invoice_no} dispatched to courier (Consignment: {$inv->consignment_id})", $inv);
-                    } else {
-                        $errors[] = $dispatchResult['message'];
+            $validStatusesMap = [
+                'processing' => 'Processing',
+                'rts' => 'RTS',
+                'in review' => 'In Review',
+                'in_review' => 'In Review',
+                'pending' => 'Pending',
+                'in transit' => 'In Transit',
+                'in_transit' => 'In Transit',
+                'on hold' => 'On Hold',
+                'on_hold' => 'On Hold',
+                'no response' => 'No Response',
+                'no_response' => 'No Response',
+                'in courier' => 'In Courier',
+                'in_courier' => 'In Courier',
+                'delivered' => 'Delivered',
+                'pending return' => 'Pending Return',
+                'pending_return' => 'Pending Return',
+                'returned' => 'Returned',
+                'partial' => 'Partial',
+                'cancelled' => 'Cancelled',
+            ];
+
+            $rawStatus = $request->input('order_status', $request->input('status', 'Processing'));
+            $statusKey = strtolower(trim((string)$rawStatus));
+            $status = $validStatusesMap[$statusKey] ?? (function_exists('mapCourierStatus') ? mapCourierStatus($statusKey) : ucfirst($statusKey));
+
+            $invoices = Invoice::with('customer')->whereIn('id', $ids)->get();
+            $count = 0;
+            $errors = [];
+
+            foreach ($invoices as $inv) {
+                $oldStatus = $inv->order_status;
+
+                // Lock Delivered Invoices: Status cannot be changed once Delivered!
+                if (in_array(strtolower(trim($oldStatus ?? '')), ['delivered'])) {
+                    $errors[] = "Invoice #{$inv->invoice_no} is already Delivered and its status cannot be changed.";
+                    continue;
+                }
+
+                // Synchronize inventory stock and IMEI serials on status change
+                if (function_exists('syncInvoiceStockForStatusChange')) {
+                    syncInvoiceStockForStatusChange($inv, $status, $oldStatus);
+                }
+
+                // Note update if provided
+                if ($request->filled('note')) {
+                    $trimmedNote = trim($request->input('note'));
+                    $dateStr = date('d M Y, h:i A');
+                    $existingNote = !empty($inv->note) ? $inv->note . "\n" : "";
+                    $inv->note = $existingNote . "[{$status} - {$dateStr}]: {$trimmedNote}";
+                }
+
+                // If status is updated to 'In Courier', dispatch to courier API if not already sent
+                if (in_array(strtolower(trim($status)), ['in courier', 'in_courier'])) {
+                    if (empty($inv->consignment_id)) {
+                        $dispatchResult = $this->dispatchInvoiceToCourier($inv);
+                        if ($dispatchResult['success']) {
+                            logActivity('Send to Courier', "Invoice #{$inv->invoice_no} dispatched to courier (Consignment: {$inv->consignment_id})", $inv);
+                        } else {
+                            $errors[] = $dispatchResult['message'];
+                        }
+                    }
+                    $inv->order_status = 'In Courier';
+                    $inv->save();
+                    $count++;
+                    logActivity('Update Order Status', "Invoice #{$inv->invoice_no} status changed from '{$oldStatus}' to 'In Courier'", $inv);
+                } else {
+                    $inv->order_status = $status;
+                    $inv->save();
+                    $count++;
+                    logActivity('Update Order Status', "Invoice #{$inv->invoice_no} status changed from '{$oldStatus}' to '{$status}'", $inv);
+                }
+
+                if (in_array(strtolower(trim($status)), ['delivered'])) {
+                    if ($inv->total_due > 0 && $inv->status != 2) {
+                        if (function_exists('autoPayInvoiceDue')) {
+                            autoPayInvoiceDue($inv);
+                        }
                     }
                 }
-                $inv->order_status = 'In Courier';
-                $inv->save();
-                $count++;
-                logActivity('Update Order Status', "Invoice #{$inv->invoice_no} status changed from '{$oldStatus}' to 'In Courier'", $inv);
-            } else {
-                $inv->order_status = $status;
-                $inv->save();
-                $count++;
-                logActivity('Update Order Status', "Invoice #{$inv->invoice_no} status changed from '{$oldStatus}' to '{$status}'", $inv);
             }
 
-            if (in_array(strtolower(trim($status)), ['delivered'])) {
-                if ($inv->total_due > 0 && $inv->status != 2) {
-                    autoPayInvoiceDue($inv);
+            if ($count > 0) {
+                $msg = __(":count invoice(s) status updated to :status!", ['count' => $count, 'status' => $status]);
+                if (!empty($errors)) {
+                    $msg .= ' ' . implode(' | ', $errors);
+                    session()->flash('info', $msg);
+                } else {
+                    session()->flash('success', $msg);
+                }
+
+                if ($request->ajax() || $request->wantsJson() || $request->expectsJson() || $request->isJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => $msg,
+                        'count' => $count,
+                        'status' => $status,
+                    ]);
+                }
+            } else {
+                $errMsg = implode(' | ', $errors) ?: __('No invoices were updated.');
+                session()->flash('error', $errMsg);
+
+                if ($request->ajax() || $request->wantsJson() || $request->expectsJson() || $request->isJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $errMsg,
+                    ], 422);
                 }
             }
-        }
 
-        if ($count > 0) {
-            $msg = __(":count invoice(s) status updated to :status!", ['count' => $count, 'status' => $status]);
-            if (!empty($errors)) {
-                $msg .= ' ' . implode(' | ', $errors);
-                session()->flash('info', $msg);
-            } else {
-                session()->flash('success', $msg);
+            return redirect()->back();
+
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("Error in updateOrderStatus: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+            $errMsg = "স্ট্যাটাস পরিবর্তন ব্যর্থ হয়েছে: " . $e->getMessage();
+            if ($request->ajax() || $request->wantsJson() || $request->expectsJson() || $request->isJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $errMsg,
+                ], 500);
             }
-        } else {
-            session()->flash('error', implode(' | ', $errors) ?: __('No invoices were updated.'));
+            return redirect()->back()->with('error', $errMsg);
         }
-
-        return redirect()->back();
     }
 
     public function clearSelectedDues(Request $request)
