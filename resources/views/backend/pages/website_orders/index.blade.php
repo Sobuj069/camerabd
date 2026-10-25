@@ -1095,7 +1095,7 @@
         })
         .then(({ status, body }) => {
             if (status === 200 && body.success) {
-                // Instantly dispatch dataLayer order confrom event
+                // Instantly dispatch dataLayer oder_comfrom event
                 if (body.order_datalayer) {
                     try {
                         var dlWithTime = Object.assign({}, body.order_datalayer, { _pushed_at: Date.now() });
@@ -1108,12 +1108,12 @@
                         window.dataLayer = window.dataLayer || [];
                         window.dataLayer.push({ ecommerce: null });
                         window.dataLayer.push(Object.assign({}, body.order_datalayer, {
-                            event: 'order confrom',
+                            event: 'oder_comfrom',
                             status: 'approved',
                             order_status: 'Approved'
                         }));
                     }
-                    console.log('%c✅ [DataLayer] "order confrom" event fired successfully!', 'background: #10b981; color: white; font-weight: bold; padding: 6px 12px; font-size: 14px; border-radius: 4px;', body.order_datalayer);
+                    console.log('%c✅ [DataLayer] "oder_comfrom" event fired successfully!', 'background: #10b981; color: white; font-weight: bold; padding: 6px 12px; font-size: 14px; border-radius: 4px;', body.order_datalayer);
                 }
 
                 if (typeof toastr !== 'undefined') {

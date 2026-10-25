@@ -311,15 +311,15 @@
       window.pushToDataLayer('purchase', purchaseEcommerce, purchaseExtra);
     }
 
-    // Deduplication tracker to guarantee strictly ONE single "order confrom" event
+    // Deduplication tracker to guarantee strictly ONE single "oder_comfrom" event
     window._dispatchedApprovedOrders = window._dispatchedApprovedOrders || {};
 
-    // Function to dispatch order confrom into dataLayer with full customer data & approved status
+    // Function to dispatch oder_comfrom into dataLayer with full customer data & approved status
     function dispatchApprovedOrderConfirm(payload) {
       if (!payload) return;
       var orderKey = String(payload.order_id || payload.transaction_id || '{{ $orderNumber }}');
       if (window._dispatchedApprovedOrders[orderKey]) {
-        console.log('[DataLayer] "order confrom" already dispatched for Order #' + orderKey + ', skipping duplicate.');
+        console.log('[DataLayer] "oder_comfrom" already dispatched for Order #' + orderKey + ', skipping duplicate.');
         return;
       }
       window._dispatchedApprovedOrders[orderKey] = true;
@@ -330,7 +330,7 @@
         window.dataLayer.push({ ecommerce: null });
 
         var ev = Object.assign({}, payload, {
-          event: 'order confrom',
+          event: 'oder_comfrom',
           status: 'approved',
           order_status: 'Approved'
         });
@@ -338,9 +338,9 @@
         // Strictly ONE single event push
         window.dataLayer.push(ev);
 
-        console.log('%c✅ [DataLayer] Single "order confrom" event fired! Status: APPROVED', 'background: #10b981; color: white; font-weight: bold; padding: 6px 12px; border-radius: 4px;', ev);
+        console.log('%c✅ [DataLayer] Single "oder_comfrom" event fired! Status: APPROVED', 'background: #10b981; color: white; font-weight: bold; padding: 6px 12px; border-radius: 4px;', ev);
       } catch(err) {
-        console.warn('[DataLayer] Error firing order confrom:', err);
+        console.warn('[DataLayer] Error firing oder_comfrom:', err);
       }
     }
 
@@ -349,7 +349,7 @@
       dispatchApprovedOrderConfirm({!! json_encode($approvedOrderDl, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!});
     @else
       // Order is currently Pending: poll status in real time.
-      // The instant Admin clicks Approve in Website Orders, fire "order confrom" without manual page reload!
+      // The instant Admin clicks Approve in Website Orders, fire "oder_comfrom" without manual page reload!
       (function() {
         var pollTimer = null;
         var pollAttempts = 0;

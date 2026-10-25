@@ -1613,7 +1613,7 @@ $('#orderStatusForm').on('submit', function(e) {
                         window.dataLayer = window.dataLayer || [];
                         window.dataLayer.push({ ecommerce: null });
                         window.dataLayer.push(Object.assign({}, res.order_datalayer, {
-                            event: 'order confrom',
+                            event: 'oder_comfrom',
                             status: 'approved',
                             order_status: 'Approved'
                         }));

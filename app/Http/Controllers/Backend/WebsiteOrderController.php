@@ -919,7 +919,7 @@ class WebsiteOrderController extends Controller
         $shippingFee = (float)($order->shipping_fee ?: ($order->shipping_cost ?: 0));
 
         return [
-            'event' => 'order confrom',
+            'event' => 'oder_comfrom',
             'status' => 'approved',
             'order_status' => 'Approved',
             'order_id' => (string)$order->order_no,
