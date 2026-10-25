@@ -149,19 +149,6 @@
           </div>
         </div>
 
-        <!-- Key Features Bullet List -->
-        <div class="mb-6">
-          <h4 class="text-xs uppercase font-extrabold text-text-muted tracking-wider mb-2">Key Highlights:</h4>
-          <ul class="space-y-1.5 text-xs text-on-surface">
-            @foreach(($product['features'] ?? []) as $feat)
-              <li class="flex items-start gap-2">
-                <span class="material-symbols-outlined text-primary text-[16px] shrink-0 mt-0.5">check_circle</span>
-                <span>{{ $feat }}</span>
-              </li>
-            @endforeach
-          </ul>
-        </div>
-
         <!-- Variant Selector Example -->
         <div class="mb-6">
           <label class="block text-xs uppercase font-extrabold text-text-muted tracking-wider mb-2">Configuration / Package:</label>
@@ -206,6 +193,21 @@
             </a>
           </div>
         </div>
+
+        <!-- Key Features Bullet List (Moved Below Action Buttons) -->
+        @if(isset($product['features']) && count($product['features']) > 0)
+        <div class="pt-5 border-t border-surface-border mt-5">
+          <h4 class="text-xs uppercase font-extrabold text-text-muted tracking-wider mb-2.5">Key Highlights:</h4>
+          <ul class="space-y-2 text-xs text-on-surface">
+            @foreach($product['features'] as $feat)
+              <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-primary text-[16px] shrink-0 mt-0.5">check_circle</span>
+                <span>{{ $feat }}</span>
+              </li>
+            @endforeach
+          </ul>
+        </div>
+        @endif
 
         <!-- Official Guarantee Perks (Moved Down Below Action Buttons) -->
         <div class="grid grid-cols-2 gap-3 pt-5 border-t border-surface-border mt-5">
