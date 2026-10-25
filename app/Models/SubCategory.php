@@ -11,6 +11,16 @@ class SubCategory extends Model
 
     protected $guarded = [];
 
+    protected static function booted()
+    {
+        static::saved(function () {
+            \Illuminate\Support\Facades\Cache::forget('mega_menu_categories_v2');
+        });
+        static::deleted(function () {
+            \Illuminate\Support\Facades\Cache::forget('mega_menu_categories_v2');
+        });
+    }
+
     public function category()
     {
         return $this->belongsTo(Category::class);

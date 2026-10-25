@@ -31,6 +31,13 @@ class HomepageSection extends Model
                 $section->key = $key;
             }
         });
+
+        static::saved(function () {
+            \Illuminate\Support\Facades\Cache::forget('frontend_homepage_sections_v2');
+        });
+        static::deleted(function () {
+            \Illuminate\Support\Facades\Cache::forget('frontend_homepage_sections_v2');
+        });
     }
 
     /**

@@ -11,6 +11,16 @@ class Product extends Model
 
     protected $guarded = [];
 
+    protected static function booted()
+    {
+        static::saved(function () {
+            \Illuminate\Support\Facades\Cache::forget('frontend_homepage_sections_v2');
+        });
+        static::deleted(function () {
+            \Illuminate\Support\Facades\Cache::forget('frontend_homepage_sections_v2');
+        });
+    }
+
     public function product_variations()
     {
         return $this->hasMany(ProductVariation::class);

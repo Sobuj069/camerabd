@@ -157,7 +157,7 @@
         <div class="bg-surface-container-low p-4 rounded-2xl border border-surface-border mb-6">
           <div class="flex items-baseline gap-3 flex-wrap">
             <span class="text-2xl md:text-3xl font-extrabold text-primary">
-              ৳ {{ number_format($product['price']) }} TK
+              ৳ {{ number_format((float)($product['price'] ?? 0)) }} TK
             </span>
             @if(!empty($product['old_price']))
               <span class="text-base text-text-muted line-through">
@@ -198,11 +198,11 @@
           <div class="grid grid-cols-2 gap-2.5">
             <button class="package-btn p-3 rounded-xl border-2 border-primary bg-primary/5 text-left text-xs transition-all">
               <span class="font-bold block text-on-surface">Standard Package</span>
-              <span class="text-primary font-bold">৳ {{ number_format($product['price']) }} TK</span>
+              <span class="text-primary font-bold">৳ {{ number_format((float)($product['price'] ?? 0)) }} TK</span>
             </button>
             <button class="package-btn p-3 rounded-xl border border-surface-border hover:border-primary text-left text-xs transition-all">
               <span class="font-bold block text-on-surface">Creator Pro Kit (+ Battery/Bag)</span>
-              <span class="text-text-muted">৳ {{ number_format($product['price'] + 8500) }} TK</span>
+              <span class="text-text-muted">৳ {{ number_format(((float)($product['price'] ?? 0)) + 8500) }} TK</span>
             </button>
           </div>
         </div>
@@ -474,13 +474,14 @@
 
     $dlRelatedItems = [];
     if (!empty($related) && is_array($related)) {
+      $itemIdxCounter = 1;
       foreach (array_slice($related, 0, 4) as $idx => $rel) {
         $dlRelatedItems[] = [
           'item_id' => (string)($rel['id'] ?? ($rel['sku'] ?? '')),
           'item_name' => $rel['name'] ?? '',
           'affiliation' => $siteName ?? 'CAMERA BD',
           'currency' => 'BDT',
-          'index' => $idx + 1,
+          'index' => $itemIdxCounter++,
           'item_brand' => $rel['brand'] ?? 'CAMERA BD',
           'item_category' => $rel['category'] ?? 'Gear',
           'price' => (float)($rel['price'] ?? 0),

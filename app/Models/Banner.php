@@ -24,6 +24,16 @@ class Banner extends Model
         'order' => 'integer',
     ];
 
+    protected static function booted()
+    {
+        static::saved(function () {
+            \Illuminate\Support\Facades\Cache::forget('frontend_homepage_sections_v2');
+        });
+        static::deleted(function () {
+            \Illuminate\Support\Facades\Cache::forget('frontend_homepage_sections_v2');
+        });
+    }
+
     /**
      * Scope for active banners
      */

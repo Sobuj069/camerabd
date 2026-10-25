@@ -15,74 +15,76 @@ class CategoryNavService
      */
     public static function getMegaMenuCategories()
     {
-        // 1. Fetch all real categories with their subcategories from database
-        try {
-            $dbCategories = Category::with('subCategories')
-                ->orderBy('is_top', 'desc')
-                ->orderBy('top_order', 'asc')
-                ->orderBy('id', 'asc')
-                ->get();
-        } catch (\Throwable $e) {
-            $dbCategories = collect();
-        }
-
-        $categoriesList = [];
-
-        foreach ($dbCategories as $cat) {
-            $rawName = trim($cat->name);
-            $normKey = strtolower($rawName);
-            $slug = Str::slug($rawName);
-
-            // Clean, professional title formatting for UI
-            $displayName = ucwords(strtolower($rawName));
-            if ($normKey === 'accessoris') $displayName = 'Accessories';
-            elseif ($normKey === 'battry') $displayName = 'Battery';
-            elseif ($normKey === 'pockt camera') $displayName = 'Pocket Camera';
-            elseif ($normKey === 'trypod') $displayName = 'Tripod';
-            elseif ($normKey === 'walike talike') $displayName = 'Walkie Talkie';
-            elseif ($normKey === 'nickband') $displayName = 'Neckband';
-            elseif ($normKey === 'sound box') $displayName = 'Sound Box';
-            elseif ($normKey === 'powerbank') $displayName = 'Power Bank';
-
-            $icon = self::resolveCategoryIcon($rawName);
-
-            $subList = [];
-
-            // ONLY populate subcategories if they actually exist in the database!
-            if ($cat->subCategories && $cat->subCategories->isNotEmpty()) {
-                foreach ($cat->subCategories as $dbSub) {
-                    $subSlug = Str::slug($dbSub->name);
-                    $subList[] = [
-                        'id' => $dbSub->id,
-                        'name' => $dbSub->name,
-                        'slug' => $subSlug,
-                        'icon' => self::resolveCategoryIcon($dbSub->name),
-                        'icon_color' => '#006241',
-                        'image' => null,
-                        'url' => route('frontend.subcategory', [$slug, $subSlug]),
-                    ];
-                }
+        return \Illuminate\Support\Facades\Cache::remember('mega_menu_categories_v2', 86400, function () {
+            // 1. Fetch all real categories with their subcategories from database
+            try {
+                $dbCategories = Category::with('subCategories')
+                    ->orderBy('is_top', 'desc')
+                    ->orderBy('top_order', 'asc')
+                    ->orderBy('id', 'asc')
+                    ->get();
+            } catch (\Throwable $e) {
+                $dbCategories = collect();
             }
 
-            $imageUrl = $cat->image_url ?: null;
+            $categoriesList = [];
 
-            $categoriesList[$slug] = [
-                'id' => $cat->id,
-                'name' => $displayName,
-                'raw_name' => $rawName,
-                'slug' => $slug,
-                'image' => $imageUrl,
-                'has_custom_image' => !empty($cat->image_url),
-                'icon' => $icon,
-                'icon_color' => '#006241',
-                'is_top' => (bool) $cat->is_top,
-                'top_order' => (int) $cat->top_order,
-                'view_all_url' => route('frontend.category', $slug),
-                'subcategories' => $subList,
-            ];
-        }
+            foreach ($dbCategories as $cat) {
+                $rawName = trim($cat->name);
+                $normKey = strtolower($rawName);
+                $slug = Str::slug($rawName);
 
-        return array_values($categoriesList);
+                // Clean, professional title formatting for UI
+                $displayName = ucwords(strtolower($rawName));
+                if ($normKey === 'accessoris') $displayName = 'Accessories';
+                elseif ($normKey === 'battry') $displayName = 'Battery';
+                elseif ($normKey === 'pockt camera') $displayName = 'Pocket Camera';
+                elseif ($normKey === 'trypod') $displayName = 'Tripod';
+                elseif ($normKey === 'walike talike') $displayName = 'Walkie Talkie';
+                elseif ($normKey === 'nickband') $displayName = 'Neckband';
+                elseif ($normKey === 'sound box') $displayName = 'Sound Box';
+                elseif ($normKey === 'powerbank') $displayName = 'Power Bank';
+
+                $icon = self::resolveCategoryIcon($rawName);
+
+                $subList = [];
+
+                // ONLY populate subcategories if they actually exist in the database!
+                if ($cat->subCategories && $cat->subCategories->isNotEmpty()) {
+                    foreach ($cat->subCategories as $dbSub) {
+                        $subSlug = Str::slug($dbSub->name);
+                        $subList[] = [
+                            'id' => $dbSub->id,
+                            'name' => $dbSub->name,
+                            'slug' => $subSlug,
+                            'icon' => self::resolveCategoryIcon($dbSub->name),
+                            'icon_color' => '#006241',
+                            'image' => null,
+                            'url' => route('frontend.subcategory', [$slug, $subSlug]),
+                        ];
+                    }
+                }
+
+                $imageUrl = $cat->image_url ?: null;
+
+                $categoriesList[$slug] = [
+                    'id' => $cat->id,
+                    'name' => $displayName,
+                    'raw_name' => $rawName,
+                    'slug' => $slug,
+                    'image' => $imageUrl,
+                    'has_custom_image' => !empty($cat->image_url),
+                    'icon' => $icon,
+                    'icon_color' => '#006241',
+                    'is_top' => (bool) $cat->is_top,
+                    'top_order' => (int) $cat->top_order,
+                    'view_all_url' => route('frontend.category', $slug),
+                    'subcategories' => $subList,
+                ];
+            }
+
+            return array_values($categoriesList);
+        });
     }
 
     /**

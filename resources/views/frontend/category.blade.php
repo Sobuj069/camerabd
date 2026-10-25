@@ -290,13 +290,14 @@
   @php
     $dlCatItems = [];
     if (!empty($products) && is_array($products)) {
-      foreach (array_slice($products, 0, 24) as $idx => $p) {
+      $catItemCounter = 1;
+      foreach (array_slice(array_values($products), 0, 24) as $idx => $p) {
         $dlCatItems[] = [
           'item_id' => (string)($p['id'] ?? ($p['sku'] ?? '')),
           'item_name' => $p['name'] ?? '',
           'affiliation' => $siteName ?? 'CAMERA BD',
           'currency' => 'BDT',
-          'index' => $idx + 1,
+          'index' => $catItemCounter++,
           'item_brand' => $p['brand'] ?? 'CAMERA BD',
           'item_category' => $p['category'] ?? ($currentCategory['name'] ?? 'Gear'),
           'price' => (float)($p['price'] ?? 0),

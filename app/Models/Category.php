@@ -12,6 +12,18 @@ class Category extends Model
 
     use HasFactory;
 
+    protected static function booted()
+    {
+        static::saved(function () {
+            \Illuminate\Support\Facades\Cache::forget('mega_menu_categories_v2');
+            \Illuminate\Support\Facades\Cache::forget('frontend_homepage_sections_v2');
+        });
+        static::deleted(function () {
+            \Illuminate\Support\Facades\Cache::forget('mega_menu_categories_v2');
+            \Illuminate\Support\Facades\Cache::forget('frontend_homepage_sections_v2');
+        });
+    }
+
     public function subCategories()
     {
         return $this->hasMany(SubCategory::class, 'category_id');
