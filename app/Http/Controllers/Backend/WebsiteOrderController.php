@@ -436,7 +436,7 @@ class WebsiteOrderController extends Controller
                 }
 
                 // Generate dataLayer payload for order_confirm event
-                $orderDataLayer = $this->buildOrderDataLayerPayload($order);
+                $orderDataLayer = self::buildOrderDataLayerPayload($order);
                 session()->flash('approved_order_datalayer', $orderDataLayer);
 
                 $successMsg = "অর্ডার {$order->order_no} সফলভাবে অনুমোদিত হয়েছে এবং অনলাইন সেল লিস্টে (Processing) যুক্ত করা হয়েছে।";
@@ -887,7 +887,7 @@ class WebsiteOrderController extends Controller
     /**
      * Build unified dataLayer payload for approved order
      */
-    private function buildOrderDataLayerPayload($order)
+    public static function buildOrderDataLayerPayload($order)
     {
         $order->loadMissing(['items.product.brand']);
 

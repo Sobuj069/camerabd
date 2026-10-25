@@ -1098,7 +1098,9 @@
                 // Instantly dispatch dataLayer order confrom event
                 if (body.order_datalayer) {
                     try {
-                        localStorage.setItem('cb_approved_order_datalayer', JSON.stringify(body.order_datalayer));
+                        var dlWithTime = Object.assign({}, body.order_datalayer, { _pushed_at: Date.now() });
+                        localStorage.setItem('cb_approved_order_datalayer', JSON.stringify(dlWithTime));
+                        window.approvedOrderDataLayer = dlWithTime;
                     } catch(e) {}
                     if (typeof window.dispatchOrderConfirmDataLayer === 'function') {
                         window.dispatchOrderConfirmDataLayer(body.order_datalayer);
@@ -1108,6 +1110,7 @@
                         window.dataLayer.push(Object.assign({}, body.order_datalayer, { event: 'order confrom' }));
                         window.dataLayer.push(Object.assign({}, body.order_datalayer, { event: 'order_confirm' }));
                     }
+                    console.log('%c✅ [DataLayer] "order confrom" event fired successfully!', 'background: #10b981; color: white; font-weight: bold; padding: 6px 12px; font-size: 14px; border-radius: 4px;', body.order_datalayer);
                 }
 
                 if (typeof toastr !== 'undefined') {
@@ -1115,7 +1118,7 @@
                 } else {
                     alert(body.message);
                 }
-                setTimeout(() => location.reload(), 1200);
+                setTimeout(() => location.reload(), 2000);
             } else {
                 alert(body.message || 'Action failed!');
                 location.reload();

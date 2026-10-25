@@ -92,6 +92,7 @@ Route::get('/cart', [FrontendController::class, 'cart'])->name('frontend.cart');
 Route::get('/checkout', [FrontendController::class, 'checkout'])->name('frontend.checkout');
 Route::post('/checkout', [FrontendController::class, 'processCheckout'])->name('frontend.process-checkout');
 Route::get('/order-confirmation/{order_number?}', [FrontendController::class, 'orderConfirmation'])->name('frontend.order-confirmation');
+Route::get('/api/order-status/{order_number}', [FrontendController::class, 'checkOrderStatus'])->name('frontend.order-status-check');
 Route::get('/wishlist', [FrontendController::class, 'wishlist'])->name('frontend.wishlist');
 Route::post('/api/meta-capi/track', [FrontendController::class, 'trackCapiEvent'])->name('meta-capi.track');
 

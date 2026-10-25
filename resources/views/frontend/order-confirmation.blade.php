@@ -310,6 +310,62 @@
 
       window.pushToDataLayer('purchase', purchaseEcommerce, purchaseExtra);
     }
+
+    // Function to dispatch order confrom into dataLayer with full customer data & approved status
+    function dispatchApprovedOrderConfirm(payload) {
+      if (!payload) return;
+      try {
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({ ecommerce: null });
+
+        var ev = Object.assign({}, payload, {
+          status: 'approved',
+          order_status: 'Approved'
+        });
+
+        // 1. Primary event name requested: "order confrom"
+        window.dataLayer.push(Object.assign({}, ev, { event: 'order confrom' }));
+        // 2. Standard alias: "order_confirm"
+        window.dataLayer.push(Object.assign({}, ev, { event: 'order_confirm' }));
+
+        if (typeof window.pushToDataLayer === 'function') {
+          window.pushToDataLayer('order confrom', ev.ecommerce, ev);
+          window.pushToDataLayer('order_confirm', ev.ecommerce, ev);
+        }
+        console.log('%c✅ [DataLayer] "order confrom" event fired! Status: APPROVED', 'background: #10b981; color: white; font-weight: bold; padding: 6px 12px; border-radius: 4px;', ev);
+      } catch(err) {
+        console.warn('[DataLayer] Error firing order confrom:', err);
+      }
+    }
+
+    @if(!empty($isApproved) && !empty($approvedOrderDl))
+      // Order is already Approved: fire immediately
+      dispatchApprovedOrderConfirm({!! json_encode($approvedOrderDl, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!});
+    @else
+      // Order is currently Pending: poll status in real time.
+      // The instant Admin clicks Approve in Website Orders, fire "order confrom" without manual page reload!
+      (function() {
+        var pollTimer = null;
+        var pollAttempts = 0;
+        var maxAttempts = 120; // 120 * 2.5s = 5 minutes
+        pollTimer = setInterval(function() {
+          pollAttempts++;
+          if (pollAttempts > maxAttempts) {
+            clearInterval(pollTimer);
+            return;
+          }
+          fetch('{{ route("frontend.order-status-check", $orderNumber) }}')
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+              if (res && res.success && res.is_approved && res.order_datalayer) {
+                clearInterval(pollTimer);
+                dispatchApprovedOrderConfirm(res.order_datalayer);
+              }
+            })
+            .catch(function(e) {});
+        }, 2500);
+      })();
+    @endif
     // Clean cart in localStorage after successful order placement
     try {
       localStorage.removeItem('cb_cart');

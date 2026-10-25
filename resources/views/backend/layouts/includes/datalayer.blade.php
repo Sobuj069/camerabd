@@ -65,20 +65,23 @@
     }
   };
 
-  // Check localStorage for pending order_confirm events across page reloads
+  // Check localStorage for pending order_confirm events across page reloads (persists for 15 minutes)
   (function() {
     try {
       var storedSingle = localStorage.getItem('cb_approved_order_datalayer');
       if (storedSingle) {
-        localStorage.removeItem('cb_approved_order_datalayer');
         var parsed = JSON.parse(storedSingle);
-        if (parsed && typeof window.dispatchOrderConfirmDataLayer === 'function') {
-          window.dispatchOrderConfirmDataLayer(parsed);
+        if (parsed && (!parsed._pushed_at || (Date.now() - parsed._pushed_at < 15 * 60 * 1000))) {
+          window.approvedOrderDataLayer = parsed;
+          if (typeof window.dispatchOrderConfirmDataLayer === 'function') {
+            window.dispatchOrderConfirmDataLayer(parsed);
+          }
+        } else {
+          localStorage.removeItem('cb_approved_order_datalayer');
         }
       }
       var storedMulti = localStorage.getItem('cb_approved_orders_datalayer');
       if (storedMulti) {
-        localStorage.removeItem('cb_approved_orders_datalayer');
         var parsedMulti = JSON.parse(storedMulti);
         if (Array.isArray(parsedMulti) && typeof window.dispatchOrderConfirmDataLayer === 'function') {
           parsedMulti.forEach(function(o) {

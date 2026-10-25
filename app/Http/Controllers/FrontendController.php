@@ -862,7 +862,39 @@ class FrontendController extends Controller
         // Security check: Only trigger Meta Purchase Pixel on initial order completion redirect
         $isFreshOrder = $request->session()->has('just_placed_order') && $request->session()->get('just_placed_order') === $order->order_no;
 
-        return view('frontend.order-confirmation', compact('order', 'orderNumber', 'orderData', 'orderItems', 'isFreshOrder'));
+        $isApproved = ($order->status === 'approved' || strtolower($order->order_status ?? '') === 'approved');
+        $approvedOrderDl = null;
+        if ($isApproved) {
+            $approvedOrderDl = \App\Http\Controllers\Backend\WebsiteOrderController::buildOrderDataLayerPayload($order);
+        }
+
+        return view('frontend.order-confirmation', compact('order', 'orderNumber', 'orderData', 'orderItems', 'isFreshOrder', 'isApproved', 'approvedOrderDl'));
+    }
+
+    /**
+     * Check Order Status API for real-time frontend DataLayer event dispatch
+     */
+    public function checkOrderStatus($order_number)
+    {
+        $order = WebsiteOrder::with(['items.product.brand'])->where('order_no', $order_number)->first();
+        if (!$order) {
+            return response()->json(['success' => false, 'message' => 'Order not found'], 404);
+        }
+
+        $isApproved = ($order->status === 'approved' || strtolower($order->order_status ?? '') === 'approved');
+        $dataLayer = null;
+        if ($isApproved) {
+            $dataLayer = \App\Http\Controllers\Backend\WebsiteOrderController::buildOrderDataLayerPayload($order);
+        }
+
+        return response()->json([
+            'success' => true,
+            'order_no' => $order->order_no,
+            'status' => $order->status,
+            'order_status' => $order->order_status,
+            'is_approved' => $isApproved,
+            'order_datalayer' => $dataLayer,
+        ]);
     }
 
     /**
