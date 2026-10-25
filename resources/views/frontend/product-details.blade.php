@@ -76,7 +76,7 @@
           <span class="material-symbols-outlined text-[22px]">favorite_border</span>
         </button>
 
-        <img id="main-product-img" src="{{ $product['images'][0] ?? 'https://via.placeholder.com/600' }}" alt="{{ $product['name'] }}" class="max-h-full max-w-full object-contain transition-all duration-500 group-hover:scale-105" />
+        <img id="main-product-img" src="{{ $product['images'][0] ?? 'https://via.placeholder.com/600' }}" alt="{{ $product['name'] }}" class="max-h-full max-w-full object-contain transition-all duration-500 group-hover:scale-105" fetchpriority="high" loading="eager" decoding="async" />
       </div>
 
       <!-- Thumbnail Selector Carousel -->
@@ -84,7 +84,7 @@
         <div class="flex items-center gap-3 overflow-x-auto no-scrollbar py-1">
           @foreach($product['images'] as $index => $img)
             <button onclick="changeMainImage('{{ $img }}', this)" class="thumbnail-btn w-20 h-20 rounded-xl p-2 bg-surface-base border-2 {{ $index === 0 ? 'border-primary' : 'border-surface-border' }} hover:border-primary shrink-0 transition-all">
-              <img src="{{ $img }}" alt="Thumbnail {{ $index+1 }}" class="w-full h-full object-contain" />
+              <img src="{{ $img }}" alt="Thumbnail {{ $index+1 }}" class="w-full h-full object-contain" loading="lazy" decoding="async" />
             </button>
           @endforeach
         </div>
@@ -364,7 +364,7 @@
           <div class="bg-surface-card rounded-2xl p-4 border border-surface-border flex flex-col justify-between hover:shadow-md transition-all group">
             <div>
               <a href="{{ url('/product-details/' . $rel['slug']) }}" class="block aspect-square p-2 bg-surface-base rounded-xl mb-3 overflow-hidden">
-                <img src="{{ $rel['images'][0] ?? '' }}" alt="{{ $rel['name'] }}" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />
+                <img src="{{ $rel['images'][0] ?? '' }}" alt="{{ $rel['name'] }}" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async" />
               </a>
               <span class="text-[10px] text-primary font-bold uppercase">{{ $rel['brand'] }}</span>
               <h4 class="text-xs font-bold text-text-display line-clamp-2 mt-0.5 mb-1 group-hover:text-primary transition-colors">

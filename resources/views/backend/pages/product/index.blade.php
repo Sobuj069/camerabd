@@ -956,7 +956,7 @@
                             
                             $hlPreviewSrc = $hlBanImage 
                                 ? ((str_starts_with($hlBanImage, 'http://') || str_starts_with($hlBanImage, 'https://')) ? $hlBanImage : asset($hlBanImage))
-                                : 'https://lh3.googleusercontent.com/aida/AEtjO1X-nc7VZD9tYHp6qutS95cjA-Xk5pOOzJwdae3Vi5yg75ZaanA4-bPFLwz-qoo-JoQi5TkDwO71GgUsiHVOVo5x8y535Jg4E3WEA_VzQl9ZAdT5TVIR5gEoikhv-Z2gFvZvSkGbsxQIifYqIgqsF8YhYzvl6tPc6smePHKqrg_ApXKYK0N-E5a5oijUQjPNmBCEz6Eh9i35JKinBfJI9ZCuzzIm1KilnSKr1gZmzV4bCV9tLBN_Y3w1T5o';
+                                : '{{ asset('uploads/banners/banner_hollyland.webp') }}';
                         @endphp
 
                         <!-- Section 1: Header Bar Settings -->

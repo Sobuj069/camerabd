@@ -151,6 +151,24 @@ class Product extends Model
             return asset('backend/images/no_images.png');
         }
         if (str_starts_with($img, 'http://') || str_starts_with($img, 'https://')) {
+            // Check if we have a locally cached / optimized copy in uploads/products
+            $parsed = parse_url($img, PHP_URL_PATH);
+            if (!empty($parsed)) {
+                $basename = basename($parsed);
+                $cleanName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', pathinfo($basename, PATHINFO_FILENAME));
+                $candidates = [
+                    'p' . $this->id . '_thumb_' . $cleanName . '.webp',
+                    'p' . $this->id . '_img0_' . $cleanName . '.webp',
+                    $cleanName . '.webp',
+                    $cleanName . '.avif',
+                    $basename,
+                ];
+                foreach ($candidates as $cand) {
+                    if (file_exists(public_path('uploads/products/' . $cand))) {
+                        return asset('uploads/products/' . $cand);
+                    }
+                }
+            }
             return $img;
         }
         return asset('uploads/products/' . $img);

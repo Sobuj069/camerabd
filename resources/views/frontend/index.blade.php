@@ -431,7 +431,7 @@
                 <a href="{{ $mBanner->link ?: '#' }}" 
                    class="mobile-hero-slide absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out {{ $idx === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none' }}"
                    data-slide-index="{{ $idx }}">
-                  <img alt="{{ $mBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover" src="{{ $mBanner->image_url }}"/>
+                  <img alt="{{ $mBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover" src="{{ $mBanner->image_url }}" @if($idx === 0) fetchpriority="high" loading="eager" @else loading="lazy" @endif decoding="async"/>
                 </a>
               @endforeach
             </div>
@@ -449,7 +449,7 @@
           @else
             <!-- Fallback Hero Banner -->
             <a href="{{ url('/product-details/dji-osmo-pocket-4p') }}" class="block w-full h-full">
-              <img alt="DJI Osmo Pocket 4P" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1Vqtovg_xZlDnZaVLXZXohSSKxOzwNsqMMehT2gASqjyOfoGneJMZFqoH9IPecShYtpwgk9u7piXxWXoxpDO3um1RY2TiwiV07r6eOYuayiVh2wtWy2mFCC7cRlyTcyGO5Oow-9tFRAkoIMevpq-fd1cgrFpY2jHKfVeiNgh_iTom9zUqW3Ma_1mf2SEbP2PjUTxpPZkHYWb_ZrFZhOob0QRha2GFauumTzaWXmI3sUn8DY_-RRBUeP5Kg"/>
+              <img alt="DJI Osmo Pocket 4P" class="w-full h-full object-cover" src="{{ asset('uploads/banners/banner_pocket4p.webp') }}" fetchpriority="high" loading="eager" decoding="async"/>
             </a>
           @endif
         </div>
@@ -459,22 +459,22 @@
           <!-- Card 1: Side Top Promo -->
           @if(isset($heroSideTopBanner) && $heroSideTopBanner)
             <a class="block rounded-xl overflow-hidden bg-surface-card shadow-sm border border-surface-border aspect-[16/9] group active:scale-[0.99] transition-transform" href="{{ $heroSideTopBanner->link ?: '#' }}">
-              <img alt="{{ $heroSideTopBanner->title ?? (($siteName ?? 'CAMERA BD') . ' Promo') }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="{{ $heroSideTopBanner->image_url }}"/>
+              <img alt="{{ $heroSideTopBanner->title ?? (($siteName ?? 'CAMERA BD') . ' Promo') }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="{{ $heroSideTopBanner->image_url }}" loading="eager" decoding="async"/>
             </a>
           @else
             <a class="block rounded-xl overflow-hidden bg-surface-card shadow-sm border border-surface-border aspect-[16/9] group active:scale-[0.99] transition-transform" href="{{ route('frontend.category', ['slug' => 'drone']) }}">
-              <img alt="DJI Neo 2 Drone" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="https://lh3.googleusercontent.com/aida/AEtjO1VhOgpQCvjwP81MCDPHJoV-TCBpVyatc_-EgTdYpU1gErRH_l_jm3yo999fSrNbB71ww4lj1OO7VCT2_6YVzNGYCIhfP53eAwmaELrh5oG5d6IDeulyBqrmcb1_FbCW1DD-0CulNGjDfY4q-YgQA4kRw7onQ9_o4Q2vrVcGlcYyW5nHaPfXyAhtBJbexteyxElnOs_0FS5tROKeEz8tFh-dWLAE52k2g5mJpaUorGGuCV9sVBx_9sv-dOE"/>
+              <img alt="DJI Neo 2 Drone" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="{{ asset('uploads/banners/banner_neo2.webp') }}" loading="eager" decoding="async"/>
             </a>
           @endif
 
           <!-- Card 2: Side Bottom Promo -->
           @if(isset($heroSideBottomBanner) && $heroSideBottomBanner)
             <a class="block rounded-xl overflow-hidden bg-surface-card shadow-sm border border-surface-border aspect-[16/9] group active:scale-[0.99] transition-transform" href="{{ $heroSideBottomBanner->link ?: '#' }}">
-              <img alt="{{ $heroSideBottomBanner->title ?? (($siteName ?? 'CAMERA BD') . ' Promo') }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="{{ $heroSideBottomBanner->image_url }}"/>
+              <img alt="{{ $heroSideBottomBanner->title ?? (($siteName ?? 'CAMERA BD') . ' Promo') }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="{{ $heroSideBottomBanner->image_url }}" loading="eager" decoding="async"/>
             </a>
           @else
             <a class="block rounded-xl overflow-hidden bg-surface-card shadow-sm border border-surface-border aspect-[16/9] group active:scale-[0.99] transition-transform" href="{{ route('frontend.category', ['slug' => 'digital-camera']) }}">
-              <img alt="Nikon Cinema Series" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="https://lh3.googleusercontent.com/aida/AEtjO1Uo-ckvULlFV2gVtf9Pp7azws98fqwuvjcqQw3boocOesHEduRc9_3Dh1hXNM3kSacsR3e5Dv9QVTd43GszBoTaQeY911zs_dpSq0GPIO6ELFZslqUonTjzdo7jBxBUDwaP9x3niWmwC18RUiavJ635vJfgHEPBY5u9RS0z315h3uIirGohyxMIPY_ULhnG4GD0tF12d8d1h0VNSrLlz-F7GnHY6BS-r3uOR3Q7w7Vq4Xll1UhToPrl92M"/>
+              <img alt="Nikon Cinema Series" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" src="{{ asset('uploads/banners/banner_z30.webp') }}" loading="eager" decoding="async"/>
             </a>
           @endif
         </div>
@@ -490,7 +490,7 @@
                 <a href="{{ $mBanner->link ?: '#' }}" 
                    class="desktop-hero-slide absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out {{ $idx === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none' }}"
                    data-slide-index="{{ $idx }}">
-                  <img alt="{{ $mBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out" src="{{ $mBanner->image_url }}"/>
+                  <img alt="{{ $mBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out" src="{{ $mBanner->image_url }}" @if($idx === 0) fetchpriority="high" loading="eager" @else loading="lazy" @endif decoding="async"/>
                 </a>
               @endforeach
             </div>
@@ -516,7 +516,7 @@
           @else
             <!-- Fallback Billboard -->
             <a href="{{ url('/product-details/dji-osmo-pocket-4p') }}" class="block w-full h-full">
-              <img alt="DJI Osmo Pocket 4P Dual-Lens Camera" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out" src="https://lh3.googleusercontent.com/aida/AEtjO1Vqtovg_xZlDnZaVLXZXohSSKxOzwNsqMMehT2gASqjyOfoGneJMZFqoH9IPecShYtpwgk9u7piXxWXoxpDO3um1RY2TiwiV07r6eOYuayiVh2wtWy2mFCC7cRlyTcyGO5Oow-9tFRAkoIMevpq-fd1cgrFpY2jHKfVeiNgh_iTom9zUqW3Ma_1mf2SEbP2PjUTxpPZkHYWb_ZrFZhOob0QRha2GFauumTzaWXmI3sUn8DY_-RRBUeP5Kg"/>
+              <img alt="DJI Osmo Pocket 4P Dual-Lens Camera" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out" src="{{ asset('uploads/banners/banner_pocket4p.webp') }}" fetchpriority="high" loading="eager" decoding="async"/>
             </a>
           @endif
         </div>
@@ -526,22 +526,22 @@
           <!-- Card 1: Side Top -->
           @if(isset($heroSideTopBanner) && $heroSideTopBanner)
             <a href="{{ $heroSideTopBanner->link ?: '#' }}" class="flex-1 block bg-surface-card rounded-2xl shadow-sm overflow-hidden border border-surface-border group aspect-[16/7.5]">
-              <img alt="{{ $heroSideTopBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" src="{{ $heroSideTopBanner->image_url }}"/>
+              <img alt="{{ $heroSideTopBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" src="{{ $heroSideTopBanner->image_url }}" loading="eager" decoding="async"/>
             </a>
           @else
             <a href="{{ route('frontend.category', ['slug' => 'drone']) }}" class="flex-1 block bg-surface-card rounded-2xl shadow-sm overflow-hidden border border-surface-border group aspect-[16/7.5]">
-              <img alt="DJI Neo 2 Drone" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" src="https://lh3.googleusercontent.com/aida/AEtjO1VhOgpQCvjwP81MCDPHJoV-TCBpVyatc_-EgTdYpU1gErRH_l_jm3yo999fSrNbB71ww4lj1OO7VCT2_6YVzNGYCIhfP53eAwmaELrh5oG5d6IDeulyBqrmcb1_FbCW1DD-0CulNGjDfY4q-YgQA4kRw7onQ9_o4Q2vrVcGlcYyW5nHaPfXyAhtBJbexteyxElnOs_0FS5tROKeEz8tFh-dWLAE52k2g5mJpaUorGGuCV9sVBx_9sv-dOE"/>
+              <img alt="DJI Neo 2 Drone" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" src="{{ asset('uploads/banners/banner_neo2.webp') }}" loading="eager" decoding="async"/>
             </a>
           @endif
 
           <!-- Card 2: Side Bottom -->
           @if(isset($heroSideBottomBanner) && $heroSideBottomBanner)
             <a href="{{ $heroSideBottomBanner->link ?: '#' }}" class="flex-1 block bg-surface-card rounded-2xl shadow-sm overflow-hidden border border-surface-border group aspect-[16/7.5]">
-              <img alt="{{ $heroSideBottomBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" src="{{ $heroSideBottomBanner->image_url }}"/>
+              <img alt="{{ $heroSideBottomBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" src="{{ $heroSideBottomBanner->image_url }}" loading="eager" decoding="async"/>
             </a>
           @else
             <a href="{{ route('frontend.category', ['slug' => 'digital-camera']) }}" class="flex-1 block bg-surface-card rounded-2xl shadow-sm overflow-hidden border border-surface-border group aspect-[16/7.5]">
-              <img alt="Nikon Z30 Cinema Body" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" src="https://lh3.googleusercontent.com/aida/AEtjO1Uo-ckvULlFV2gVtf9Pp7azws98fqwuvjcqQw3boocOesHEduRc9_3Dh1hXNM3kSacsR3e5Dv9QVTd43GszBoTaQeY911zs_dpSq0GPIO6ELFZslqUonTjzdo7jBxBUDwaP9x3niWmwC18RUiavJ635vJfgHEPBY5u9RS0z315h3uIirGohyxMIPY_ULhnG4GD0tF12d8d1h0VNSrLlz-F7GnHY6BS-r3uOR3Q7w7Vq4Xll1UhToPrl92M"/>
+              <img alt="Nikon Z30 Cinema Body" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" src="{{ asset('uploads/banners/banner_z30.webp') }}" loading="eager" decoding="async"/>
             </a>
           @endif
         </div>
@@ -579,7 +579,7 @@
             <a href="{{ $cat['view_all_url'] ?? route('frontend.category', $cat['slug']) }}" class="bg-white rounded-2xl border border-[#d0ece7]/80 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center group hover:border-secondary hover:shadow-md transition-all duration-200 shadow-xs">
               <div class="w-full aspect-square rounded-xl bg-gradient-to-b from-[#f2f9f8] to-[#e6f4f1] flex items-center justify-center p-2 mb-1.5 overflow-hidden group-hover:bg-[#d8efe9] transition-colors relative">
                 @if(!empty($cat['image']))
-                  <img src="{{ $cat['image'] }}" alt="{{ $cat['name'] }}" class="w-full h-full object-contain filter drop-shadow-sm group-hover:scale-110 transition-transform duration-300" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling ? this.nextElementSibling.classList.remove('hidden') : null;"/>
+                  <img src="{{ $cat['image'] }}" alt="{{ $cat['name'] }}" class="w-full h-full object-contain filter drop-shadow-sm group-hover:scale-110 transition-transform duration-300" loading="lazy" decoding="async" onerror="this.style.display='none'; this.nextElementSibling ? this.nextElementSibling.classList.remove('hidden') : null;"/>
                   <div class="w-full h-full hidden items-center justify-center text-secondary">
                     <span class="material-symbols-outlined text-[26px]">{{ $cat['icon'] ?? 'category' }}</span>
                   </div>
@@ -603,7 +603,7 @@
               <a href="{{ $cat['view_all_url'] ?? route('frontend.category', $cat['slug']) }}" class="w-[125px] sm:w-[135px] md:w-[150px] lg:w-[160px] shrink-0 flex-none bg-white rounded-2xl border border-[#d0ece7] p-3 md:p-3.5 flex flex-col items-center justify-between text-center group hover:border-secondary hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 select-none">
                 <div class="w-full aspect-square rounded-xl bg-gradient-to-b from-[#f2f9f8] to-[#e6f4f1] flex items-center justify-center p-2 mb-2 overflow-hidden group-hover:bg-[#d8efe9] transition-colors relative">
                   @if(!empty($cat['image']))
-                    <img src="{{ $cat['image'] }}" alt="{{ $cat['name'] }}" class="w-full h-full object-contain filter drop-shadow-sm group-hover:scale-110 transition-transform duration-300" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling ? this.nextElementSibling.style.display='flex' : null;"/>
+                    <img src="{{ $cat['image'] }}" alt="{{ $cat['name'] }}" class="w-full h-full object-contain filter drop-shadow-sm group-hover:scale-110 transition-transform duration-300" loading="lazy" decoding="async" onerror="this.style.display='none'; this.nextElementSibling ? this.nextElementSibling.style.display='flex' : null;"/>
                     <div class="w-full h-full hidden items-center justify-center text-secondary group-hover:scale-110 transition-transform duration-300">
                       <span class="material-symbols-outlined text-[36px]">{{ $cat['icon'] ?? 'category' }}</span>
                     </div>
@@ -680,7 +680,7 @@
                   </button>
                   <a href="{{ route('frontend.product.details', $deal->slug ?: $deal->id) }}" class="w-full h-full flex items-center justify-center">
                     @if($deal->has_real_image)
-                      <img alt="{{ $deal->name }}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="{{ $deal->thumbnail_url }}" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-50 p-2\'><span class=\'material-symbols-outlined text-[36px] text-slate-300\'>videocam</span><span class=\'text-[10px] font-bold text-slate-400 mt-1\'>Broadcast Gear</span></div>';"/>
+                      <img alt="{{ $deal->name }}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="{{ $deal->thumbnail_url }}" loading="lazy" decoding="async" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-50 p-2\'><span class=\'material-symbols-outlined text-[36px] text-slate-300\'>videocam</span><span class=\'text-[10px] font-bold text-slate-400 mt-1\'>Broadcast Gear</span></div>';"/>
                     @else
                       <div class="w-full h-full flex items-center justify-center flex-col text-slate-400 bg-gradient-to-br from-slate-50 to-slate-100/90 rounded-lg p-3 text-center border border-slate-100 group-hover:bg-slate-100 transition-colors">
                         <div class="w-12 h-12 rounded-full bg-white shadow-xs flex items-center justify-center text-primary mb-1.5 group-hover:scale-110 transition-transform">
@@ -771,7 +771,7 @@
                 </button>
                 <a href="{{ route('frontend.product.details', $popular->slug ?: $popular->id) }}" class="w-full h-full flex items-center justify-center">
                   @if($popular->has_real_image)
-                    <img alt="{{ $popular->name }}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="{{ $popular->thumbnail_url }}" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-50 p-2\'><span class=\'material-symbols-outlined text-[36px] text-slate-300\'>photo_camera</span><span class=\'text-[10px] font-bold text-slate-400 mt-1\'>Camera Gear</span></div>';"/>
+                    <img alt="{{ $popular->name }}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="{{ $popular->thumbnail_url }}" loading="lazy" decoding="async" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-50 p-2\'><span class=\'material-symbols-outlined text-[36px] text-slate-300\'>photo_camera</span><span class=\'text-[10px] font-bold text-slate-400 mt-1\'>Camera Gear</span></div>';"/>
                   @else
                     <div class="w-full h-full flex items-center justify-center flex-col text-slate-400 bg-gradient-to-br from-slate-50 to-slate-100/90 rounded-lg p-3 text-center border border-slate-100 group-hover:bg-slate-100 transition-colors">
                       <div class="w-12 h-12 rounded-full bg-white shadow-xs flex items-center justify-center text-broadcast-teal mb-1.5 group-hover:scale-110 transition-transform">
@@ -834,7 +834,7 @@
               $hlBannerSrc = asset($hlBannerImg);
           }
       } else {
-          $hlBannerSrc = 'https://lh3.googleusercontent.com/aida/AEtjO1X-nc7VZD9tYHp6qutS95cjA-Xk5pOOzJwdae3Vi5yg75ZaanA4-bPFLwz-qoo-JoQi5TkDwO71GgUsiHVOVo5x8y535Jg4E3WEA_VzQl9ZAdT5TVIR5gEoikhv-Z2gFvZvSkGbsxQIifYqIgqsF8YhYzvl6tPc6smePHKqrg_ApXKYK0N-E5a5oijUQjPNmBCEz6Eh9i35JKinBfJI9ZCuzzIm1KilnSKr1gZmzV4bCV9tLBN_Y3w1T5o';
+          $hlBannerSrc = asset('uploads/banners/banner_hollyland.webp');
       }
     @endphp
     <section id="hollyland-audio" class="max-w-7xl mx-auto px-4 lg:px-6 pt-8 lg:pt-10 w-full">
@@ -905,7 +905,7 @@
 
             <!-- Center Product Visual -->
             <div class="relative z-10 my-auto py-3 flex items-center justify-center">
-              <img src="{{ $hlBannerSrc }}" alt="{{ $hlBannerBrand }}" class="max-h-[170px] w-auto object-contain filter drop-shadow-[0_10px_20px_rgba(0,0,0,0.6)] group-hover:scale-105 transition-transform duration-500" />
+              <img src="{{ $hlBannerSrc }}" alt="{{ $hlBannerBrand }}" class="max-h-[170px] w-auto object-contain filter drop-shadow-[0_10px_20px_rgba(0,0,0,0.6)] group-hover:scale-105 transition-transform duration-500" loading="lazy" decoding="async" />
             </div>
 
             <!-- Bottom Script: Capture What Matters -->
@@ -945,7 +945,7 @@
                     <div class="w-full aspect-square flex items-center justify-center p-2 mb-1.5 overflow-hidden">
                       <a href="{{ route('frontend.product.details', $hlProduct->slug ?: $hlProduct->id) }}" class="w-full h-full flex items-center justify-center">
                         @if($hlProduct->has_real_image)
-                          <img src="{{ $hlProduct->thumbnail_url }}" alt="{{ $hlProduct->name }}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full flex flex-col items-center justify-center text-[#006a61] bg-[#f0faf7] p-2 rounded-lg\'><span class=\'material-symbols-outlined text-[32px]\'>mic</span><span class=\'text-[10px] font-bold mt-1\'>Hollyland</span></div>';"/>
+                          <img src="{{ $hlProduct->thumbnail_url }}" alt="{{ $hlProduct->name }}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full flex flex-col items-center justify-center text-[#006a61] bg-[#f0faf7] p-2 rounded-lg\'><span class=\'material-symbols-outlined text-[32px]\'>mic</span><span class=\'text-[10px] font-bold mt-1\'>Hollyland</span></div>';"/>
                         @else
                           <div class="w-full h-full flex items-center justify-center flex-col text-[#006a61] bg-gradient-to-br from-[#f0faf7] to-[#e0f4ee] rounded-xl p-3 text-center border border-[#d2efe7] group-hover:bg-[#e6f7f2] transition-colors">
                             <div class="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center text-[#006a61] mb-1 group-hover:scale-110 transition-transform">
@@ -1040,7 +1040,7 @@
                 @endif
                 <a href="{{ route('frontend.product.details', $essential->slug ?: $essential->id) }}" class="w-full h-full flex items-center justify-center">
                   @if($essential->has_real_image)
-                    <img alt="{{ $essential->name }}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="{{ $essential->thumbnail_url }}" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-50 p-2\'><span class=\'material-symbols-outlined text-[36px] text-slate-300\'>power</span><span class=\'text-[10px] font-bold text-slate-400 mt-1\'>Studio Gear</span></div>';"/>
+                    <img alt="{{ $essential->name }}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="{{ $essential->thumbnail_url }}" loading="lazy" decoding="async" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-50 p-2\'><span class=\'material-symbols-outlined text-[36px] text-slate-300\'>power</span><span class=\'text-[10px] font-bold text-slate-400 mt-1\'>Studio Gear</span></div>';"/>
                   @else
                     <div class="w-full h-full flex items-center justify-center flex-col text-slate-400 bg-gradient-to-br from-slate-50 to-slate-100/90 rounded-lg p-3 text-center border border-slate-100 group-hover:bg-slate-100 transition-colors">
                       <div class="w-12 h-12 rounded-full bg-white shadow-xs flex items-center justify-center text-amber-500 mb-1.5 group-hover:scale-110 transition-transform">
@@ -1122,7 +1122,7 @@
                       @endif
                       <a href="{{ route('frontend.product.details', $secProd->slug ?: $secProd->id) }}" class="w-full h-full flex items-center justify-center">
                         @if($secProd->has_real_image)
-                          <img alt="{{ $secProd->name }}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="{{ $secProd->thumbnail_url }}" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-50 p-2\'><span class=\'material-symbols-outlined text-[36px] text-slate-300\'>{{ $customSec->icon ?: 'inventory_2' }}</span><span class=\'text-[10px] font-bold text-slate-400 mt-1\'>{{ addslashes($customSec->name) }}</span></div>';"/>
+                          <img alt="{{ $secProd->name }}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300 relative z-0" src="{{ $secProd->thumbnail_url }}" loading="lazy" decoding="async" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-50 p-2\'><span class=\'material-symbols-outlined text-[36px] text-slate-300\'>{{ $customSec->icon ?: 'inventory_2' }}</span><span class=\'text-[10px] font-bold text-slate-400 mt-1\'>{{ addslashes($customSec->name) }}</span></div>';"/>
                         @else
                           <div class="w-full h-full flex items-center justify-center flex-col text-slate-400 bg-gradient-to-br from-slate-50 to-slate-100/90 rounded-lg p-3 text-center border border-slate-100 group-hover:bg-slate-100 transition-colors">
                             <div class="w-12 h-12 rounded-full bg-white shadow-xs flex items-center justify-center text-secondary mb-1.5 group-hover:scale-110 transition-transform">
@@ -1178,7 +1178,7 @@
             <a href="{{ route('frontend.search', ['brand' => $brandItem->slug ?: $brandItem->id]) }}" title="{{ $brandItem->name }}" class="bg-white rounded-2xl border border-[#d9eee8] hover:border-[#006241] p-3.5 lg:p-4 flex items-center justify-center min-h-[75px] lg:min-h-[82px] shadow-xs hover:shadow-md hover:-translate-y-1 transition-all duration-200 group">
               <div class="w-full flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
                 @if(!empty($brandItem->image_url))
-                  <img src="{{ $brandItem->image_url }}" alt="{{ $brandItem->name }}" class="max-h-[38px] lg:max-h-[44px] max-w-[130px] w-auto object-contain" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'text-xs sm:text-sm font-extrabold text-[#111827] uppercase tracking-wider\'>{{ addslashes($brandItem->name) }}</span>';"/>
+                  <img src="{{ $brandItem->image_url }}" alt="{{ $brandItem->name }}" class="max-h-[38px] lg:max-h-[44px] max-w-[130px] w-auto object-contain" loading="lazy" decoding="async" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'text-xs sm:text-sm font-extrabold text-[#111827] uppercase tracking-wider\'>{{ addslashes($brandItem->name) }}</span>';"/>
                 @else
                   <div class="flex items-center justify-center gap-1.5 px-2 py-1 text-center">
                     <span class="material-symbols-outlined text-[#4a6b63] text-[18px] opacity-70">sell</span>

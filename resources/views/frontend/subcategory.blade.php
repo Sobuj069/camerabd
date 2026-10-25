@@ -164,7 +164,7 @@
               </div>
 
               <a href="{{ url('/product-details/' . ($prod['slug'] ?? 'sony-fx30')) }}" class="w-full aspect-square bg-surface-base rounded-2xl p-3 flex items-center justify-center mb-3 overflow-hidden border border-surface-border block">
-                <img src="{{ $prod['images'][0] ?? 'https://via.placeholder.com/300' }}" alt="{{ $prod['name'] }}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300" />
+                <img src="{{ $prod['images'][0] ?? 'https://via.placeholder.com/300' }}" alt="{{ $prod['name'] }}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async" />
               </a>
 
               <div class="flex items-center justify-between text-[10px] mb-1">
