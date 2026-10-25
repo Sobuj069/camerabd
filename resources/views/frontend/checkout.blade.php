@@ -351,7 +351,199 @@
     addressInput.addEventListener('input', autoDetectDeliveryZone);
   }
 
-  // Form submit check with double-click guard
+  // -------------------------------------------------------------
+  // DataLayer Customer Data Extractor & Dispatcher
+  // -------------------------------------------------------------
+  function getCustomerData() {
+    const nameEl = document.querySelector('input[name="customer_name"]');
+    const phoneEl = document.querySelector('input[name="phone"]');
+    const emailEl = document.querySelector('input[name="email"]');
+    const divisionEl = document.querySelector('select[name="division"]');
+    const cityEl = document.querySelector('input[name="city"]');
+    const addressEl = document.querySelector('textarea[name="delivery_address"]');
+    const notesEl = document.querySelector('input[name="order_notes"]');
+
+    const fullName = (nameEl ? nameEl.value : '').trim();
+    const phone = (phoneEl ? phoneEl.value : '').trim();
+    const email = (emailEl ? emailEl.value : '').trim();
+    const division = (divisionEl ? divisionEl.value : '').trim();
+    const city = (cityEl ? cityEl.value : '').trim();
+    const address = (addressEl ? addressEl.value : '').trim();
+    const notes = (notesEl ? notesEl.value : '').trim();
+
+    // Split First & Last Name
+    let firstName = fullName;
+    let lastName = '';
+    if (fullName.includes(' ')) {
+      const parts = fullName.split(' ');
+      firstName = parts[0];
+      lastName = parts.slice(1).join(' ');
+    }
+
+    // Format phone (+88 for BD)
+    let formattedPhone = phone;
+    const digits = phone.replace(/[^0-9]/g, '');
+    if (digits.length === 11 && digits.startsWith('01')) {
+      formattedPhone = '+88' + digits;
+    } else if (digits.length === 13 && digits.startsWith('8801')) {
+      formattedPhone = '+' + digits;
+    }
+
+    const customerObj = {
+      name: fullName,
+      customer_name: fullName,
+      first_name: firstName,
+      last_name: lastName,
+      phone: phone,
+      customer_phone: phone,
+      phone_number: formattedPhone,
+      email: email,
+      customer_email: email,
+      division: division,
+      customer_division: division,
+      city: city,
+      customer_city: city,
+      district: city,
+      address: address,
+      customer_address: address,
+      delivery_address: address,
+      street: address,
+      country: 'Bangladesh',
+      country_code: 'BD',
+      order_notes: notes
+    };
+
+    const userDataObj = {
+      email: email || undefined,
+      phone_number: formattedPhone || undefined,
+      address: {
+        first_name: firstName || undefined,
+        last_name: lastName || undefined,
+        street: address || undefined,
+        city: city || undefined,
+        region: division || undefined,
+        country: 'BD'
+      }
+    };
+
+    return {
+      customer: customerObj,
+      customer_info: customerObj,
+      user_data: userDataObj,
+      customer_name: fullName,
+      customer_phone: phone,
+      customer_email: email,
+      customer_city: city,
+      customer_division: division,
+      customer_address: address
+    };
+  }
+
+  // Real-time Push to DataLayer when customer inputs change
+  let customerInfoDebounceTimer = null;
+  function pushCustomerInfoToDataLayer(triggerEvent) {
+    try {
+      const cust = getCustomerData();
+      if (!cust.customer_name && !cust.customer_phone && !cust.customer_email && !cust.customer_address) {
+        return;
+      }
+
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: triggerEvent || 'customer_info_updated',
+        customer: cust.customer,
+        customer_info: cust.customer_info,
+        user_data: cust.user_data,
+        customer_name: cust.customer_name,
+        customer_phone: cust.customer_phone,
+        customer_email: cust.customer_email,
+        customer_city: cust.customer_city,
+        customer_division: cust.customer_division,
+        customer_address: cust.customer_address
+      });
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        console.log('[DataLayer Customer Info Pushed]', cust);
+      }
+    } catch(err) {
+      console.warn('[DataLayer] Customer Info push error:', err);
+    }
+  }
+
+  // Attach event listeners to all customer input fields
+  function setupCustomerInputListeners() {
+    const selector = 'input[name="customer_name"], input[name="phone"], input[name="email"], select[name="division"], input[name="city"], textarea[name="delivery_address"], input[name="order_notes"]';
+    const inputs = document.querySelectorAll(selector);
+
+    inputs.forEach(function(input) {
+      input.addEventListener('input', function() {
+        clearTimeout(customerInfoDebounceTimer);
+        customerInfoDebounceTimer = setTimeout(function() {
+          pushCustomerInfoToDataLayer('customer_info_updated');
+        }, 500);
+      });
+
+      input.addEventListener('change', function() {
+        pushCustomerInfoToDataLayer('customer_info_updated');
+        trackDataLayerAddShippingInfo();
+      });
+
+      input.addEventListener('blur', function() {
+        pushCustomerInfoToDataLayer('customer_info_updated');
+      });
+    });
+  }
+
+  // Track add_shipping_info with customer info
+  let lastTrackedShippingTier = '';
+  function trackDataLayerAddShippingInfo() {
+    try {
+      if (typeof window.pushToDataLayer !== 'function') return;
+      const items = window.CameraCart ? CameraCart.get() : [];
+      if (!items || items.length === 0) return;
+
+      const subtotal = window.CameraCart ? CameraCart.getSubtotal() : 0;
+      const grandTotal = subtotal + currentShippingCost;
+      const cust = getCustomerData();
+      const deliveryMethodInput = document.getElementById('delivery-method-input');
+      const shippingTier = deliveryMethodInput ? deliveryMethodInput.value : (currentShippingCost === 80 ? 'Express Home Delivery (Inside Dhaka)' : 'Courier Delivery (Outside Dhaka)');
+
+      if (lastTrackedShippingTier === shippingTier && !cust.customer_name && !cust.customer_phone) return;
+      lastTrackedShippingTier = shippingTier;
+
+      const dlCheckoutItems = items.map(function(item, idx) {
+        return {
+          item_id: String(item.id || item.barcode || item.name),
+          item_name: item.name || 'Cinema Product',
+          affiliation: '{{ addslashes($siteName ?? "CAMERA BD") }}',
+          currency: 'BDT',
+          price: parseFloat(item.price) || 0,
+          quantity: parseInt(item.qty) || 1,
+          index: idx + 1
+        };
+      });
+
+      window.pushToDataLayer('add_shipping_info', {
+        currency: 'BDT',
+        value: parseFloat(grandTotal) || 0,
+        shipping_tier: shippingTier,
+        items: dlCheckoutItems
+      }, {
+        customer: cust.customer,
+        customer_info: cust.customer_info,
+        user_data: cust.user_data,
+        customer_name: cust.customer_name,
+        customer_phone: cust.customer_phone,
+        customer_email: cust.customer_email,
+        customer_city: cust.customer_city,
+        customer_division: cust.customer_division,
+        customer_address: cust.customer_address
+      });
+    } catch(e) {
+      console.warn('[DataLayer] AddShippingInfo error:', e);
+    }
+  }
+
+  // Form submit check with double-click guard & DataLayer Submit tracking
   let isCheckoutSubmitting = false;
   document.getElementById('checkout-form').addEventListener('submit', function(e) {
     if (isCheckoutSubmitting) {
@@ -374,6 +566,63 @@
       shippingInput.value = currentShippingCost;
     }
 
+    // Push add_payment_info and checkout_submit with full customer data before submission
+    try {
+      const cust = getCustomerData();
+      const subtotal = window.CameraCart ? CameraCart.getSubtotal() : 0;
+      const grandTotal = subtotal + currentShippingCost;
+      const dlCheckoutItems = items.map(function(item, idx) {
+        return {
+          item_id: String(item.id || item.barcode || item.name),
+          item_name: item.name || 'Cinema Product',
+          affiliation: '{{ addslashes($siteName ?? "CAMERA BD") }}',
+          currency: 'BDT',
+          price: parseFloat(item.price) || 0,
+          quantity: parseInt(item.qty) || 1,
+          index: idx + 1
+        };
+      });
+
+      if (typeof window.pushToDataLayer === 'function') {
+        window.pushToDataLayer('add_payment_info', {
+          currency: 'BDT',
+          value: parseFloat(grandTotal) || 0,
+          payment_type: 'Cash On Delivery',
+          items: dlCheckoutItems
+        }, {
+          customer: cust.customer,
+          customer_info: cust.customer_info,
+          user_data: cust.user_data,
+          customer_name: cust.customer_name,
+          customer_phone: cust.customer_phone,
+          customer_email: cust.customer_email,
+          customer_city: cust.customer_city,
+          customer_division: cust.customer_division,
+          customer_address: cust.customer_address
+        });
+
+        window.pushToDataLayer('checkout_submit', {
+          currency: 'BDT',
+          value: parseFloat(grandTotal) || 0,
+          shipping: currentShippingCost,
+          payment_type: 'Cash On Delivery',
+          items: dlCheckoutItems
+        }, {
+          customer: cust.customer,
+          customer_info: cust.customer_info,
+          user_data: cust.user_data,
+          customer_name: cust.customer_name,
+          customer_phone: cust.customer_phone,
+          customer_email: cust.customer_email,
+          customer_city: cust.customer_city,
+          customer_division: cust.customer_division,
+          customer_address: cust.customer_address
+        });
+      }
+    } catch(err) {
+      console.warn('[DataLayer] Checkout submit tracking error:', err);
+    }
+
     isCheckoutSubmitting = true;
     const submitBtn = document.getElementById('submit-order-btn');
     if (submitBtn) {
@@ -391,7 +640,7 @@
     renderCheckoutSummary();
   });
 
-  // GA4 / GTM DataLayer BeginCheckout Event Tracking
+  // GA4 / GTM DataLayer BeginCheckout Event Tracking with Customer Data
   function trackDataLayerBeginCheckout() {
     try {
       if (typeof window.pushToDataLayer !== 'function') return;
@@ -399,6 +648,7 @@
       if (!items || items.length === 0) return;
 
       const subtotal = window.CameraCart ? CameraCart.getSubtotal() : 0;
+      const cust = getCustomerData();
       const dlCheckoutItems = items.map(function(item, idx) {
         return {
           item_id: String(item.id || item.barcode || item.name),
@@ -415,6 +665,16 @@
         currency: 'BDT',
         value: parseFloat(subtotal) || 0,
         items: dlCheckoutItems
+      }, {
+        customer: cust.customer,
+        customer_info: cust.customer_info,
+        user_data: cust.user_data,
+        customer_name: cust.customer_name,
+        customer_phone: cust.customer_phone,
+        customer_email: cust.customer_email,
+        customer_city: cust.customer_city,
+        customer_division: cust.customer_division,
+        customer_address: cust.customer_address
       });
     } catch(e) {
       console.warn('[DataLayer] BeginCheckout error:', e);
@@ -481,6 +741,8 @@
   document.addEventListener('DOMContentLoaded', function() {
     autoDetectDeliveryZone();
     renderCheckoutSummary();
+    setupCustomerInputListeners();
+    pushCustomerInfoToDataLayer('customer_info_updated');
     trackDataLayerBeginCheckout();
     trackMetaPixelInitiateCheckout();
   });

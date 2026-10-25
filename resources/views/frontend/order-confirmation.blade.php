@@ -186,7 +186,7 @@
 
 @push('scripts')
 <script>
-  // GA4 / GTM DataLayer Purchase Event Tracking
+  // GA4 / GTM DataLayer Purchase & Customer Info Event Tracking
   @php
     $dlOrderItems = [];
     if (isset($orderItems) && count($orderItems) > 0) {
@@ -212,9 +212,75 @@
         'index' => 1
       ];
     }
+
+    $cName = (string)($orderData['customer_name'] ?? '');
+    $cPhone = (string)($orderData['phone'] ?? '');
+    $cEmail = (string)($orderData['email'] ?? '');
+    $cCity = (string)($orderData['city'] ?? '');
+    $cDivision = (string)($orderData['division'] ?? '');
+    $cAddress = (string)($orderData['delivery_address'] ?? '');
+
+    $nameParts = explode(' ', trim($cName));
+    $cFirstName = $nameParts[0] ?? '';
+    $cLastName = count($nameParts) > 1 ? implode(' ', array_slice($nameParts, 1)) : '';
+
+    $rawDigits = preg_replace('/[^0-9]/', '', $cPhone);
+    $fmtPhone = $cPhone;
+    if (strlen($rawDigits) === 11 && str_starts_with($rawDigits, '01')) {
+      $fmtPhone = '+88' . $rawDigits;
+    } elseif (strlen($rawDigits) === 13 && str_starts_with($rawDigits, '8801')) {
+      $fmtPhone = '+' . $rawDigits;
+    }
+
+    $customerData = [
+      'name' => $cName,
+      'customer_name' => $cName,
+      'first_name' => $cFirstName,
+      'last_name' => $cLastName,
+      'phone' => $cPhone,
+      'customer_phone' => $cPhone,
+      'phone_number' => $fmtPhone,
+      'email' => $cEmail,
+      'customer_email' => $cEmail,
+      'city' => $cCity,
+      'customer_city' => $cCity,
+      'district' => $cCity,
+      'division' => $cDivision,
+      'customer_division' => $cDivision,
+      'address' => $cAddress,
+      'customer_address' => $cAddress,
+      'delivery_address' => $cAddress,
+      'street' => $cAddress,
+      'country' => 'Bangladesh',
+      'country_code' => 'BD'
+    ];
+
+    $userData = [
+      'email' => !empty($cEmail) ? $cEmail : null,
+      'phone_number' => !empty($fmtPhone) ? $fmtPhone : null,
+      'address' => [
+        'first_name' => !empty($cFirstName) ? $cFirstName : null,
+        'last_name' => !empty($cLastName) ? $cLastName : null,
+        'street' => !empty($cAddress) ? $cAddress : null,
+        'city' => !empty($cCity) ? $cCity : null,
+        'region' => !empty($cDivision) ? $cDivision : null,
+        'postal_code' => null,
+        'country' => 'BD'
+      ]
+    ];
   @endphp
   document.addEventListener('DOMContentLoaded', function() {
-    // GA4 / GTM DataLayer Purchase Event
+    window.dataLayer = window.dataLayer || [];
+
+    // User Data Push for Google Tag Manager Enhanced Conversions
+    window.dataLayer.push({
+      event: 'user_data',
+      customer: {!! json_encode($customerData, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!},
+      customer_info: {!! json_encode($customerData, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!},
+      user_data: {!! json_encode($userData, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!}
+    });
+
+    // GA4 / GTM DataLayer Purchase Event with Full Customer Info
     if (typeof window.pushToDataLayer === 'function') {
       window.pushToDataLayer('purchase', {
         transaction_id: '{{ $orderNumber }}',
@@ -225,8 +291,15 @@
         coupon: '{{ !empty($orderData['discount']) && $orderData['discount'] > 0 ? "DISCOUNT" : "" }}',
         items: {!! json_encode($dlOrderItems, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!}
       }, {
-        customer_name: '{{ addslashes($orderData["customer_name"] ?? "") }}',
-        customer_city: '{{ addslashes($orderData["city"] ?? "") }}'
+        customer: {!! json_encode($customerData, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!},
+        customer_info: {!! json_encode($customerData, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!},
+        user_data: {!! json_encode($userData, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!},
+        customer_name: '{{ addslashes($cName) }}',
+        customer_phone: '{{ addslashes($cPhone) }}',
+        customer_email: '{{ addslashes($cEmail) }}',
+        customer_city: '{{ addslashes($cCity) }}',
+        customer_division: '{{ addslashes($cDivision) }}',
+        customer_address: '{{ addslashes($cAddress) }}'
       });
     }
     // Clean cart in localStorage after successful order placement
