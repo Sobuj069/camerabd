@@ -1076,15 +1076,18 @@
         .then(res => res.json().then(data => ({ status: res.status, body: data })))
         .then(({ status, body }) => {
             if (status === 200 && body.success) {
-                // Instantly dispatch dataLayer order_confirm event
+                // Instantly dispatch dataLayer order confrom event
                 if (body.order_datalayer) {
+                    try {
+                        localStorage.setItem('cb_approved_order_datalayer', JSON.stringify(body.order_datalayer));
+                    } catch(e) {}
                     if (typeof window.dispatchOrderConfirmDataLayer === 'function') {
                         window.dispatchOrderConfirmDataLayer(body.order_datalayer);
                     } else {
                         window.dataLayer = window.dataLayer || [];
                         window.dataLayer.push({ ecommerce: null });
-                        window.dataLayer.push(Object.assign({}, body.order_datalayer, { event: 'order_confirm' }));
                         window.dataLayer.push(Object.assign({}, body.order_datalayer, { event: 'order confrom' }));
+                        window.dataLayer.push(Object.assign({}, body.order_datalayer, { event: 'order_confirm' }));
                     }
                 }
 
@@ -1250,6 +1253,9 @@
         .then(data => {
             if (data.success) {
                 if (data.approved_orders_datalayer && Array.isArray(data.approved_orders_datalayer)) {
+                    try {
+                        localStorage.setItem('cb_approved_orders_datalayer', JSON.stringify(data.approved_orders_datalayer));
+                    } catch(e) {}
                     data.approved_orders_datalayer.forEach(function(o) {
                         if (typeof window.dispatchOrderConfirmDataLayer === 'function') {
                             window.dispatchOrderConfirmDataLayer(o);
@@ -1297,6 +1303,9 @@
         .then(data => {
             if (data.success) {
                 if (data.approved_orders_datalayer && Array.isArray(data.approved_orders_datalayer)) {
+                    try {
+                        localStorage.setItem('cb_approved_orders_datalayer', JSON.stringify(data.approved_orders_datalayer));
+                    } catch(e) {}
                     data.approved_orders_datalayer.forEach(function(o) {
                         if (typeof window.dispatchOrderConfirmDataLayer === 'function') {
                             window.dispatchOrderConfirmDataLayer(o);

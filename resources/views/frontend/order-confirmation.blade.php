@@ -309,8 +309,6 @@
       };
 
       window.pushToDataLayer('purchase', purchaseEcommerce, purchaseExtra);
-      window.pushToDataLayer('order_confirm', purchaseEcommerce, purchaseExtra);
-      window.pushToDataLayer('order confrom', purchaseEcommerce, purchaseExtra);
     }
     // Clean cart in localStorage after successful order placement
     try {

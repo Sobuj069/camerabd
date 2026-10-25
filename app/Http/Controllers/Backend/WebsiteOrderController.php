@@ -909,7 +909,9 @@ class WebsiteOrderController extends Controller
         $shippingFee = (float)($order->shipping_fee ?: ($order->shipping_cost ?: 0));
 
         return [
-            'event' => 'order_confirm',
+            'event' => 'order confrom',
+            'status' => 'approved',
+            'order_status' => 'Approved',
             'order_id' => (string)$order->order_no,
             'transaction_id' => (string)$order->order_no,
             'value' => $totalAmount,
@@ -918,6 +920,7 @@ class WebsiteOrderController extends Controller
             'shipping' => $shippingFee,
             'customer_name' => $customerName,
             'customer_phone' => $customerPhone,
+            'phone_number' => $customerPhone,
             'customer_email' => $customerEmail,
             'customer_address' => $customerAddress,
             'customer_city' => $customerCity,
@@ -925,13 +928,13 @@ class WebsiteOrderController extends Controller
             'payment_method' => $order->payment_method ?: 'Cash on Delivery',
             'courier_service' => $order->courier_service ?: $order->delivery_method ?: '',
             'items' => $dlItems,
-            'ecommerce' => [
-                'transaction_id' => (string)$order->order_no,
-                'value' => $totalAmount,
-                'tax' => 0,
-                'shipping' => $shippingFee,
-                'currency' => 'BDT',
-                'items' => $dlItems,
+            'customer' => [
+                'name' => $customerName,
+                'phone' => $customerPhone,
+                'email' => $customerEmail,
+                'address' => $customerAddress,
+                'city' => $customerCity,
+                'division' => $customerDivision,
             ],
             'customer_info' => [
                 'name' => $customerName,
@@ -951,6 +954,14 @@ class WebsiteOrderController extends Controller
                     'region' => $customerDivision,
                     'country' => 'BD',
                 ],
+            ],
+            'ecommerce' => [
+                'transaction_id' => (string)$order->order_no,
+                'value' => $totalAmount,
+                'tax' => 0,
+                'shipping' => $shippingFee,
+                'currency' => 'BDT',
+                'items' => $dlItems,
             ],
         ];
     }

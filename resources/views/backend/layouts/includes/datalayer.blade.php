@@ -35,26 +35,59 @@
   };
 
   /**
-   * Helper function to dispatch order_confirm event with all aliases
+   * Helper function to dispatch order confrom event with customer data and status
    */
   window.dispatchOrderConfirmDataLayer = function(payload) {
     if (!payload) return;
     try {
       window.dataLayer = window.dataLayer || [];
       window.dataLayer.push({ ecommerce: null });
-      // Standard snake_case event
-      window.dataLayer.push(Object.assign({}, payload, { event: 'order_confirm' }));
-      // Exact user requested alias
-      window.dataLayer.push(Object.assign({}, payload, { event: 'order confrom' }));
-      window.dataLayer.push(Object.assign({}, payload, { event: 'order_confirmed' }));
+
+      var fullPayload = Object.assign({}, payload, {
+        status: 'approved',
+        order_status: 'Approved'
+      });
+
+      // 1. Primary event name specified by user: 'order confrom'
+      window.dataLayer.push(Object.assign({}, fullPayload, { event: 'order confrom' }));
+
+      // 2. Standard snake_case alias: 'order_confirm'
+      window.dataLayer.push(Object.assign({}, fullPayload, { event: 'order_confirm' }));
+
+      // 3. Optional enhanced ecommerce push via helper
       if (typeof window.pushToDataLayer === 'function') {
-        window.pushToDataLayer('order_confirm', payload.ecommerce, payload);
+        window.pushToDataLayer('order confrom', fullPayload.ecommerce, fullPayload);
+        window.pushToDataLayer('order_confirm', fullPayload.ecommerce, fullPayload);
       }
-      console.log('✅ [DataLayer] order_confirm event successfully dispatched for Order #' + (payload.order_id || payload.transaction_id));
+      console.log('✅ [DataLayer] "order confrom" event fired for Approved Order #' + (fullPayload.order_id || fullPayload.transaction_id), fullPayload);
     } catch(err) {
-      console.warn('[DataLayer] Error dispatching order_confirm:', err);
+      console.warn('[DataLayer] Error dispatching order confrom:', err);
     }
   };
+
+  // Check localStorage for pending order_confirm events across page reloads
+  (function() {
+    try {
+      var storedSingle = localStorage.getItem('cb_approved_order_datalayer');
+      if (storedSingle) {
+        localStorage.removeItem('cb_approved_order_datalayer');
+        var parsed = JSON.parse(storedSingle);
+        if (parsed && typeof window.dispatchOrderConfirmDataLayer === 'function') {
+          window.dispatchOrderConfirmDataLayer(parsed);
+        }
+      }
+      var storedMulti = localStorage.getItem('cb_approved_orders_datalayer');
+      if (storedMulti) {
+        localStorage.removeItem('cb_approved_orders_datalayer');
+        var parsedMulti = JSON.parse(storedMulti);
+        if (Array.isArray(parsedMulti) && typeof window.dispatchOrderConfirmDataLayer === 'function') {
+          parsedMulti.forEach(function(o) {
+            window.dispatchOrderConfirmDataLayer(o);
+          });
+        }
+      }
+    } catch(e) {}
+  })();
 </script>
 
 @if(!empty($gtmHeaderScript))
