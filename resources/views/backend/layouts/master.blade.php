@@ -50,6 +50,7 @@
     <script src="{{ asset('backend') }}/js/jquery.min.js"></script>
     <script src="{{ asset('backend') }}/js/jquery-ui.js"></script>
     <!-- End script -->
+    @include('backend.layouts.includes.datalayer')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('css')
 </head>

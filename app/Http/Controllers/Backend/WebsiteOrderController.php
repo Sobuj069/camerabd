@@ -434,15 +434,22 @@ class WebsiteOrderController extends Controller
                     Log::warning("Meta CAPI Purchase tracking error on approve: " . $capiErr->getMessage());
                 }
 
+                // Generate dataLayer payload for order_confirm event
+                $orderDataLayer = $this->buildOrderDataLayerPayload($order);
+                session()->flash('approved_order_datalayer', $orderDataLayer);
+
                 $successMsg = "অর্ডার {$order->order_no} সফলভাবে অনুমোদিত হয়েছে এবং অনলাইন সেল লিস্টে (Processing) যুক্ত করা হয়েছে।";
                 if ($request->ajax() || $request->wantsJson()) {
                     return response()->json([
                         'success' => true,
                         'message' => $successMsg,
                         'status' => 'approved',
+                        'order_datalayer' => $orderDataLayer,
                     ]);
                 }
-                return redirect()->back()->with('success', $successMsg);
+                return redirect()->back()
+                    ->with('success', $successMsg)
+                    ->with('approved_order_datalayer', $orderDataLayer);
 
             } catch (\Exception $e) {
                 Log::error("Error approving website order #{$order->id}: " . $e->getMessage());
@@ -524,6 +531,7 @@ class WebsiteOrderController extends Controller
         $approvedCount = 0;
         $failedCount = 0;
         $errorMessages = [];
+        $approvedOrdersDataLayer = [];
 
         foreach ($orders as $order) {
             if ($action === 'approve') {
@@ -532,6 +540,9 @@ class WebsiteOrderController extends Controller
                 $resData = json_decode($res->getContent(), true);
                 if (!empty($resData['success'])) {
                     $approvedCount++;
+                    if (!empty($resData['order_datalayer'])) {
+                        $approvedOrdersDataLayer[] = $resData['order_datalayer'];
+                    }
                 } else {
                     $failedCount++;
                     $errorMessages[] = "#{$order->order_no}: " . ($resData['message'] ?? 'Failed');
@@ -555,10 +566,15 @@ class WebsiteOrderController extends Controller
             $msg .= " ({$failedCount} টি অর্ডারে স্টক ঘাটতি বা সমস্যা ছিল)";
         }
 
+        if (!empty($approvedOrdersDataLayer)) {
+            session()->flash('approved_orders_datalayer', $approvedOrdersDataLayer);
+        }
+
         return response()->json([
             'success' => true,
             'message' => $msg,
             'errors' => $errorMessages,
+            'approved_orders_datalayer' => $approvedOrdersDataLayer,
         ]);
     }
 
@@ -856,5 +872,86 @@ class WebsiteOrderController extends Controller
         });
 
         return response()->json($results);
+    }
+
+    /**
+     * Build unified dataLayer payload for approved order
+     */
+    private function buildOrderDataLayerPayload($order)
+    {
+        $order->loadMissing(['items.product.brand']);
+
+        $dlItems = [];
+        $idx = 1;
+        if (!empty($order->items)) {
+            foreach ($order->items as $item) {
+                $brandName = $item->product?->brand?->name ?? (get_setting('com_name') ?: 'CAMERA BD');
+                $dlItems[] = [
+                    'item_id' => (string)($item->product_code ?: ($item->product_barcode ?: ($item->product_id ?: ''))),
+                    'item_name' => $item->product_name ?: 'Product',
+                    'affiliation' => get_setting('com_name') ?: 'CAMERA BD',
+                    'currency' => 'BDT',
+                    'index' => $idx++,
+                    'item_brand' => $brandName,
+                    'price' => (float)($item->unit_price ?: 0),
+                    'quantity' => (int)($item->quantity ?: 1),
+                ];
+            }
+        }
+
+        $customerPhone = $order->customer_phone ?: $order->phone ?: '';
+        $customerName = $order->customer_name ?: '';
+        $customerEmail = $order->customer_email ?: $order->email ?: '';
+        $customerAddress = $order->customer_address ?: $order->delivery_address ?: '';
+        $customerCity = $order->city ?: '';
+        $customerDivision = $order->division ?: '';
+        $totalAmount = (float)($order->total_amount ?: 0);
+        $shippingFee = (float)($order->shipping_fee ?: ($order->shipping_cost ?: 0));
+
+        return [
+            'event' => 'order_confirm',
+            'order_id' => (string)$order->order_no,
+            'transaction_id' => (string)$order->order_no,
+            'value' => $totalAmount,
+            'currency' => 'BDT',
+            'tax' => 0,
+            'shipping' => $shippingFee,
+            'customer_name' => $customerName,
+            'customer_phone' => $customerPhone,
+            'customer_email' => $customerEmail,
+            'customer_address' => $customerAddress,
+            'customer_city' => $customerCity,
+            'customer_division' => $customerDivision,
+            'payment_method' => $order->payment_method ?: 'Cash on Delivery',
+            'courier_service' => $order->courier_service ?: $order->delivery_method ?: '',
+            'items' => $dlItems,
+            'ecommerce' => [
+                'transaction_id' => (string)$order->order_no,
+                'value' => $totalAmount,
+                'tax' => 0,
+                'shipping' => $shippingFee,
+                'currency' => 'BDT',
+                'items' => $dlItems,
+            ],
+            'customer_info' => [
+                'name' => $customerName,
+                'phone' => $customerPhone,
+                'email' => $customerEmail,
+                'address' => $customerAddress,
+                'city' => $customerCity,
+                'division' => $customerDivision,
+            ],
+            'user_data' => [
+                'phone_number' => $customerPhone,
+                'email' => $customerEmail,
+                'address' => [
+                    'first_name' => $customerName,
+                    'street' => $customerAddress,
+                    'city' => $customerCity,
+                    'region' => $customerDivision,
+                    'country' => 'BD',
+                ],
+            ],
+        ];
     }
 }

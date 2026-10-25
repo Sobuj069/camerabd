@@ -1076,12 +1076,24 @@
         .then(res => res.json().then(data => ({ status: res.status, body: data })))
         .then(({ status, body }) => {
             if (status === 200 && body.success) {
+                // Instantly dispatch dataLayer order_confirm event
+                if (body.order_datalayer) {
+                    if (typeof window.dispatchOrderConfirmDataLayer === 'function') {
+                        window.dispatchOrderConfirmDataLayer(body.order_datalayer);
+                    } else {
+                        window.dataLayer = window.dataLayer || [];
+                        window.dataLayer.push({ ecommerce: null });
+                        window.dataLayer.push(Object.assign({}, body.order_datalayer, { event: 'order_confirm' }));
+                        window.dataLayer.push(Object.assign({}, body.order_datalayer, { event: 'order confrom' }));
+                    }
+                }
+
                 if (typeof toastr !== 'undefined') {
                     toastr.success(body.message);
                 } else {
                     alert(body.message);
                 }
-                setTimeout(() => location.reload(), 800);
+                setTimeout(() => location.reload(), 1200);
             } else {
                 alert(body.message || 'Action failed!');
                 location.reload();
@@ -1237,6 +1249,13 @@
         .then(res => res.json())
         .then(data => {
             if (data.success) {
+                if (data.approved_orders_datalayer && Array.isArray(data.approved_orders_datalayer)) {
+                    data.approved_orders_datalayer.forEach(function(o) {
+                        if (typeof window.dispatchOrderConfirmDataLayer === 'function') {
+                            window.dispatchOrderConfirmDataLayer(o);
+                        }
+                    });
+                }
                 alert(data.message);
                 location.reload();
             } else {
@@ -1277,6 +1296,13 @@
         .then(res => res.json())
         .then(data => {
             if (data.success) {
+                if (data.approved_orders_datalayer && Array.isArray(data.approved_orders_datalayer)) {
+                    data.approved_orders_datalayer.forEach(function(o) {
+                        if (typeof window.dispatchOrderConfirmDataLayer === 'function') {
+                            window.dispatchOrderConfirmDataLayer(o);
+                        }
+                    });
+                }
                 alert(data.message);
                 location.reload();
             } else {
