@@ -441,16 +441,27 @@ class WebsiteOrderController extends Controller
                 });
 
                 // Dispatch Meta Conversions API (Server-Side) Purchase Event ONLY on Approval!
-                try {
-                    $order->loadMissing('items');
-                    \App\Services\MetaCapiService::trackPurchase($order, 'purchase_' . $order->order_no);
-                    Log::info("Meta CAPI Purchase Event Dispatched on Order Approval #{$order->order_no}");
-                } catch (\Throwable $capiErr) {
-                    Log::warning("Meta CAPI Purchase tracking error on approve: " . $capiErr->getMessage());
+                // If GTM is configured, GTM handles Meta tracking via DataLayer purchase event to prevent duplicate Server CAPI events
+                $gtmId = function_exists('get_setting') && get_setting('gtm_id') ? get_setting('gtm_id') : env('GTM_ID');
+                if (empty($gtmId)) {
+                    try {
+                        $order->loadMissing('items');
+                        \App\Services\MetaCapiService::trackPurchase($order, 'purchase_' . $order->order_no);
+                        Log::info("Meta CAPI Purchase Event Dispatched on Order Approval #{$order->order_no}");
+                    } catch (\Throwable $capiErr) {
+                        Log::warning("Meta CAPI Purchase tracking error on approve: " . $capiErr->getMessage());
+                    }
                 }
 
-                // Generate dataLayer payload for order_confirm event
-                $orderDataLayer = self::buildOrderDataLayerPayload($order);
+                // Coordinate DataLayer dispatch: if customer has active confirmation page, let customer browser dispatch with real user cookies
+                $hasActiveConfirmation = \Illuminate\Support\Facades\Cache::has('active_confirmation_' . $order->order_no);
+                $cacheKey = 'order_dl_dispatched_' . $order->order_no;
+                $orderDataLayer = null;
+
+                if (!$hasActiveConfirmation && !\Illuminate\Support\Facades\Cache::has($cacheKey)) {
+                    \Illuminate\Support\Facades\Cache::put($cacheKey, true, 86400);
+                    $orderDataLayer = self::buildOrderDataLayerPayload($order);
+                }
 
                 $successMsg = "অর্ডার {$order->order_no} সফলভাবে অনুমোদিত হয়েছে এবং অনলাইন সেল লিস্টে (Processing) যুক্ত করা হয়েছে।";
                 if ($request->ajax() || $request->wantsJson()) {

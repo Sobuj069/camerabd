@@ -298,6 +298,7 @@
       } catch(e) {}
 
       try {
+        window._isOrderApproved = true;
         window.dataLayer = window.dataLayer || [];
         // Clear previous ecommerce object per Google standard
         window.dataLayer.push({ ecommerce: null });
