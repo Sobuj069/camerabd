@@ -42,10 +42,15 @@
   window.dispatchOrderConfirmDataLayer = function(payload) {
     if (!payload) return;
     var orderKey = String(payload.order_id || payload.transaction_id || 'default');
-    if (window._backendDispatchedOrders[orderKey]) {
+    var storageKey = 'cb_dispatched_order_' + orderKey;
+    if (window._backendDispatchedOrders[orderKey] || localStorage.getItem(storageKey)) {
+      console.log('[DataLayer] Order #' + orderKey + ' already dispatched, skipping duplicate.');
       return;
     }
     window._backendDispatchedOrders[orderKey] = true;
+    try {
+      localStorage.setItem(storageKey, Date.now());
+    } catch(e) {}
 
     try {
       window.dataLayer = window.dataLayer || [];

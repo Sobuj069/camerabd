@@ -1109,11 +1109,6 @@
             if (status === 200 && body.success) {
                 // Instantly dispatch dataLayer purchase event
                 if (body.order_datalayer) {
-                    try {
-                        var dlWithTime = Object.assign({}, body.order_datalayer, { _pushed_at: Date.now() });
-                        localStorage.setItem('cb_approved_order_datalayer', JSON.stringify(dlWithTime));
-                        window.approvedOrderDataLayer = dlWithTime;
-                    } catch(e) {}
                     if (typeof window.dispatchOrderConfirmDataLayer === 'function') {
                         window.dispatchOrderConfirmDataLayer(body.order_datalayer);
                     } else {

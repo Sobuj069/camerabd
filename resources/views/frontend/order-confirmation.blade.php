@@ -287,11 +287,15 @@
     function dispatchApprovedOrderConfirm(payload) {
       if (!payload) return;
       var orderKey = String(payload.order_id || payload.transaction_id || '{{ $orderNumber }}');
-      if (window._dispatchedApprovedOrders[orderKey]) {
+      var storageKey = 'cb_dispatched_order_' + orderKey;
+      if (window._dispatchedApprovedOrders[orderKey] || localStorage.getItem(storageKey)) {
         console.log('[DataLayer] "purchase" already dispatched for Order #' + orderKey + ', skipping duplicate.');
         return;
       }
       window._dispatchedApprovedOrders[orderKey] = true;
+      try {
+        localStorage.setItem(storageKey, Date.now());
+      } catch(e) {}
 
       try {
         window.dataLayer = window.dataLayer || [];

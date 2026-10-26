@@ -1608,9 +1608,6 @@ $('#orderStatusForm').on('submit', function(e) {
             $btn.prop('disabled', false).html('Update');
             if (res.success) {
                 if (res.order_datalayer) {
-                    try {
-                        localStorage.setItem('cb_approved_order_datalayer', JSON.stringify(res.order_datalayer));
-                    } catch(e) {}
                     if (typeof window.dispatchOrderConfirmDataLayer === 'function') {
                         window.dispatchOrderConfirmDataLayer(res.order_datalayer);
                     } else {

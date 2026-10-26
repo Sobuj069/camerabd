@@ -50,6 +50,14 @@
         if (p && !p._gtm_dispatched && (!p._pushed_at || (Date.now() - p._pushed_at < 15 * 60 * 1000))) {
           // Immediately mark and clear to prevent duplicate firing on page reloads
           localStorage.removeItem('cb_approved_order_datalayer');
+          var orderKey = String(p.order_id || p.transaction_id || 'default');
+          var storageKey = 'cb_dispatched_order_' + orderKey;
+          if (localStorage.getItem(storageKey)) {
+            return;
+          }
+          try {
+            localStorage.setItem(storageKey, Date.now());
+          } catch(e) {}
 
           window.dataLayer = window.dataLayer || [];
           window.dataLayer.push({ ecommerce: null });
