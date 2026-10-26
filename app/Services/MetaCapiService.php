@@ -23,7 +23,7 @@ class MetaCapiService
                 return trim($id);
             }
         }
-        return '28625456847108675';
+        return env('META_PIXEL_ID', '');
     }
 
     /**

@@ -44,6 +44,7 @@ class BusinessSettingsController extends Controller
         }
     
         // Clear cache
+        \Illuminate\Support\Facades\Cache::forget('business_settings');
         Artisan::call('cache:clear');
     
         session()->flash('success', 'Successfully System Settings Updated!');

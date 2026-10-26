@@ -175,7 +175,7 @@
                     <div class="field">
                         <label>{{ __('Pathao Client ID') }}</label>
                         <input type="hidden" name="types[]" value="pathao_client_id">
-                        <input type="text" name="pathao_client_id" value="{{ get_setting('pathao_client_id') ?: (env('PATHAO_CLIENT_ID') ?: 'jnegkRrewZ') }}" placeholder="{{ __('Client ID') }}">
+                        <input type="text" name="pathao_client_id" value="{{ get_setting('pathao_client_id') ?: env('PATHAO_CLIENT_ID') }}" placeholder="{{ __('Client ID') }}">
                     </div>
                     <div class="field">
                         <label>{{ __('Pathao Client Secret') }}</label>
@@ -221,7 +221,7 @@
                     <div class="field">
                         <label>{{ __('Meta Pixel / Dataset ID') }}</label>
                         <input type="hidden" name="types[]" value="meta_pixel_id">
-                        <input type="text" name="meta_pixel_id" value="{{ get_setting('meta_pixel_id') ?: '28625456847108675' }}" placeholder="28625456847108675">
+                        <input type="text" name="meta_pixel_id" value="{{ get_setting('meta_pixel_id') }}" placeholder="e.g. 28625456847108675">
                         <small class="text-muted">{{ __('Found in Meta Events Manager > Datasets') }}</small>
                     </div>
 

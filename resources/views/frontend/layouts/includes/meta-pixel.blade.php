@@ -1,3 +1,11 @@
+@php
+  $metaPixelId = function_exists("get_setting") ? trim(get_setting("meta_pixel_id") ?? '') : '';
+  if (empty($metaPixelId)) {
+      $metaPixelId = env('META_PIXEL_ID', '');
+  }
+  $isConfirmationPage = request()->routeIs('frontend.order-confirmation') ? 'true' : 'false';
+@endphp
+@if(!empty($metaPixelId))
 <!-- Meta Pixel Code -->
 <script>
 !function(f,b,e,v,n,t,s)
@@ -8,10 +16,6 @@ n.queue=[];t=b.createElement(e);t.async=!0;
 t.src=v;s=b.getElementsByTagName(e)[0];
 s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
-@php
-  $metaPixelId = function_exists("get_setting") && get_setting("meta_pixel_id") ? get_setting("meta_pixel_id") : "28625456847108675";
-  $isConfirmationPage = request()->routeIs('frontend.order-confirmation') ? 'true' : 'false';
-@endphp
 
 // ========================================================
 // META PIXEL GUARD: Block ob3_plugin & Premature Purchase Events
@@ -144,3 +148,4 @@ fbq('track', 'PageView');
 src="https://www.facebook.com/tr?id={{ $metaPixelId }}&ev=PageView&noscript=1"
 /></noscript>
 <!-- End Meta Pixel Code -->
+@endif
