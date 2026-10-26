@@ -1592,10 +1592,14 @@ $('#orderStatusForm').on('submit', function(e) {
 
     $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Updating...');
 
+    var postData = $(this).serialize();
+    var stockModeVal = $('#approveStockMode').val() || 'without_manage';
+    postData += '&stock_mode=' + encodeURIComponent(stockModeVal);
+
     $.ajax({
         url: $(this).attr('action'),
         type: "POST",
-        data: $(this).serialize(),
+        data: postData,
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
             'Accept': 'application/json'
@@ -1625,9 +1629,10 @@ $('#orderStatusForm').on('submit', function(e) {
                 alert(res.message || 'Status update failed.');
             }
         },
-        error: function() {
+        error: function(xhr) {
             $btn.prop('disabled', false).html('Update');
-            alert('Failed to update status. Please try again.');
+            var err = xhr.responseJSON;
+            alert(err && err.message ? err.message : 'Failed to update status. Please try again.');
         }
     });
 });

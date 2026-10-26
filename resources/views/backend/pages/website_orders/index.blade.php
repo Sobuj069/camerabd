@@ -733,8 +733,8 @@
             <div class="dispatch-field">
                 <label><i class="feather icon-package text-info"></i> Stock Transfer Mode:</label>
                 <select id="stockTransferModeSelect" class="dispatch-select">
-                    <option value="Without Manage Stock (Direct Transfer)">Without Manage Stock (Direct Transfer)</option>
-                    <option value="Manage Stock (FIFO)">Manage Stock (FIFO Deduction)</option>
+                    <option value="without_manage" selected>Without Manage Stock (Direct Transfer)</option>
+                    <option value="with_manage">Manage Stock (FIFO Deduction)</option>
                 </select>
             </div>
 
@@ -1061,11 +1061,20 @@
                 return;
             }
         } else if (newStatus === 'approved') {
-            if (!confirm('Are you sure you want to approve this order and transfer it to the Online Sale List? Stock will be checked and deducted via FIFO, and Meta (Facebook) Purchase event will be fired.')) {
+            const stockModeSelect = document.getElementById('stockTransferModeSelect');
+            const stockModeVal = stockModeSelect ? stockModeSelect.value : 'without_manage';
+            const isWithManage = stockModeVal === 'with_manage';
+            const confirmMsg = isWithManage
+                ? 'Are you sure you want to approve this order with MANAGE STOCK? Stock will be checked and deducted via FIFO. (If insufficient, approval will halt).'
+                : 'Are you sure you want to approve this order WITHOUT MANAGE STOCK? The order will transfer directly to Online Sale List.';
+
+            if (!confirm(confirmMsg)) {
                 location.reload();
                 return;
             }
         }
+
+        const currentStockMode = document.getElementById('stockTransferModeSelect') ? document.getElementById('stockTransferModeSelect').value : 'without_manage';
 
         fetch(`{{ url('/website-orders') }}/${orderId}/status`, {
             method: 'POST',
@@ -1074,7 +1083,10 @@
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({ status: newStatus })
+            body: JSON.stringify({
+                status: newStatus,
+                stock_mode: currentStockMode
+            })
         })
         .then(async res => {
             const ct = res.headers.get('content-type') || '';
@@ -1265,6 +1277,9 @@
             }
         }
 
+        const stockModeSelect = document.getElementById('stockTransferModeSelect');
+        const stockMode = stockModeSelect ? stockModeSelect.value : 'without_manage';
+
         fetch(`{{ route('website-orders.bulk-action') }}`, {
             method: 'POST',
             headers: {
@@ -1272,7 +1287,11 @@
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({ action: action, order_ids: orderIds })
+            body: JSON.stringify({
+                action: action,
+                order_ids: orderIds,
+                stock_mode: stockMode
+            })
         })
         .then(async res => {
             const ct = res.headers.get('content-type') || '';
@@ -1309,6 +1328,8 @@
 
         const courier = document.getElementById('courierServiceSelect').value;
         const sendApi = document.getElementById('sendToCourierApiCheckbox').checked;
+        const stockModeSelect = document.getElementById('stockTransferModeSelect');
+        const stockMode = stockModeSelect ? stockModeSelect.value : 'without_manage';
 
         if (!confirm(`Send ${orderIds.length} selected orders to ${courier}?`)) {
             return;
@@ -1324,7 +1345,8 @@
             body: JSON.stringify({
                 order_ids: orderIds,
                 courier_service: courier,
-                send_to_courier_api: sendApi
+                send_to_courier_api: sendApi,
+                stock_mode: stockMode
             })
         })
         .then(async res => {

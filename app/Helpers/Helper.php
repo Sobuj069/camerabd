@@ -1739,8 +1739,21 @@ function calculateUnitPriceUsingFIFO($productId, $requiredQty, $variationId = nu
 
                 $remainingQty -= $usedQty;
             }
+
+            // If required quantity exceeded positive stock (sale without manage stock), deduct remainder into negative on last item
+            if ($remainingQty > 0) {
+                $lastItem = $purchaseItems->last();
+                $lastItem->update(['stock_qty' => $lastItem->stock_qty - $remainingQty]);
+
+                if ($product && $product->unit && $product->unit->related_unit != null) {
+                    $relatedVal = (float) ($product->unit->related_value ?: 1);
+                    $totalCost += ($remainingQty / $relatedVal) * $lastItem->rate;
+                } else {
+                    $totalCost += $remainingQty * $lastItem->rate;
+                }
+            }
         } else {
-            // 🔹 No stock available, use last purchase rate
+            // No positive stock available, find latest purchase item and deduct into negative
             $lastPurchaseItemQuery = PurchaseItem::where('product_id', $productId);
 
             if ($variationId !== null && $variationId !== '') {
@@ -1764,13 +1777,35 @@ function calculateUnitPriceUsingFIFO($productId, $requiredQty, $variationId = nu
             $lastPurchaseItem = $lastPurchaseItemQuery->orderBy('id', 'desc')->first();
 
             if ($lastPurchaseItem) {
-                if ($product->unit->related_unit == null) {
-                    $totalCost = $requiredQty * $lastPurchaseItem->rate;
-                } else {
+                $lastPurchaseItem->update(['stock_qty' => $lastPurchaseItem->stock_qty - $requiredQty]);
+
+                if ($product->unit && $product->unit->related_unit != null) {
                     $totalCost = ($requiredQty / $product->unit->related_value) * $lastPurchaseItem->rate;
+                } else {
+                    $totalCost = $requiredQty * $lastPurchaseItem->rate;
                 }
             } else {
-                $totalCost = 0; // fallback if no purchase exists at all
+                // If no purchase item exists for this branch, try finding any purchase item across branches
+                $anyPi = PurchaseItem::where('product_id', $productId)->orderBy('id', 'desc')->first();
+                if ($anyPi) {
+                    $anyPi->update(['stock_qty' => $anyPi->stock_qty - $requiredQty]);
+                    $totalCost = $requiredQty * $anyPi->rate;
+                } else {
+                    // Fallback rate from product purchase_price
+                    $rate = (float)($product->purchase_price ?? 0);
+                    PurchaseItem::create([
+                        'purchase_id' => 0,
+                        'product_id' => $productId,
+                        'product_variation_id' => $variationId ?: null,
+                        'branch_id' => $branchId ?: ($userBranchId ?: 1),
+                        'rate' => $rate,
+                        'quantity' => 0,
+                        'stock_qty' => -$requiredQty,
+                        'sub_total' => 0,
+                        'date' => date('Y-m-d')
+                    ]);
+                    $totalCost = $requiredQty * $rate;
+                }
             }
         }
     } else {

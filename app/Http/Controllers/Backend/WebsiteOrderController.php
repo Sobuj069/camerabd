@@ -300,40 +300,47 @@ class WebsiteOrderController extends Controller
 
         // If transitioning to 'approved'
         if ($newStatus === 'approved') {
-            // 1. Stock check: Ensure every physical product has sufficient stock
-            $insufficientItems = [];
-            foreach ($order->items as $item) {
-                $prod = $item->product;
-                if ($prod && $prod->is_service == 0) {
-                    $stockQuery = PurchaseItem::where('product_id', $item->product_id)
-                        ->where('stock_qty', '>', 0);
-                    if ($item->product_variation_id) {
-                        $stockQuery->where('product_variation_id', $item->product_variation_id);
-                    }
-                    $available = (float) $stockQuery->sum('stock_qty');
-                    $required = (float) $item->quantity;
+            // Determine stock mode: 'with_manage' vs 'without_manage'
+            $rawStockMode = strtolower(trim($request->input('stock_mode', 'without_manage')));
+            $isWithManage = in_array($rawStockMode, ['with_manage', 'manage_stock', 'manage stock (fifo)']) 
+                || (str_contains($rawStockMode, 'manage') && !str_contains($rawStockMode, 'without'));
 
-                    if ($available < $required) {
-                        $insufficientItems[] = "{$item->product_name} (প্রয়োজন: {$required}, মজুদ: {$available})";
+            // 1. Stock check: ONLY if Manage Stock mode is selected!
+            if ($isWithManage) {
+                $insufficientItems = [];
+                foreach ($order->items as $item) {
+                    $prod = $item->product;
+                    if ($prod && $prod->is_service == 0) {
+                        $stockQuery = PurchaseItem::where('product_id', $item->product_id)
+                            ->where('stock_qty', '>', 0);
+                        if ($item->product_variation_id) {
+                            $stockQuery->where('product_variation_id', $item->product_variation_id);
+                        }
+                        $available = (float) $stockQuery->sum('stock_qty');
+                        $required = (float) $item->quantity;
+
+                        if ($available < $required) {
+                            $insufficientItems[] = "{$item->product_name} (প্রয়োজন: {$required}, মজুদ: {$available})";
+                        }
                     }
                 }
-            }
 
-            if (!empty($insufficientItems)) {
-                $msg = "স্টক পর্যাপ্ত নেই! নিম্নের পণ্যগুলো প্রথমে পারচেজ (Purchase) করুন:\n- " . implode("\n- ", $insufficientItems);
-                if ($request->ajax() || $request->wantsJson()) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => $msg,
-                        'insufficient_items' => $insufficientItems,
-                    ], 422);
+                if (!empty($insufficientItems)) {
+                    $msg = "স্টক পর্যাপ্ত নেই! নিম্নের পণ্যগুলো প্রথমে পারচেজ (Purchase) করুন:\n- " . implode("\n- ", $insufficientItems);
+                    if ($request->ajax() || $request->wantsJson()) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => $msg,
+                            'insufficient_items' => $insufficientItems,
+                        ], 422);
+                    }
+                    return redirect()->back()->with('error', $msg);
                 }
-                return redirect()->back()->with('error', $msg);
             }
 
             // 2. Perform DB Transaction: Deduct FIFO stock, create/find Customer, create Invoice & InvoiceItems
             try {
-                DB::transaction(function () use ($order, $userBranchId) {
+                DB::transaction(function () use ($order, $userBranchId, $rawStockMode, $request) {
                     // Find or create customer
                     $cleanPhone = preg_replace('/[^\d]/', '', $order->customer_phone);
                     if (strlen($cleanPhone) > 11) {
@@ -376,8 +383,8 @@ class WebsiteOrderController extends Controller
                     $invoice->branch_id = $userBranchId;
                     $invoice->sale_type = 'Online';
                     $invoice->order_status = 'processing';
-                    $rawService = strtolower(trim($order->courier_service ?? $order->delivery_method ?? ''));
-                    $invoice->courier_type = str_contains($rawService, 'pathao') ? 'Pathao' : 'Steadfast';
+                    $rawService = strtolower(trim($request->input('courier_type') ?: ($order->courier_service ?? $order->delivery_method ?? '')));
+                    $invoice->courier_type = str_contains($rawService, 'pathao') ? 'Pathao' : (str_contains($rawService, 'redx') ? 'RedX' : 'Steadfast');
                     $invoice->total_amount = $order->total_amount;
                     $invoice->delivery_charge = $order->shipping_fee ?? 0;
                     $invoice->discount = $order->discount ?? 0;
@@ -388,6 +395,9 @@ class WebsiteOrderController extends Controller
                     $invoice->source_link = $order->order_no;
                     $invoice->status = 1;
                     $invoice->created_by = auth()->id() ?? 1;
+                    if (\Illuminate\Support\Facades\Schema::hasColumn('invoices', 'stock_mode')) {
+                        $invoice->stock_mode = $rawStockMode;
+                    }
                     $invoice->save();
 
                     // Create InvoiceItems and deduct FIFO stock
@@ -420,10 +430,14 @@ class WebsiteOrderController extends Controller
                     }
 
                     // Mark order approved and link invoice
-                    $order->update([
+                    $updateFields = [
                         'status' => 'approved',
                         'invoice_id' => $invoice->id,
-                    ]);
+                    ];
+                    if (\Illuminate\Support\Facades\Schema::hasColumn('website_orders', 'stock_mode')) {
+                        $updateFields['stock_mode'] = $rawStockMode;
+                    }
+                    $order->update($updateFields);
                 });
 
                 // Dispatch Meta Conversions API (Server-Side) Purchase Event ONLY on Approval!
@@ -542,10 +556,14 @@ class WebsiteOrderController extends Controller
         $failedCount = 0;
         $errorMessages = [];
         $approvedOrdersDataLayer = [];
+        $stockMode = $request->input('stock_mode', 'without_manage');
 
         foreach ($orders as $order) {
             if ($action === 'approve') {
-                $subRequest = new Request(['status' => 'approved']);
+                $subRequest = new Request([
+                    'status' => 'approved',
+                    'stock_mode' => $stockMode
+                ]);
                 $res = $this->updateStatus($subRequest, $order->id);
                 $resData = json_decode($res->getContent(), true);
                 if (!empty($resData['success'])) {
@@ -604,13 +622,18 @@ class WebsiteOrderController extends Controller
         // First approve them if they are still processing
         $approved = 0;
         $errors = [];
+        $stockMode = $request->input('stock_mode', 'without_manage');
 
         foreach ($orderIds as $oid) {
             $order = WebsiteOrder::find($oid);
             if (!$order) continue;
 
             if ($order->status !== 'approved') {
-                $subRequest = new Request(['status' => 'approved']);
+                $subRequest = new Request([
+                    'status' => 'approved',
+                    'stock_mode' => $stockMode,
+                    'courier_type' => $courierService
+                ]);
                 $res = $this->updateStatus($subRequest, $order->id);
                 $resData = json_decode($res->getContent(), true);
                 if (empty($resData['success'])) {

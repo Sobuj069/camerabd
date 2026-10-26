@@ -346,6 +346,31 @@ class PurchaseController extends Controller
                     $purchase_item->actual_total = $calc_subtotal;
                     $purchase_item->warranty_value = $request->new_warranty_value[$key] ?? null;
                     $purchase_item->warranty_unit = $request->new_warranty_unit[$key] ?? null;
+
+                    // Reconcile/offset negative stock from previous sales made without manage stock
+                    $negativeItems = PurchaseItem::where('product_id', $product_id)
+                        ->where('stock_qty', '<', 0)
+                        ->where('branch_id', $purchase_item->branch_id)
+                        ->when($purchase_item->product_variation_id, function($q, $v) {
+                            return $q->where('product_variation_id', $v);
+                        }, function($q) {
+                            return $q->whereNull('product_variation_id');
+                        })
+                        ->orderBy('id', 'asc')
+                        ->get();
+
+                    foreach ($negativeItems as $negItem) {
+                        if ($purchase_item->stock_qty <= 0) break;
+                        $deficit = abs($negItem->stock_qty);
+                        if ($purchase_item->stock_qty >= $deficit) {
+                            $purchase_item->stock_qty -= $deficit;
+                            $negItem->update(['stock_qty' => 0]);
+                        } else {
+                            $negItem->update(['stock_qty' => -($deficit - $purchase_item->stock_qty)]);
+                            $purchase_item->stock_qty = 0;
+                        }
+                    }
+
                     $purchase_item->save();
 
                     // ✅ Add to serial_numbers table
