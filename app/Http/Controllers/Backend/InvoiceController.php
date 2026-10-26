@@ -441,6 +441,8 @@ class InvoiceController extends Controller
                 'no_response' => 'No Response',
                 'in courier' => 'In Courier',
                 'in_courier' => 'In Courier',
+                'all in courier' => 'In Courier',
+                'all_in_courier' => 'In Courier',
                 'delivered' => 'Delivered',
                 'pending return' => 'Pending Return',
                 'pending_return' => 'Pending Return',
@@ -2447,6 +2449,9 @@ class InvoiceController extends Controller
             $webOrder = null;
             if (!empty($inv->source_link)) {
                 $webOrder = \App\Models\WebsiteOrder::where('order_no', $inv->source_link)->first();
+            }
+            if (!$webOrder && !empty($inv->id)) {
+                $webOrder = \App\Models\WebsiteOrder::where('invoice_id', $inv->id)->first();
             }
             if (!$webOrder && !empty($inv->note)) {
                 if (preg_match('/Website Order #([A-Za-z0-9_-]+)/i', $inv->note, $m)) {

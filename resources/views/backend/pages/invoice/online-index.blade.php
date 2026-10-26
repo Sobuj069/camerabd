@@ -556,6 +556,9 @@
                                     <a class="dropdown-item" href="javascript:void(0);" onclick="performBulkStatusChange('rts')">
                                         <i class="feather icon-box text-info mr-2"></i> RTS (Ready to Ship)
                                     </a>
+                                    <a class="dropdown-item" href="javascript:void(0);" onclick="performBulkStatusChange('in_courier')">
+                                        <i class="feather icon-send text-primary mr-2"></i> All in Courier (Send to Courier)
+                                    </a>
                                     <a class="dropdown-item" href="javascript:void(0);" onclick="performBulkStatusChange('in_review')">
                                         <i class="feather icon-eye text-primary mr-2"></i> In Review
                                     </a>
@@ -779,6 +782,9 @@
                                                     <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton-{{ $data->id }}">
                                                         <a class="dropdown-item" href="javascript:void(0);" onclick="changeSingleOrderStatus({{ $data->id }}, 'rts')">
                                                             <i class="feather icon-box text-info mr-2"></i> Mark as RTS
+                                                        </a>
+                                                        <a class="dropdown-item" href="javascript:void(0);" onclick="changeSingleOrderStatus({{ $data->id }}, 'in_courier')">
+                                                            <i class="feather icon-send text-primary mr-2"></i> Mark as In Courier (Send to Courier)
                                                         </a>
                                                         <a class="dropdown-item" href="javascript:void(0);" onclick="changeSingleOrderStatus({{ $data->id }}, 'delivered')">
                                                             <i class="feather icon-check-circle text-success mr-2"></i> Mark as Delivered
@@ -1419,6 +1425,8 @@
             var warnMsg = "Are you sure you want to change this order status to '" + newStatus + "'?";
             if (newStatus === 'returned' || newStatus === 'cancelled') {
                 warnMsg += "\n\n⚠️ IMPORTANT: Marking as '" + newStatus.toUpperCase() + "' will automatically restore all product items back to your inventory stock (FIFO)!";
+            } else if (newStatus === 'in_courier' || newStatus === 'all_in_courier') {
+                warnMsg = "Change order status to 'ALL IN COURIER'?\n\nIf this order has not been sent to courier yet, it will be automatically dispatched to Courier API (Steadfast/Pathao) and assigned a Consignment ID.";
             }
 
             if (!confirm(warnMsg)) {
@@ -1473,6 +1481,8 @@
             var confirmMsg = "Update " + selectedIds.length + " selected order(s) to '" + newStatus.toUpperCase() + "'?";
             if (newStatus === 'returned' || newStatus === 'cancelled') {
                 confirmMsg += "\n\n⚠️ IMPORTANT: Products for these orders will be RESTORED to stock inventory!";
+            } else if (newStatus === 'in_courier' || newStatus === 'all_in_courier') {
+                confirmMsg = "Update " + selectedIds.length + " selected order(s) to 'ALL IN COURIER'?\n\nOrders not yet sent to courier will be automatically dispatched to Courier API (Steadfast/Pathao) and assigned Consignment IDs.";
             }
 
             if (!confirm(confirmMsg)) {
