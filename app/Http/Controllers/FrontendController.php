@@ -865,15 +865,8 @@ class FrontendController extends Controller
         $isApproved = ($order->status === 'approved' || strtolower($order->order_status ?? '') === 'approved');
         $approvedOrderDl = null;
         if ($isApproved) {
-            $cacheKey = 'order_dl_dispatched_' . $order->order_no;
-            if (!\Illuminate\Support\Facades\Cache::has($cacheKey)) {
-                \Illuminate\Support\Facades\Cache::put($cacheKey, true, 86400);
-                $approvedOrderDl = \App\Http\Controllers\Backend\WebsiteOrderController::buildOrderDataLayerPayload($order);
-            }
+            $approvedOrderDl = \App\Http\Controllers\Backend\WebsiteOrderController::buildOrderDataLayerPayload($order);
         }
-
-        // Mark that customer is actively on the confirmation page
-        \Illuminate\Support\Facades\Cache::put('active_confirmation_' . $order->order_no, true, 180);
 
         return view('frontend.order-confirmation', compact('order', 'orderNumber', 'orderData', 'orderItems', 'isFreshOrder', 'isApproved', 'approvedOrderDl'));
     }
@@ -888,17 +881,10 @@ class FrontendController extends Controller
             return response()->json(['success' => false, 'message' => 'Order not found'], 404);
         }
 
-        // Keep active customer session heartbeat alive
-        \Illuminate\Support\Facades\Cache::put('active_confirmation_' . $order->order_no, true, 30);
-
         $isApproved = ($order->status === 'approved' || strtolower($order->order_status ?? '') === 'approved');
         $dataLayer = null;
         if ($isApproved) {
-            $cacheKey = 'order_dl_dispatched_' . $order->order_no;
-            if (!\Illuminate\Support\Facades\Cache::has($cacheKey)) {
-                \Illuminate\Support\Facades\Cache::put($cacheKey, true, 86400);
-                $dataLayer = \App\Http\Controllers\Backend\WebsiteOrderController::buildOrderDataLayerPayload($order);
-            }
+            $dataLayer = \App\Http\Controllers\Backend\WebsiteOrderController::buildOrderDataLayerPayload($order);
         }
 
         return response()->json([

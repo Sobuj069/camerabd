@@ -183,7 +183,7 @@
         </div>
 
         <!-- Confirm & Place Order Button -->
-        <button type="submit" id="submit-order-btn" data-no-pixel="true" data-pixel-event="none" class="w-full bg-primary hover:bg-primary-hover text-white font-extrabold text-base py-4 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer">
+        <button type="submit" id="submit-order-btn" data-no-pixel="true" data-prevent-automatic-events="true" class="fb-no-track w-full bg-primary hover:bg-primary-hover text-white font-extrabold text-base py-4 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer">
           <span class="material-symbols-outlined text-[20px]">check_circle</span>
           <span>Confirm & Place Order</span>
         </button>

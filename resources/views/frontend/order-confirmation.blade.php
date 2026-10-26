@@ -316,6 +316,40 @@
       } catch(err) {
         console.warn('[DataLayer] Error firing purchase:', err);
       }
+
+      // Direct Meta Pixel (Browser) Purchase Event Dispatch with matching Event ID
+      if (typeof window.fbq === 'function') {
+        try {
+          var fbContents = [];
+          var fbContentIds = [];
+          if (Array.isArray(payload.items)) {
+            payload.items.forEach(function(item) {
+              var pId = String(item.item_id || item.id || '');
+              if (pId) {
+                fbContentIds.push(pId);
+                fbContents.push({
+                  id: pId,
+                  quantity: parseInt(item.quantity || 1, 10),
+                  item_price: parseFloat(item.price || 0)
+                });
+              }
+            });
+          }
+          window.fbq('track', 'Purchase', {
+            content_type: 'product',
+            contents: fbContents,
+            content_ids: fbContentIds.length ? fbContentIds : [orderKey],
+            value: parseFloat(payload.value || payload.total_amount || 0),
+            currency: payload.currency || 'BDT',
+            num_items: fbContents.length || 1
+          }, {
+            eventID: orderKey
+          });
+          console.log('%c🎯 [Meta Pixel] Browser Purchase event dispatched! EventID: ' + orderKey, 'background: #1877f2; color: white; font-weight: bold; padding: 6px 12px; border-radius: 4px;');
+        } catch(fbErr) {
+          console.warn('[Meta Pixel] Error tracking purchase in browser:', fbErr);
+        }
+      }
     }
 
     @if(!empty($isApproved) && !empty($approvedOrderDl))

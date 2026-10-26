@@ -69,6 +69,38 @@
     } catch(err) {
       console.warn('[DataLayer] Error dispatching purchase:', err);
     }
+
+    if (typeof window.fbq === 'function') {
+      try {
+        var fbContents = [];
+        var fbContentIds = [];
+        if (Array.isArray(payload.items)) {
+          payload.items.forEach(function(item) {
+            var pId = String(item.item_id || item.id || '');
+            if (pId) {
+              fbContentIds.push(pId);
+              fbContents.push({
+                id: pId,
+                quantity: parseInt(item.quantity || 1, 10),
+                item_price: parseFloat(item.price || 0)
+              });
+            }
+          });
+        }
+        window.fbq('track', 'Purchase', {
+          content_type: 'product',
+          contents: fbContents,
+          content_ids: fbContentIds.length ? fbContentIds : [orderKey],
+          value: parseFloat(payload.value || payload.total_amount || 0),
+          currency: payload.currency || 'BDT',
+          num_items: fbContents.length || 1
+        }, {
+          eventID: orderKey
+        });
+      } catch(fbErr) {
+        console.warn('[Meta Pixel] Error tracking purchase in backend:', fbErr);
+      }
+    }
   };
 
   // Check localStorage for pending order_confirm events across page reloads

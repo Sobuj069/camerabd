@@ -23,7 +23,11 @@ class MetaCapiService
                 return trim($id);
             }
         }
-        return env('META_PIXEL_ID', '');
+        $envId = env('META_PIXEL_ID', '');
+        if (!empty($envId)) {
+            return trim($envId);
+        }
+        return '28625456847108675';
     }
 
     /**
@@ -165,7 +169,7 @@ class MetaCapiService
     public static function trackPurchase(WebsiteOrder $order, ?string $eventId = null, ?Request $request = null): array
     {
         $req = $request ?: request();
-        $eventId = $eventId ?: ('purchase_' . $order->order_no);
+        $eventId = $eventId ?: ((string) $order->order_no);
 
         $userData = [
             'name' => $order->customer_name,
