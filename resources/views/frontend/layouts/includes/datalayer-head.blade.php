@@ -4,16 +4,7 @@
   $ga4Id = function_exists('get_setting') && get_setting('ga4_measurement_id') ? get_setting('ga4_measurement_id') : env('GA4_MEASUREMENT_ID');
   $hasGtm = !empty($gtmHeaderScript) || !empty($gtmId);
 @endphp
-@php
-  $liveMetaPixelId = function_exists('get_setting') && get_setting('meta_pixel_id') ? get_setting('meta_pixel_id') : (env('META_PIXEL_ID') ?: '28625456847108675');
-@endphp
-<!-- Meta Pixel Automatic Event Suppression (Prevents estimated cs_est Purchase on checkout button click) -->
-<script>
-  window.fbq = window.fbq || function() {
-    (window.fbq.q = window.fbq.q || []).push(arguments);
-  };
-  window.fbq('set', 'autoConfig', false, '{{ $liveMetaPixelId }}');
-</script>
+
 
 <!-- DataLayer Core Engine & GA4 Ecommerce Architecture -->
 <script>
