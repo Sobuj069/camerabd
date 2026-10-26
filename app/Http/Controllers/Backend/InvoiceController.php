@@ -1783,8 +1783,28 @@ class InvoiceController extends Controller
     public function returnInvoice($id, Request $request)
     {
         $item = InvoiceItem::where('id', $id)->first();
+        if (!$item) {
+            session()->flash('error', __('Invoice item not found'));
+            return redirect()->back();
+        }
 
         DB::transaction(function () use ($request, $item) {
+            if ($item->product && $item->product->is_service == 0) {
+                $rtnQty = (float)($request->rtn_main ?: $item->main_qty ?: 1);
+                $branchId = $item->branch_id ?: ($item->invoice?->branch_id ?? null);
+                if (function_exists('restoreToFIFO')) {
+                    restoreToFIFO($item->product_id, $rtnQty, $item->product_variation_id, $branchId);
+                }
+                if (!empty($item->imei)) {
+                    $imeis = array_filter(array_map('trim', explode("\n", $item->imei)));
+                    if (!empty($imeis)) {
+                        \App\Models\SerialNumber::where('product_id', $item->product_id)
+                            ->whereIn('serial', $imeis)
+                            ->update(['status' => 1]);
+                    }
+                }
+            }
+
             $item->delete();
 
             $main_qty = $request->rtn_main;

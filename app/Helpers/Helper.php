@@ -1884,55 +1884,96 @@ function restoreToFIFO($productId, $qtyToRestore, $variationId = null, $branchId
     $product = Product::find($productId);
     if (!$product || $product->is_service == 1) return;
 
-    $userBranchId = auth()->user()?->branch_id ?? 1;
+    $userBranchId = auth()->check() && auth()->user() ? auth()->user()->branch_id : 2;
     $filterBranchId = session('branch_filter_id', $userBranchId);
 
-    $query = PurchaseItem::where('product_id', $productId)
-        ->orderBy('id', 'desc'); // reverse order (LIFO restore to most recent stock first)
+    $effectiveBranchId = ($branchId && $branchId != 1) 
+        ? $branchId 
+        : (($filterBranchId && $filterBranchId != 1) 
+            ? $filterBranchId 
+            : (($userBranchId && $userBranchId != 1) ? $userBranchId : 2));
 
-    if ($variationId) {
+    // 1. Primary query: search purchase items for the target branch
+    $query = PurchaseItem::where('product_id', $productId)->orderBy('id', 'desc');
+
+    if ($variationId !== null && $variationId !== '') {
         $query->where('product_variation_id', $variationId);
+    } else {
+        $query->whereNull('product_variation_id');
     }
 
-    if ($branchId) {
-        $query->where('branch_id', $branchId);
-    } else {
-        if ($userBranchId == 1 && $filterBranchId) {
-            $query->where('branch_id', $filterBranchId);
-        } else {
-            $query->where('branch_id', $userBranchId);
-        }
+    if ($effectiveBranchId) {
+        $query->where('branch_id', $effectiveBranchId);
     }
 
     $purchaseItems = $query->get();
 
-    $remaining = (float) $qtyToRestore;
-    foreach ($purchaseItems as $item) {
-        if ($remaining <= 0) break;
-
-        // Calculate capacity of this purchase item
-        $related_value = 1.0;
-        if ($product->unit) {
-            $related_value = ($product->unit->related_value > 0) ? (float) $product->unit->related_value : 1.0;
+    // 2. Fallback: If no purchase items found in that branch, search across ALL branches
+    if ($purchaseItems->isEmpty()) {
+        $fallbackQuery = PurchaseItem::where('product_id', $productId)->orderBy('id', 'desc');
+        if ($variationId !== null && $variationId !== '') {
+            $fallbackQuery->where('product_variation_id', $variationId);
+        } else {
+            $fallbackQuery->whereNull('product_variation_id');
         }
-        $actual_sub = (float) ($item->actual_sub ?? 0);
-        $actual_main = (float) $item->actual_main;
-        $item_capacity = ($actual_main * $related_value) + $actual_sub;
-
-        // Calculate how much stock can be restored to this item
-        $can_restore = max(0.0, $item_capacity - (float)$item->stock_qty);
-        $restore_to_this_item = min($remaining, $can_restore);
-
-        if ($restore_to_this_item > 0) {
-            $item->update(['stock_qty' => $item->stock_qty + $restore_to_this_item]);
-            $remaining -= $restore_to_this_item;
-        }
+        $purchaseItems = $fallbackQuery->get();
     }
 
-    // Fallback: If there's still remaining quantity, add it to the first item (the most recent purchase item)
-    if ($remaining > 0 && $purchaseItems->isNotEmpty()) {
-        $firstItem = $purchaseItems->first();
-        $firstItem->update(['stock_qty' => $firstItem->stock_qty + $remaining]);
+    // 3. Fallback: If still empty (e.g. variation difference), search any purchase item for this product
+    if ($purchaseItems->isEmpty()) {
+        $purchaseItems = PurchaseItem::where('product_id', $productId)->orderBy('id', 'desc')->get();
+    }
+
+    $remaining = (float) $qtyToRestore;
+
+    if ($purchaseItems->isNotEmpty()) {
+        foreach ($purchaseItems as $item) {
+            if ($remaining <= 0) break;
+
+            // Calculate capacity of this purchase item
+            $related_value = 1.0;
+            if ($product->unit) {
+                $related_value = ($product->unit->related_value > 0) ? (float) $product->unit->related_value : 1.0;
+            }
+            $actual_sub = (float) ($item->actual_sub ?? 0);
+            $actual_main = (float) ($item->actual_main ?? $item->main_qty ?? 0);
+            $item_capacity = ($actual_main * $related_value) + $actual_sub;
+
+            // Calculate how much stock can be restored to this item
+            $can_restore = max(0.0, $item_capacity - (float)$item->stock_qty);
+            $restore_to_this_item = min($remaining, $can_restore);
+
+            if ($restore_to_this_item > 0) {
+                $item->update(['stock_qty' => $item->stock_qty + $restore_to_this_item]);
+                $remaining -= $restore_to_this_item;
+            }
+        }
+
+        // If there is still remaining quantity (capacity reached on all items), add to latest item
+        if ($remaining > 0) {
+            $firstItem = $purchaseItems->first();
+            $firstItem->update(['stock_qty' => $firstItem->stock_qty + $remaining]);
+            $remaining = 0;
+        }
+    } else {
+        // Zero purchase records exist for this product: create one so stock is restored
+        $targetBranch = $effectiveBranchId ?: 2;
+        $rate = (float)($product->purchase_price ?? 0);
+        PurchaseItem::create([
+            'purchase_id' => 0,
+            'product_id' => $productId,
+            'product_variation_id' => $variationId ?: null,
+            'branch_id' => $targetBranch,
+            'rate' => $rate,
+            'main_qty' => $remaining,
+            'stock_qty' => $remaining,
+            'actual_main' => $remaining,
+            'actual_sub' => 0,
+            'actual_total' => $remaining * $rate,
+            'sub_total' => $remaining * $rate,
+            'date' => date('Y-m-d')
+        ]);
+        $remaining = 0;
     }
 }
 
@@ -1952,7 +1993,10 @@ if (!function_exists('syncInvoiceStockForStatusChange')) {
         $isNewReturnedOrCancelled = in_array($normNew, ['returned', 'return', 'cancelled', 'failed', 'canceled']);
         $wasReturnedOrCancelled = in_array($normOld, ['returned', 'return', 'cancelled', 'failed', 'canceled']);
 
-        $branchId = $invoice->branch_id ?: (auth()->user()?->branch_id ?? 1);
+        $userBranchId = auth()->check() && auth()->user() ? auth()->user()->branch_id : 2;
+        $branchId = ($invoice->branch_id && $invoice->branch_id != 1) 
+            ? $invoice->branch_id 
+            : (($userBranchId && $userBranchId != 1) ? $userBranchId : 2);
 
         // 1. Status changing TO Returned/Cancelled -> RESTORE STOCK (FIFO) + REACTIVATE IMEI
         if ($isNewReturnedOrCancelled) {
@@ -2003,6 +2047,29 @@ if (!function_exists('syncInvoiceStockForStatusChange')) {
                     }
                 }
             }
+        }
+
+        // 3. Sync linked WebsiteOrder status if applicable
+        try {
+            $webOrder = null;
+            if (!empty($invoice->source_link)) {
+                $webOrder = \App\Models\WebsiteOrder::where('order_no', $invoice->source_link)->first();
+            }
+            if (!$webOrder && !empty($invoice->id)) {
+                $webOrder = \App\Models\WebsiteOrder::where('invoice_id', $invoice->id)->first();
+            }
+            if (!$webOrder && !empty($invoice->note)) {
+                if (preg_match('/Website Order #([A-Za-z0-9_-]+)/i', $invoice->note, $m)) {
+                    $webOrder = \App\Models\WebsiteOrder::where('order_no', $m[1])->first();
+                }
+            }
+            if ($webOrder) {
+                $webOrder->order_status = ucfirst($newStatus);
+                $webOrder->status = strtolower($newStatus);
+                $webOrder->save();
+            }
+        } catch (\Throwable $t) {
+            \Log::warning("Failed to sync WebsiteOrder for Invoice #{$invoice->invoice_no}: " . $t->getMessage());
         }
     }
 }
@@ -2060,18 +2127,33 @@ function reduceStockFIFO($productId, $requiredQty, $variationId = null, $branchI
         return 0;
     }
 
+    $effectiveBranchId = ($branchId && $branchId != 1) ? $branchId : null;
+
     $purchaseItemsQuery = PurchaseItem::where('product_id', $productId)
         ->where('stock_qty', '>', 0);
 
-    if ($variationId) {
+    if ($variationId !== null && $variationId !== '') {
         $purchaseItemsQuery->where('product_variation_id', $variationId);
+    } else {
+        $purchaseItemsQuery->whereNull('product_variation_id');
     }
 
-    if ($branchId) {
-        $purchaseItemsQuery->where('branch_id', $branchId);
+    if ($effectiveBranchId) {
+        $purchaseItemsQuery->where('branch_id', $effectiveBranchId);
     }
 
     $purchaseItems = $purchaseItemsQuery->orderBy('date', 'asc')->orderBy('id', 'asc')->get();
+
+    // Fallback: search across all branches
+    if ($purchaseItems->isEmpty()) {
+        $fallbackQuery = PurchaseItem::where('product_id', $productId)->where('stock_qty', '>', 0);
+        if ($variationId !== null && $variationId !== '') {
+            $fallbackQuery->where('product_variation_id', $variationId);
+        } else {
+            $fallbackQuery->whereNull('product_variation_id');
+        }
+        $purchaseItems = $fallbackQuery->orderBy('date', 'asc')->orderBy('id', 'asc')->get();
+    }
 
     $remainingQty = $requiredQty;
     $totalCost = 0;
@@ -2085,17 +2167,22 @@ function reduceStockFIFO($productId, $requiredQty, $variationId = null, $branchI
         $item->stock_qty -= $usedQty;
         $item->save();
 
-        if ($product->unit->related_unit == null) {
-            $totalCost += $usedQty * $item->rate;
+        if ($product->unit && $product->unit->related_unit != null) {
+            $totalCost += ($usedQty / ($product->unit->related_value ?: 1)) * $item->rate;
         } else {
-            $totalCost += ($usedQty / $product->unit->related_value) * $item->rate;
+            $totalCost += $usedQty * $item->rate;
         }
 
         $remainingQty -= $usedQty;
     }
 
+    // Deduct remaining into negative on last item if needed
     if ($remainingQty > 0) {
-        throw new \Exception("Insufficient stock for product ID: {$productId}" . ($variationId ? " (Variation ID: $variationId)" : ""));
+        $anyPi = PurchaseItem::where('product_id', $productId)->orderBy('id', 'desc')->first();
+        if ($anyPi) {
+            $anyPi->update(['stock_qty' => $anyPi->stock_qty - $remainingQty]);
+            $totalCost += $remainingQty * $anyPi->rate;
+        }
     }
 
     return $totalCost;
