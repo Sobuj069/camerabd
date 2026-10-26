@@ -513,10 +513,10 @@
     }
   });
 
-  // Meta Pixel ViewContent Event Tracking
+  // Meta Pixel ViewContent Event Tracking (Only if GTM is not active, otherwise GTM handles it via view_item DataLayer)
   document.addEventListener('DOMContentLoaded', function() {
     try {
-      if (typeof fbq === 'function') {
+      if (!window._hasGtm && typeof fbq === 'function') {
         fbq('track', 'ViewContent', {
           content_name: '{{ addslashes($product["name"] ?? "") }}',
           content_category: '{{ addslashes($product["category"] ?? "Gear") }}',

@@ -735,27 +735,28 @@
         currency: 'BDT'
       };
 
-      // 1. Browser Event
-      if (typeof fbq === 'function') {
-        fbq('track', 'InitiateCheckout', customPayload, { eventID: eventId });
-      }
+      // Direct Meta Pixel & CAPI (Only if GTM is not active, otherwise GTM handles it via begin_checkout DataLayer)
+      if (!window._hasGtm) {
+        if (typeof fbq === 'function') {
+          fbq('track', 'InitiateCheckout', customPayload, { eventID: eventId });
+        }
 
-      // 2. Server Event (CAPI via Background Endpoint)
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
-      fetch('{{ route("meta-capi.track") }}', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': csrfToken,
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          event_name: 'InitiateCheckout',
-          event_id: eventId,
-          custom_data: customPayload,
-          source_url: window.location.href
-        })
-      }).catch(e => console.debug('CAPI async notice:', e));
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+        fetch('{{ route("meta-capi.track") }}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            event_name: 'InitiateCheckout',
+            event_id: eventId,
+            custom_data: customPayload,
+            source_url: window.location.href
+          })
+        }).catch(e => console.debug('CAPI async notice:', e));
+      }
 
     } catch(err) {
       console.warn('Meta Pixel InitiateCheckout error:', err);

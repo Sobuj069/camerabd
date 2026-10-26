@@ -1,12 +1,14 @@
 @php
   $gtmHeaderScript = function_exists('get_setting') ? get_setting('gtm_header_script') : null;
   $gtmId = function_exists('get_setting') && get_setting('gtm_id') ? get_setting('gtm_id') : env('GTM_ID');
+  $hasGtm = !empty($gtmHeaderScript) || !empty($gtmId);
   $approvedOrderDl = session('approved_order_datalayer');
   $approvedOrdersDl = session('approved_orders_datalayer');
 @endphp
 
 <!-- DataLayer Core Engine & GTM for Backend Orders Tracking -->
 <script>
+  window._hasGtm = {{ $hasGtm ? 'true' : 'false' }};
   window.dataLayer = window.dataLayer || [];
 
   /**
@@ -70,7 +72,7 @@
       console.warn('[DataLayer] Error dispatching purchase:', err);
     }
 
-    if (typeof window.fbq === 'function') {
+    if (!window._hasGtm && typeof window.fbq === 'function') {
       try {
         var fbContents = [];
         var fbContentIds = [];

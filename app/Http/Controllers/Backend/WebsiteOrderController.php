@@ -441,15 +441,22 @@ class WebsiteOrderController extends Controller
                 });
 
                 // Dispatch Meta Conversions API (Server-Side) Purchase Event ONLY on Approval!
-                $capiDispatchedKey = 'capi_purchase_sent_' . $order->order_no;
-                if (!\Illuminate\Support\Facades\Cache::has($capiDispatchedKey) && \App\Services\MetaCapiService::isEnabled()) {
-                    \Illuminate\Support\Facades\Cache::put($capiDispatchedKey, true, 86400);
-                    try {
-                        $order->loadMissing('items');
-                        \App\Services\MetaCapiService::trackPurchase($order, (string)$order->order_no);
-                        Log::info("Meta CAPI Purchase Event Dispatched on Order Approval #{$order->order_no}");
-                    } catch (\Throwable $capiErr) {
-                        Log::warning("Meta CAPI Purchase tracking error on approve: " . $capiErr->getMessage());
+                // If GTM is configured (via gtm_id or gtm_header_script), GTM handles CAPI via DataLayer to avoid duplicate Server events
+                $gtmId = function_exists('get_setting') && get_setting('gtm_id') ? get_setting('gtm_id') : env('GTM_ID');
+                $gtmHeaderScript = function_exists('get_setting') ? get_setting('gtm_header_script') : null;
+                $hasGtm = !empty($gtmId) || !empty($gtmHeaderScript);
+
+                if (!$hasGtm) {
+                    $capiDispatchedKey = 'capi_purchase_sent_' . $order->order_no;
+                    if (!\Illuminate\Support\Facades\Cache::has($capiDispatchedKey) && \App\Services\MetaCapiService::isEnabled()) {
+                        \Illuminate\Support\Facades\Cache::put($capiDispatchedKey, true, 86400);
+                        try {
+                            $order->loadMissing('items');
+                            \App\Services\MetaCapiService::trackPurchase($order, (string)$order->order_no);
+                            Log::info("Meta CAPI Purchase Event Dispatched on Order Approval #{$order->order_no}");
+                        } catch (\Throwable $capiErr) {
+                            Log::warning("Meta CAPI Purchase tracking error on approve: " . $capiErr->getMessage());
+                        }
                     }
                 }
 

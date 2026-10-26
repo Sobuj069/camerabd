@@ -471,9 +471,9 @@
           });
         }
 
-        // Meta Pixel AddToCart Event
+        // Meta Pixel AddToCart Event (Only if GTM is not active, otherwise GTM handles it via add_to_cart DataLayer)
         try {
-          if (typeof fbq === 'function') {
+          if (!window._hasGtm && typeof fbq === 'function') {
             fbq('track', 'AddToCart', {
               content_name: item.name || 'Cinema Product',
               content_ids: item.id ? [String(item.id)] : [String(item.barcode || item.name)],

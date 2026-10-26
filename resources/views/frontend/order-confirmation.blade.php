@@ -317,8 +317,8 @@
         console.warn('[DataLayer] Error firing purchase:', err);
       }
 
-      // Direct Meta Pixel (Browser) Purchase Event Dispatch with matching Event ID
-      if (typeof window.fbq === 'function') {
+      // Direct Meta Pixel (Browser) Purchase Event Dispatch ONLY when GTM is not active (GTM manages Pixel via DataLayer)
+      if (!window._hasGtm && typeof window.fbq === 'function') {
         try {
           var fbContents = [];
           var fbContentIds = [];

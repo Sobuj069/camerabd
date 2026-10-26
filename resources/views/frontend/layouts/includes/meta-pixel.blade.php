@@ -1,4 +1,8 @@
 @php
+  $gtmHeaderScript = function_exists('get_setting') ? get_setting('gtm_header_script') : null;
+  $gtmId = function_exists('get_setting') && get_setting('gtm_id') ? get_setting('gtm_id') : env('GTM_ID');
+  $hasGtm = !empty($gtmHeaderScript) || !empty($gtmId);
+
   $metaPixelId = function_exists("get_setting") ? trim(get_setting("meta_pixel_id") ?? '') : '';
   if (empty($metaPixelId)) {
       $metaPixelId = env('META_PIXEL_ID', '');
@@ -8,7 +12,8 @@
   }
   $isConfirmationPage = request()->routeIs('frontend.order-confirmation') ? 'true' : 'false';
 @endphp
-@if(!empty($metaPixelId))
+{{-- If GTM is active, GTM container already injects and manages Meta Pixel to prevent duplicate events --}}
+@if(!$hasGtm && !empty($metaPixelId))
 <!-- Meta Pixel Code -->
 <script>
 !function(f,b,e,v,n,t,s)

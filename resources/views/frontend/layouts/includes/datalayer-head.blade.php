@@ -2,10 +2,12 @@
   $gtmHeaderScript = function_exists('get_setting') ? get_setting('gtm_header_script') : null;
   $gtmId = function_exists('get_setting') && get_setting('gtm_id') ? get_setting('gtm_id') : env('GTM_ID');
   $ga4Id = function_exists('get_setting') && get_setting('ga4_measurement_id') ? get_setting('ga4_measurement_id') : env('GA4_MEASUREMENT_ID');
+  $hasGtm = !empty($gtmHeaderScript) || !empty($gtmId);
 @endphp
 
 <!-- DataLayer Core Engine & GA4 Ecommerce Architecture -->
 <script>
+  window._hasGtm = {{ $hasGtm ? 'true' : 'false' }};
   window.dataLayer = window.dataLayer || [];
 
   /**
