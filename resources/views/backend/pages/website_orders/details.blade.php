@@ -1617,7 +1617,7 @@ $('#orderStatusForm').on('submit', function(e) {
                         window.dataLayer = window.dataLayer || [];
                         window.dataLayer.push({ ecommerce: null });
                         window.dataLayer.push(Object.assign({}, res.order_datalayer, {
-                            event: 'oder_comfrom',
+                            event: 'purchase',
                             status: 'approved',
                             order_status: 'Approved'
                         }));

@@ -280,46 +280,15 @@
       user_data: {!! json_encode($userData, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!}
     });
 
-    // GA4 / GTM DataLayer Purchase & Order Confirm Events with Full Customer Info
-    if (typeof window.pushToDataLayer === 'function') {
-      var purchaseEcommerce = {
-        transaction_id: '{{ $orderNumber }}',
-        value: {{ (float)($orderData['total_amount'] ?? 0) }},
-        tax: 0,
-        shipping: {{ (float)($orderData['shipping_cost'] ?? 0) }},
-        currency: 'BDT',
-        coupon: '{{ !empty($orderData['discount']) && $orderData['discount'] > 0 ? "DISCOUNT" : "" }}',
-        items: {!! json_encode($dlOrderItems, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!}
-      };
-
-      var purchaseExtra = {
-        customer: {!! json_encode($customerData, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!},
-        customer_info: {!! json_encode($customerData, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!},
-        user_data: {!! json_encode($userData, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!},
-        order_id: '{{ $orderNumber }}',
-        transaction_id: '{{ $orderNumber }}',
-        value: {{ (float)($orderData['total_amount'] ?? 0) }},
-        currency: 'BDT',
-        customer_name: '{{ addslashes($cName) }}',
-        customer_phone: '{{ addslashes($cPhone) }}',
-        customer_email: '{{ addslashes($cEmail) }}',
-        customer_city: '{{ addslashes($cCity) }}',
-        customer_division: '{{ addslashes($cDivision) }}',
-        customer_address: '{{ addslashes($cAddress) }}'
-      };
-
-      window.pushToDataLayer('purchase', purchaseEcommerce, purchaseExtra);
-    }
-
-    // Deduplication tracker to guarantee strictly ONE single "oder_comfrom" event
+    // Deduplication tracker to guarantee strictly ONE single "purchase" event on Approval
     window._dispatchedApprovedOrders = window._dispatchedApprovedOrders || {};
 
-    // Function to dispatch oder_comfrom into dataLayer with full customer data & approved status
+    // Function to dispatch purchase into dataLayer with full customer data & approved status
     function dispatchApprovedOrderConfirm(payload) {
       if (!payload) return;
       var orderKey = String(payload.order_id || payload.transaction_id || '{{ $orderNumber }}');
       if (window._dispatchedApprovedOrders[orderKey]) {
-        console.log('[DataLayer] "oder_comfrom" already dispatched for Order #' + orderKey + ', skipping duplicate.');
+        console.log('[DataLayer] "purchase" already dispatched for Order #' + orderKey + ', skipping duplicate.');
         return;
       }
       window._dispatchedApprovedOrders[orderKey] = true;
@@ -330,7 +299,7 @@
         window.dataLayer.push({ ecommerce: null });
 
         var ev = Object.assign({}, payload, {
-          event: 'oder_comfrom',
+          event: 'purchase',
           status: 'approved',
           order_status: 'Approved'
         });
@@ -338,9 +307,9 @@
         // Strictly ONE single event push
         window.dataLayer.push(ev);
 
-        console.log('%c✅ [DataLayer] Single "oder_comfrom" event fired! Status: APPROVED', 'background: #10b981; color: white; font-weight: bold; padding: 6px 12px; border-radius: 4px;', ev);
+        console.log('%c✅ [DataLayer] Single "purchase" event fired! Status: APPROVED', 'background: #10b981; color: white; font-weight: bold; padding: 6px 12px; border-radius: 4px;', ev);
       } catch(err) {
-        console.warn('[DataLayer] Error firing oder_comfrom:', err);
+        console.warn('[DataLayer] Error firing purchase:', err);
       }
     }
 
@@ -349,7 +318,7 @@
       dispatchApprovedOrderConfirm({!! json_encode($approvedOrderDl, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!});
     @else
       // Order is currently Pending: poll status in real time.
-      // The instant Admin clicks Approve in Website Orders, fire "oder_comfrom" without manual page reload!
+      // The instant Admin clicks Approve in Website Orders, fire "purchase" without manual page reload!
       (function() {
         var pollTimer = null;
         var pollAttempts = 0;

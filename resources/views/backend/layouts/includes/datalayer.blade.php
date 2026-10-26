@@ -37,7 +37,7 @@
   window._backendDispatchedOrders = window._backendDispatchedOrders || {};
 
   /**
-   * Helper function to dispatch oder_comfrom event with customer data and status (strictly once)
+   * Helper function to dispatch purchase event with customer data and status on Order Approval (strictly once)
    */
   window.dispatchOrderConfirmDataLayer = function(payload) {
     if (!payload) return;
@@ -52,7 +52,7 @@
       window.dataLayer.push({ ecommerce: null });
 
       var fullPayload = Object.assign({}, payload, {
-        event: 'oder_comfrom',
+        event: 'purchase',
         status: 'approved',
         order_status: 'Approved'
       });
@@ -60,9 +60,9 @@
       // Strictly ONE single event push
       window.dataLayer.push(fullPayload);
 
-      console.log('✅ [DataLayer] Single "oder_comfrom" event fired for Approved Order #' + orderKey, fullPayload);
+      console.log('✅ [DataLayer] Single "purchase" event fired for Approved Order #' + orderKey, fullPayload);
     } catch(err) {
-      console.warn('[DataLayer] Error dispatching oder_comfrom:', err);
+      console.warn('[DataLayer] Error dispatching purchase:', err);
     }
   };
 

@@ -54,12 +54,12 @@
           window.dataLayer = window.dataLayer || [];
           window.dataLayer.push({ ecommerce: null });
           var ev = Object.assign({}, p, {
-            event: 'oder_comfrom',
+            event: 'purchase',
             status: 'approved',
             order_status: 'Approved'
           });
           window.dataLayer.push(ev);
-          console.log('%c🚀 [DataLayer] Frontend GTM Dispatched single "oder_comfrom" for Approved Order #' + (p.order_id || p.transaction_id), 'background: #047857; color: #fff; font-weight: bold; padding: 4px 8px; border-radius: 4px;', ev);
+          console.log('%c🚀 [DataLayer] Frontend GTM Dispatched single "purchase" for Approved Order #' + (p.order_id || p.transaction_id), 'background: #047857; color: #fff; font-weight: bold; padding: 4px 8px; border-radius: 4px;', ev);
         }
       }
     } catch(e) {}
