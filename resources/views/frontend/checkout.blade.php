@@ -36,7 +36,7 @@
     </div>
   @endif
 
-  <form action="{{ route('frontend.process-checkout') }}" method="POST" id="checkout-form">
+  <form action="{{ route('frontend.process-checkout') }}" method="POST" id="checkout-form" data-fbq-ignore="true">
     @csrf
     
     <!-- Hidden payload inputs for Cart, Shipping, Discount -->
@@ -183,7 +183,7 @@
         </div>
 
         <!-- Confirm & Place Order Button -->
-        <button type="submit" id="submit-order-btn" data-no-pixel="true" data-prevent-automatic-events="true" class="fb-no-track w-full bg-primary hover:bg-primary-hover text-white font-extrabold text-base py-4 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer">
+        <button type="submit" id="submit-order-btn" data-no-pixel="true" data-prevent-automatic-events="true" data-fbq-ignore="true" class="fb-no-track fbq-ignore _fbq_ignore w-full bg-primary hover:bg-primary-hover text-white font-extrabold text-base py-4 rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer">
           <span class="material-symbols-outlined text-[20px]">check_circle</span>
           <span>Confirm & Place Order</span>
         </button>

@@ -4,6 +4,16 @@
   $ga4Id = function_exists('get_setting') && get_setting('ga4_measurement_id') ? get_setting('ga4_measurement_id') : env('GA4_MEASUREMENT_ID');
   $hasGtm = !empty($gtmHeaderScript) || !empty($gtmId);
 @endphp
+@php
+  $liveMetaPixelId = function_exists('get_setting') && get_setting('meta_pixel_id') ? get_setting('meta_pixel_id') : (env('META_PIXEL_ID') ?: '28625456847108675');
+@endphp
+<!-- Meta Pixel Automatic Event Suppression (Prevents estimated cs_est Purchase on checkout button click) -->
+<script>
+  window.fbq = window.fbq || function() {
+    (window.fbq.q = window.fbq.q || []).push(arguments);
+  };
+  window.fbq('set', 'autoConfig', false, '{{ $liveMetaPixelId }}');
+</script>
 
 <!-- DataLayer Core Engine & GA4 Ecommerce Architecture -->
 <script>
@@ -39,43 +49,7 @@
     }
   };
 
-  // Cross-tab check for approved order dataLayer dispatch
-  (function() {
-    try {
-      // Skip on order-confirmation page to prevent duplicate events
-      if (window.location.pathname.indexOf('order-confirmation') !== -1) {
-        return;
-      }
-      var stored = localStorage.getItem('cb_approved_order_datalayer');
-      if (stored) {
-        var p = JSON.parse(stored);
-        if (p && !p._gtm_dispatched && (!p._pushed_at || (Date.now() - p._pushed_at < 15 * 60 * 1000))) {
-          // Immediately mark and clear to prevent duplicate firing on page reloads
-          localStorage.removeItem('cb_approved_order_datalayer');
-          var orderKey = String(p.order_id || p.transaction_id || 'default');
-          var storageKey = 'cb_dispatched_order_' + orderKey;
-          if (localStorage.getItem(storageKey)) {
-            return;
-          }
-          try {
-            localStorage.setItem(storageKey, Date.now());
-          } catch(e) {}
-
-          window.dataLayer = window.dataLayer || [];
-          window.dataLayer.push({ ecommerce: null });
-          var ev = Object.assign({}, p, {
-            event: 'purchase',
-            status: 'approved',
-            order_status: 'Approved'
-          });
-          window.dataLayer.push(ev);
-          console.log('%c🚀 [DataLayer] Frontend GTM Dispatched single "purchase" for Approved Order #' + (p.order_id || p.transaction_id), 'background: #047857; color: #fff; font-weight: bold; padding: 4px 8px; border-radius: 4px;', ev);
-        }
-      }
-    } catch(e) {}
-  })();
-
-  // Base Page View Context Push
+// Base Page View Context Push
   window.dataLayer.push({
     event: 'page_data',
     page_title: document.title,
