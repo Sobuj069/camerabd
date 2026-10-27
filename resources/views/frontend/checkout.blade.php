@@ -567,97 +567,130 @@
     }
   }
 
-  // Form submit check with double-click guard & DataLayer Submit tracking
+  // Form submit check with strict double-click guard & DataLayer Submit tracking
   let isCheckoutSubmitting = false;
-  document.getElementById('checkout-form').addEventListener('submit', function(e) {
-    if (isCheckoutSubmitting) {
-      e.preventDefault();
-      return false;
-    }
+  const checkoutFormEl = document.getElementById('checkout-form');
+  const submitBtnEl = document.getElementById('submit-order-btn');
 
-    const items = window.CameraCart ? CameraCart.get() : [];
-    if (!items || items.length === 0) {
-      e.preventDefault();
-      alert('Your cart is empty! Please add products before checking out.');
-      return false;
-    }
-    const cartInput = document.getElementById('cart-items-input');
-    if (cartInput) {
-      cartInput.value = JSON.stringify(items);
-    }
-    const shippingInput = document.getElementById('shipping-cost-input');
-    if (shippingInput) {
-      shippingInput.value = currentShippingCost;
-    }
-
-    // Push add_payment_info and checkout_submit with full customer data before submission
-    try {
-      const cust = getCustomerData();
-      const subtotal = window.CameraCart ? CameraCart.getSubtotal() : 0;
-      const grandTotal = subtotal + currentShippingCost;
-      const dlCheckoutItems = items.map(function(item, idx) {
-        return {
-          item_id: String(item.id || item.barcode || item.name),
-          item_name: item.name || 'Cinema Product',
-          affiliation: '{{ addslashes($siteName ?? "CAMERA BD") }}',
-          currency: 'BDT',
-          price: parseFloat(item.price) || 0,
-          quantity: parseInt(item.qty) || 1,
-          index: idx + 1
-        };
-      });
-
-      if (typeof window.pushToDataLayer === 'function') {
-        window.pushToDataLayer('add_payment_info', {
-          currency: 'BDT',
-          value: parseFloat(grandTotal) || 0,
-          payment_type: 'Cash On Delivery',
-          items: dlCheckoutItems
-        }, {
-          customer: cust.customer,
-          customer_info: cust.customer_info,
-          user_data: cust.user_data,
-          customer_name: cust.customer_name,
-          customer_phone: cust.customer_phone,
-          customer_email: cust.customer_email,
-          customer_city: cust.customer_city,
-          customer_division: cust.customer_division,
-          customer_address: cust.customer_address
-        });
-
-        window.pushToDataLayer('checkout_submit', {
-          currency: 'BDT',
-          value: parseFloat(grandTotal) || 0,
-          shipping: currentShippingCost,
-          payment_type: 'Cash On Delivery',
-          items: dlCheckoutItems
-        }, {
-          customer: cust.customer,
-          customer_info: cust.customer_info,
-          user_data: cust.user_data,
-          customer_name: cust.customer_name,
-          customer_phone: cust.customer_phone,
-          customer_email: cust.customer_email,
-          customer_city: cust.customer_city,
-          customer_division: cust.customer_division,
-          customer_address: cust.customer_address
-        });
+  if (submitBtnEl) {
+    submitBtnEl.addEventListener('click', function(e) {
+      if (isCheckoutSubmitting) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        return false;
       }
-    } catch(err) {
-      console.warn('[DataLayer] Checkout submit tracking error:', err);
-    }
+    });
+  }
 
-    isCheckoutSubmitting = true;
-    const submitBtn = document.getElementById('submit-order-btn');
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.classList.add('opacity-75', 'cursor-not-allowed', 'pointer-events-none');
-      submitBtn.innerHTML = `
-        <span class="inline-block animate-spin mr-1">⏳</span>
-        <span>Processing Order... Please wait</span>
-      `;
+  // Reset lock if page restored from cache (e.g. back button)
+  window.addEventListener('pageshow', function() {
+    isCheckoutSubmitting = false;
+    if (submitBtnEl) {
+      submitBtnEl.disabled = false;
+      submitBtnEl.style.pointerEvents = 'auto';
+      submitBtnEl.classList.remove('opacity-75', 'cursor-not-allowed', 'pointer-events-none');
     }
   });
+
+  if (checkoutFormEl) {
+    checkoutFormEl.addEventListener('submit', function(e) {
+      if (isCheckoutSubmitting) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        return false;
+      }
+
+      const items = window.CameraCart ? CameraCart.get() : [];
+      if (!items || items.length === 0) {
+        e.preventDefault();
+        alert('Your cart is empty! Please add products before checking out.');
+        return false;
+      }
+
+      // Check HTML5 validity before locking form
+      if (checkoutFormEl.checkValidity && !checkoutFormEl.checkValidity()) {
+        return true;
+      }
+
+      // Lock immediately to prevent double submissions from fast clicks
+      isCheckoutSubmitting = true;
+      if (submitBtnEl) {
+        submitBtnEl.disabled = true;
+        submitBtnEl.style.pointerEvents = 'none';
+        submitBtnEl.classList.add('opacity-75', 'cursor-not-allowed', 'pointer-events-none');
+        submitBtnEl.innerHTML = `
+          <span class="inline-block animate-spin mr-1">⏳</span>
+          <span>Processing Order... Please wait</span>
+        `;
+      }
+
+      const cartInput = document.getElementById('cart-items-input');
+      if (cartInput) {
+        cartInput.value = JSON.stringify(items);
+      }
+      const shippingInput = document.getElementById('shipping-cost-input');
+      if (shippingInput) {
+        shippingInput.value = currentShippingCost;
+      }
+
+      // Push add_payment_info and checkout_submit with full customer data before submission
+      try {
+        const cust = getCustomerData();
+        const subtotal = window.CameraCart ? CameraCart.getSubtotal() : 0;
+        const grandTotal = subtotal + currentShippingCost;
+        const dlCheckoutItems = items.map(function(item, idx) {
+          return {
+            item_id: String(item.id || item.barcode || item.name),
+            item_name: item.name || 'Cinema Product',
+            affiliation: '{{ addslashes($siteName ?? "CAMERA BD") }}',
+            currency: 'BDT',
+            price: parseFloat(item.price) || 0,
+            quantity: parseInt(item.qty) || 1,
+            index: idx + 1
+          };
+        });
+
+        if (typeof window.pushToDataLayer === 'function') {
+          window.pushToDataLayer('add_payment_info', {
+            currency: 'BDT',
+            value: parseFloat(grandTotal) || 0,
+            payment_type: 'Cash On Delivery',
+            items: dlCheckoutItems
+          }, {
+            customer: cust.customer,
+            customer_info: cust.customer_info,
+            user_data: cust.user_data,
+            customer_name: cust.customer_name,
+            customer_phone: cust.customer_phone,
+            customer_email: cust.customer_email,
+            customer_city: cust.customer_city,
+            customer_division: cust.customer_division,
+            customer_address: cust.customer_address
+          });
+
+          window.pushToDataLayer('checkout_submit', {
+            currency: 'BDT',
+            value: parseFloat(grandTotal) || 0,
+            shipping: currentShippingCost,
+            payment_type: 'Cash On Delivery',
+            items: dlCheckoutItems
+          }, {
+            customer: cust.customer,
+            customer_info: cust.customer_info,
+            user_data: cust.user_data,
+            customer_name: cust.customer_name,
+            customer_phone: cust.customer_phone,
+            customer_email: cust.customer_email,
+            customer_city: cust.customer_city,
+            customer_division: cust.customer_division,
+            customer_address: cust.customer_address
+          });
+        }
+      } catch(err) {
+        console.warn('[DataLayer] Checkout submit tracking error:', err);
+      }
+    });
+  }
 
   // Listen for live cart events
   window.addEventListener('cameracart:updated', function() {

@@ -440,40 +440,16 @@ class WebsiteOrderController extends Controller
                     $order->update($updateFields);
                 });
 
-                // Dispatch Meta Conversions API (Server-Side) Purchase Event ONLY on Approval!
-                // If GTM is configured (via gtm_id or gtm_header_script), GTM handles CAPI via DataLayer to avoid duplicate Server events
-                $gtmId = function_exists('get_setting') && get_setting('gtm_id') ? get_setting('gtm_id') : env('GTM_ID');
-                $gtmHeaderScript = function_exists('get_setting') ? get_setting('gtm_header_script') : null;
-                $hasGtm = !empty($gtmId) || !empty($gtmHeaderScript);
-
-                if (!$hasGtm) {
-                    $capiDispatchedKey = 'capi_purchase_sent_' . $order->order_no;
-                    if (!\Illuminate\Support\Facades\Cache::has($capiDispatchedKey) && \App\Services\MetaCapiService::isEnabled()) {
-                        \Illuminate\Support\Facades\Cache::put($capiDispatchedKey, true, 86400);
-                        try {
-                            $order->loadMissing('items');
-                            \App\Services\MetaCapiService::trackPurchase($order, (string)$order->order_no);
-                            Log::info("Meta CAPI Purchase Event Dispatched on Order Approval #{$order->order_no}");
-                        } catch (\Throwable $capiErr) {
-                            Log::warning("Meta CAPI Purchase tracking error on approve: " . $capiErr->getMessage());
-                        }
-                    }
-                }
-
-                $orderDataLayer = self::buildOrderDataLayerPayload($order);
-
                 $successMsg = "অর্ডার {$order->order_no} সফলভাবে অনুমোদিত হয়েছে এবং অনলাইন সেল লিস্টে (Processing) যুক্ত করা হয়েছে।";
                 if ($request->ajax() || $request->wantsJson()) {
                     return response()->json([
                         'success' => true,
                         'message' => $successMsg,
                         'status' => 'approved',
-                        'order_datalayer' => $orderDataLayer,
                     ]);
                 }
                 return redirect()->back()
-                    ->with('success', $successMsg)
-                    ->with('approved_order_datalayer', $orderDataLayer);
+                    ->with('success', $successMsg);
 
             } catch (\Throwable $e) {
                 Log::error("Error approving website order #{$order->id}: " . $e->getMessage() . "\n" . $e->getTraceAsString());
@@ -564,7 +540,6 @@ class WebsiteOrderController extends Controller
         $approvedCount = 0;
         $failedCount = 0;
         $errorMessages = [];
-        $approvedOrdersDataLayer = [];
         $stockMode = $request->input('stock_mode', 'without_manage');
 
         foreach ($orders as $order) {
@@ -577,9 +552,6 @@ class WebsiteOrderController extends Controller
                 $resData = json_decode($res->getContent(), true);
                 if (!empty($resData['success'])) {
                     $approvedCount++;
-                    if (!empty($resData['order_datalayer'])) {
-                        $approvedOrdersDataLayer[] = $resData['order_datalayer'];
-                    }
                 } else {
                     $failedCount++;
                     $errorMessages[] = "#{$order->order_no}: " . ($resData['message'] ?? 'Failed');
@@ -603,15 +575,10 @@ class WebsiteOrderController extends Controller
             $msg .= " ({$failedCount} টি অর্ডারে স্টক ঘাটতি বা সমস্যা ছিল)";
         }
 
-        if (!empty($approvedOrdersDataLayer)) {
-            session()->flash('approved_orders_datalayer', $approvedOrdersDataLayer);
-        }
-
         return response()->json([
             'success' => true,
             'message' => $msg,
             'errors' => $errorMessages,
-            'approved_orders_datalayer' => $approvedOrdersDataLayer,
         ]);
     }
 
@@ -952,10 +919,10 @@ class WebsiteOrderController extends Controller
 
         return [
             'event' => 'purchase',
-            'status' => 'approved',
-            'order_status' => 'Approved',
             'order_id' => (string)$order->order_no,
             'transaction_id' => (string)$order->order_no,
+            'status' => $order->status ?? 'pending',
+            'order_status' => ucfirst($order->status ?? 'Pending'),
             'value' => $totalAmount,
             'currency' => 'BDT',
             'tax' => 0,

@@ -3,7 +3,7 @@
 @section('title', 'Order Confirmation - ' . ($orderNumber ?? ($siteName ?? 'CAMERA BD')))
 
 @section('content')
-<div class="max-w-4xl mx-auto px-4 lg:px-6 pt-6 lg:pt-8 pb-16 w-full">
+<div class="max-w-4xl mx-auto px-4 lg:px-6 pt-6 lg:pt-8 pb-16 w-full" data-fbq-ignore="true">
 
   <!-- Success Hero Banner -->
   <div class="bg-surface-card rounded-3xl p-6 md:p-10 border border-surface-border shadow-xs text-center mb-8">
@@ -162,17 +162,17 @@
     </div>
 
     <!-- Action Buttons: Print, Track, Continue -->
-    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 no-print">
-      <button onclick="window.print()" class="w-full sm:w-auto bg-surface-container hover:bg-surface-container-low text-on-surface border border-surface-border font-bold text-xs py-3 px-5 rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-xs">
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 no-print" data-fbq-ignore="true">
+      <button type="button" onclick="window.print()" data-fbq-ignore="true" data-no-pixel="true" class="fbq-ignore _fbq_ignore w-full sm:w-auto bg-surface-container hover:bg-surface-container-low text-on-surface border border-surface-border font-bold text-xs py-3 px-5 rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-xs">
         <span class="material-symbols-outlined text-[16px]">print</span>
         <span>Print Invoice Receipt</span>
       </button>
 
-      <div class="flex items-center gap-3 w-full sm:w-auto">
-        <a href="{{ url('/') }}" class="flex-1 sm:flex-initial border border-primary text-primary hover:bg-primary/5 font-bold text-xs py-3 px-5 rounded-xl transition-colors text-center">
+      <div class="flex items-center gap-3 w-full sm:w-auto" data-fbq-ignore="true">
+        <a href="{{ url('/') }}" data-fbq-ignore="true" data-no-pixel="true" class="fbq-ignore _fbq_ignore flex-1 sm:flex-initial border border-primary text-primary hover:bg-primary/5 font-bold text-xs py-3 px-5 rounded-xl transition-colors text-center">
           Return to Shop
         </a>
-        <a href="tel:{{ $whatsappDigits ?? '8801917256756' }}" class="flex-1 sm:flex-initial bg-primary hover:bg-primary-hover text-white font-bold text-xs py-3 px-5 rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm text-center">
+        <a href="tel:{{ $whatsappDigits ?? '8801917256756' }}" data-fbq-ignore="true" data-no-pixel="true" class="fbq-ignore _fbq_ignore flex-1 sm:flex-initial bg-primary hover:bg-primary-hover text-white font-bold text-xs py-3 px-5 rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm text-center">
           <span class="material-symbols-outlined text-[16px]">support_agent</span>
           <span>Order Support</span>
         </a>
@@ -280,39 +280,36 @@
       user_data: {!! json_encode($userData, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!}
     });
 
-    // Deduplication tracker to guarantee strictly ONE single "purchase" event on Approval
-    window._dispatchedApprovedOrders = window._dispatchedApprovedOrders || {};
+    // Deduplication tracker to guarantee strictly ONE single "purchase" event per order
+    window._dispatchedOrders = window._dispatchedOrders || {};
 
-    // Function to dispatch purchase into dataLayer with full customer data & approved status
-    function dispatchApprovedOrderConfirm(payload) {
+    // Function to dispatch purchase into dataLayer with full customer and ecommerce data
+    function dispatchPurchaseEvent(payload) {
       if (!payload) return;
       var orderKey = String(payload.order_id || payload.transaction_id || '{{ $orderNumber }}');
       var storageKey = 'cb_dispatched_order_' + orderKey;
-      if (window._dispatchedApprovedOrders[orderKey] || localStorage.getItem(storageKey)) {
+      if (window._dispatchedOrders[orderKey] || localStorage.getItem(storageKey)) {
         console.log('[DataLayer] "purchase" already dispatched for Order #' + orderKey + ', skipping duplicate.');
         return;
       }
-      window._dispatchedApprovedOrders[orderKey] = true;
+      window._dispatchedOrders[orderKey] = true;
       try {
         localStorage.setItem(storageKey, Date.now());
       } catch(e) {}
 
       try {
-        window._isOrderApproved = true;
         window.dataLayer = window.dataLayer || [];
         // Clear previous ecommerce object per Google standard
         window.dataLayer.push({ ecommerce: null });
 
         var ev = Object.assign({}, payload, {
-          event: 'purchase',
-          status: 'approved',
-          order_status: 'Approved'
+          event: 'purchase'
         });
 
         // Strictly ONE single event push
         window.dataLayer.push(ev);
 
-        console.log('%c✅ [DataLayer] Single "purchase" event fired! Status: APPROVED', 'background: #10b981; color: white; font-weight: bold; padding: 6px 12px; border-radius: 4px;', ev);
+        console.log('%c✅ [DataLayer] Single "purchase" event fired on order placement! Order: #' + orderKey, 'background: #10b981; color: white; font-weight: bold; padding: 6px 12px; border-radius: 4px;', ev);
       } catch(err) {
         console.warn('[DataLayer] Error firing purchase:', err);
       }
@@ -352,34 +349,11 @@
       }
     }
 
-    @if(!empty($isApproved) && !empty($approvedOrderDl))
-      // Order is already Approved: fire immediately
-      dispatchApprovedOrderConfirm({!! json_encode($approvedOrderDl, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!});
-    @else
-      // Order is currently Pending: poll status in real time.
-      // The instant Admin clicks Approve in Website Orders, fire "purchase" without manual page reload!
-      (function() {
-        var pollTimer = null;
-        var pollAttempts = 0;
-        var maxAttempts = 120; // 120 * 2.5s = 5 minutes
-        pollTimer = setInterval(function() {
-          pollAttempts++;
-          if (pollAttempts > maxAttempts) {
-            clearInterval(pollTimer);
-            return;
-          }
-          fetch('{{ route("frontend.order-status-check", $orderNumber) }}')
-            .then(function(r) { return r.json(); })
-            .then(function(res) {
-              if (res && res.success && res.is_approved && res.order_datalayer) {
-                clearInterval(pollTimer);
-                dispatchApprovedOrderConfirm(res.order_datalayer);
-              }
-            })
-            .catch(function(e) {});
-        }, 2500);
-      })();
+    @if(!empty($isFreshOrder) && !empty($orderDataLayer))
+      // Fresh order submission from checkout: fire purchase event immediately
+      dispatchPurchaseEvent({!! json_encode($orderDataLayer, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!});
     @endif
+
     // Clean cart in localStorage after successful order placement
     try {
       localStorage.removeItem('cb_cart');
@@ -389,8 +363,6 @@
     } catch(e) {
       console.warn('Cart clean error:', e);
     }
-
-    // Note: Meta Pixel Purchase event is strictly triggered via Server CAPI upon Admin Approval in Website Orders
   });
 </script>
 <style>

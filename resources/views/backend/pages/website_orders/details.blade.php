@@ -1607,19 +1607,6 @@ $('#orderStatusForm').on('submit', function(e) {
         success: function(res) {
             $btn.prop('disabled', false).html('Update');
             if (res.success) {
-                if (res.order_datalayer) {
-                    if (typeof window.dispatchOrderConfirmDataLayer === 'function') {
-                        window.dispatchOrderConfirmDataLayer(res.order_datalayer);
-                    } else {
-                        window.dataLayer = window.dataLayer || [];
-                        window.dataLayer.push({ ecommerce: null });
-                        window.dataLayer.push(Object.assign({}, res.order_datalayer, {
-                            event: 'purchase',
-                            status: 'approved',
-                            order_status: 'Approved'
-                        }));
-                    }
-                }
                 alert(res.message || ('Order status updated to ' + newStatus));
                 location.reload();
             } else {

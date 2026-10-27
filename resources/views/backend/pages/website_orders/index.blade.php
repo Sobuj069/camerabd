@@ -1107,28 +1107,12 @@
         })
         .then(({ status, body }) => {
             if (status === 200 && body.success) {
-                // Instantly dispatch dataLayer purchase event
-                if (body.order_datalayer) {
-                    if (typeof window.dispatchOrderConfirmDataLayer === 'function') {
-                        window.dispatchOrderConfirmDataLayer(body.order_datalayer);
-                    } else {
-                        window.dataLayer = window.dataLayer || [];
-                        window.dataLayer.push({ ecommerce: null });
-                        window.dataLayer.push(Object.assign({}, body.order_datalayer, {
-                            event: 'purchase',
-                            status: 'approved',
-                            order_status: 'Approved'
-                        }));
-                    }
-                    console.log('%c✅ [DataLayer] "purchase" event fired successfully!', 'background: #10b981; color: white; font-weight: bold; padding: 6px 12px; font-size: 14px; border-radius: 4px;', body.order_datalayer);
-                }
-
                 if (typeof toastr !== 'undefined') {
                     toastr.success(body.message);
                 } else {
                     alert(body.message);
                 }
-                setTimeout(() => location.reload(), 2000);
+                setTimeout(() => location.reload(), 1500);
             } else {
                 alert(body.message || 'Action failed!');
                 location.reload();
@@ -1294,16 +1278,6 @@
         })
         .then(data => {
             if (data.success) {
-                if (data.approved_orders_datalayer && Array.isArray(data.approved_orders_datalayer)) {
-                    try {
-                        localStorage.setItem('cb_approved_orders_datalayer', JSON.stringify(data.approved_orders_datalayer));
-                    } catch(e) {}
-                    data.approved_orders_datalayer.forEach(function(o) {
-                        if (typeof window.dispatchOrderConfirmDataLayer === 'function') {
-                            window.dispatchOrderConfirmDataLayer(o);
-                        }
-                    });
-                }
                 alert(data.message);
                 location.reload();
             } else {
@@ -1350,16 +1324,6 @@
         })
         .then(data => {
             if (data.success) {
-                if (data.approved_orders_datalayer && Array.isArray(data.approved_orders_datalayer)) {
-                    try {
-                        localStorage.setItem('cb_approved_orders_datalayer', JSON.stringify(data.approved_orders_datalayer));
-                    } catch(e) {}
-                    data.approved_orders_datalayer.forEach(function(o) {
-                        if (typeof window.dispatchOrderConfirmDataLayer === 'function') {
-                            window.dispatchOrderConfirmDataLayer(o);
-                        }
-                    });
-                }
                 alert(data.message);
                 location.reload();
             } else {

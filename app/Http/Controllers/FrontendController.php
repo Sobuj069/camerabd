@@ -806,7 +806,23 @@ class FrontendController extends Controller
 
             DB::commit();
 
-            // Note: Meta Conversions API Purchase Event will be dispatched ONLY when Admin approves the order in Website Orders (Software)
+            // Direct Meta Conversions API (Server-Side) fallback ONLY when GTM is not configured
+            $gtmId = function_exists('get_setting') && get_setting('gtm_id') ? get_setting('gtm_id') : env('GTM_ID');
+            $gtmHeaderScript = function_exists('get_setting') ? get_setting('gtm_header_script') : null;
+            $hasGtm = !empty($gtmId) || !empty($gtmHeaderScript);
+
+            if (!$hasGtm && \App\Services\MetaCapiService::isEnabled()) {
+                $capiKey = 'capi_purchase_sent_' . $order->order_no;
+                if (!\Illuminate\Support\Facades\Cache::has($capiKey)) {
+                    \Illuminate\Support\Facades\Cache::put($capiKey, true, 86400);
+                    try {
+                        $order->loadMissing('items');
+                        \App\Services\MetaCapiService::trackPurchase($order, (string)$order->order_no, $request);
+                    } catch (\Throwable $capiErr) {
+                        \Illuminate\Support\Facades\Log::warning("Meta CAPI Purchase tracking error on checkout: " . $capiErr->getMessage());
+                    }
+                }
+            }
 
             return redirect()->route('frontend.order-confirmation', ['order_number' => $order->order_no])
                 ->with([
@@ -862,17 +878,14 @@ class FrontendController extends Controller
         // Security check: Only trigger Meta Purchase Pixel on initial order completion redirect
         $isFreshOrder = $request->session()->has('just_placed_order') && $request->session()->get('just_placed_order') === $order->order_no;
 
-        $isApproved = ($order->status === 'approved' || strtolower($order->order_status ?? '') === 'approved');
-        $approvedOrderDl = null;
-        if ($isApproved) {
-            $approvedOrderDl = \App\Http\Controllers\Backend\WebsiteOrderController::buildOrderDataLayerPayload($order);
-        }
+        // Build purchase dataLayer payload immediately for checkout order placement
+        $orderDataLayer = \App\Http\Controllers\Backend\WebsiteOrderController::buildOrderDataLayerPayload($order);
 
-        return view('frontend.order-confirmation', compact('order', 'orderNumber', 'orderData', 'orderItems', 'isFreshOrder', 'isApproved', 'approvedOrderDl'));
+        return view('frontend.order-confirmation', compact('order', 'orderNumber', 'orderData', 'orderItems', 'isFreshOrder', 'orderDataLayer'));
     }
 
     /**
-     * Check Order Status API for real-time frontend DataLayer event dispatch
+     * Check Order Status API
      */
     public function checkOrderStatus($order_number)
     {
@@ -882,10 +895,6 @@ class FrontendController extends Controller
         }
 
         $isApproved = ($order->status === 'approved' || strtolower($order->order_status ?? '') === 'approved');
-        $dataLayer = null;
-        if ($isApproved) {
-            $dataLayer = \App\Http\Controllers\Backend\WebsiteOrderController::buildOrderDataLayerPayload($order);
-        }
 
         return response()->json([
             'success' => true,
@@ -893,7 +902,6 @@ class FrontendController extends Controller
             'status' => $order->status,
             'order_status' => $order->order_status,
             'is_approved' => $isApproved,
-            'order_datalayer' => $dataLayer,
         ]);
     }
 
