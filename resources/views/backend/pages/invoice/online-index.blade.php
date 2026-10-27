@@ -271,6 +271,25 @@
             gap: 6px;
         }
         .btn-action-slate:hover { background: #334155; color: #ffffff; }
+        .btn-action-blue {
+            background: #2563eb;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 12.5px;
+            padding: 8px 14px;
+            border-radius: 6px;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-action-blue:hover { background: #1d4ed8; color: #ffffff; }
+        .btn-action-blue.active {
+            background: #059669;
+            box-shadow: 0 0 0 2px #a7f3d0;
+        }
         .btn-action-cyan {
             background: #06b6d4;
             color: #ffffff;
@@ -543,6 +562,11 @@
 
                         {{-- Action Buttons Bar matching Screenshot 2 & 3 --}}
                         <div class="online-actions-bar">
+                            <button type="button" id="btnDirectSelectAllStatus" class="btn-action-blue" onclick="toggleSelectAllStatusDirectly()" title="Select all {{ $totalMatchingCount ?? $invoices->total() }} orders in this status">
+                                <i class="feather icon-check-square"></i>
+                                <span id="directSelectAllBtnText">Select All ({{ $totalMatchingCount ?? $invoices->total() }})</span>
+                            </button>
+
                             <div class="dropdown d-inline-block">
                                 <button type="button" class="btn-action-slate dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                     <i class="feather icon-edit-2"></i>
@@ -620,6 +644,15 @@
                                 <form action="{{ route('invoice.online.clear-selected-dues') }}" method="POST">
                                     @csrf
                                     <input type="hidden" name="invoice_ids" id="selectedInvoiceIdsInput">
+                                    <input type="hidden" name="select_all_pages" id="modalSelectAllPagesInput" value="0">
+                                    <input type="hidden" name="filter_status" value="{{ $curStatus }}">
+                                    <input type="hidden" name="startDate" value="{{ $startDate }}">
+                                    <input type="hidden" name="endDate" value="{{ $endDate }}">
+                                    <input type="hidden" name="customer_id" value="{{ $customer_id }}">
+                                    <input type="hidden" name="product_id" value="{{ $product_id }}">
+                                    <input type="hidden" name="platform_id" value="{{ $platform_id }}">
+                                    <input type="hidden" name="invoice_no" value="{{ $invoice_no ?? '' }}">
+                                    <input type="hidden" name="barcode" value="{{ $barcode ?? ($invoice_no ?? '') }}">
                                     <div class="modal-body text-left">
                                         <div class="alert alert-info py-2 px-3 mb-3" style="border-radius: 6px;">
                                             <div class="d-flex justify-content-between align-items-center">
@@ -654,6 +687,29 @@
                                     </div>
                                 </form>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Smart Banner for Selecting All Across Pages -->
+                    <div id="selectAllAcrossPagesBanner" class="alert py-2 px-3 mb-2" style="display: none; border-radius: 8px; font-size: 13.5px; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af;">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div class="d-flex align-items-center flex-wrap">
+                                <i class="feather icon-info mr-2 text-primary" style="font-size: 16px;"></i>
+                                <span id="selectAllBannerCurrentPageMsg">
+                                    এই পেজের <strong>{{ $invoices->count() }}</strong> টি অর্ডার সিলেক্ট করা হয়েছে।
+                                </span>
+                                @if(($totalMatchingCount ?? $invoices->total()) > $invoices->count())
+                                <a href="javascript:void(0);" id="btnSelectAllAcrossPages" class="font-weight-bold ml-2 text-primary" style="text-decoration: underline; cursor: pointer;" onclick="selectAllAcrossPages(true)">
+                                    👉 "{{ ucwords(str_replace('_', ' ', $curStatus ?? 'All')) }}" স্ট্যাটাসের সব <strong>{{ $totalMatchingCount ?? $invoices->total() }}</strong> টি অর্ডার সিলেক্ট করুন
+                                </a>
+                                @endif
+                                <span id="selectAllBannerAllPagesMsg" style="display: none;" class="font-weight-bold text-success ml-1">
+                                    🎉 "{{ ucwords(str_replace('_', ' ', $curStatus ?? 'All')) }}" স্ট্যাটাসের সব <strong>{{ $totalMatchingCount ?? $invoices->total() }}</strong> টি অর্ডার সিলেক্ট করা হয়েছে (All Selected Across Pages)!
+                                </span>
+                            </div>
+                            <a href="javascript:void(0);" id="btnClearAllPagesSelection" class="text-danger font-weight-bold ml-3" style="text-decoration: underline; font-size: 12.5px; cursor: pointer;" onclick="clearAllPagesSelection()">
+                                <i class="feather icon-x-circle mr-1"></i> সিলেকশন বাতিল করুন (Clear)
+                            </a>
                         </div>
                     </div>
 
@@ -1235,18 +1291,121 @@
 @endsection
 @push('js')
     <script>
+        // State for Selecting All across All Pages under current status
+        var isSelectAllPagesActive = false;
+        var totalMatchingInStatus = {{ $totalMatchingCount ?? $invoices->total() }};
+        var currentPageCount = {{ $invoices->count() }};
+
+        function selectAllAcrossPages(activate) {
+            isSelectAllPagesActive = !!activate;
+            let selectAllEl = document.getElementById("selectAll");
+            let banner = document.getElementById("selectAllAcrossPagesBanner");
+            let curPageMsg = document.getElementById("selectAllBannerCurrentPageMsg");
+            let btnSelectAllPages = document.getElementById("btnSelectAllAcrossPages");
+            let allPagesMsg = document.getElementById("selectAllBannerAllPagesMsg");
+            let btnClear = document.getElementById("btnClearAllPagesSelection");
+            let directBtn = document.getElementById("btnDirectSelectAllStatus");
+            let directBtnText = document.getElementById("directSelectAllBtnText");
+
+            if (isSelectAllPagesActive) {
+                if (selectAllEl) selectAllEl.checked = true;
+                document.querySelectorAll(".invoiceCheckbox").forEach(cb => cb.checked = true);
+                if (banner) banner.style.display = "block";
+                if (curPageMsg) curPageMsg.style.display = "none";
+                if (btnSelectAllPages) btnSelectAllPages.style.display = "none";
+                if (allPagesMsg) allPagesMsg.style.display = "inline";
+                if (btnClear) btnClear.style.display = "inline";
+                if (directBtn) {
+                    directBtn.classList.add('active');
+                    if (directBtnText) directBtnText.innerHTML = '<i class="feather icon-check mr-1"></i> All Selected (' + totalMatchingInStatus + ')';
+                }
+            } else {
+                if (curPageMsg) curPageMsg.style.display = "inline";
+                if (btnSelectAllPages) btnSelectAllPages.style.display = "inline";
+                if (allPagesMsg) allPagesMsg.style.display = "none";
+                if (directBtn) {
+                    directBtn.classList.remove('active');
+                    if (directBtnText) directBtnText.textContent = 'Select All (' + totalMatchingInStatus + ')';
+                }
+            }
+        }
+
+        function clearAllPagesSelection() {
+            isSelectAllPagesActive = false;
+            let selectAllEl = document.getElementById("selectAll");
+            if (selectAllEl) selectAllEl.checked = false;
+            document.querySelectorAll(".invoiceCheckbox").forEach(cb => cb.checked = false);
+
+            let banner = document.getElementById("selectAllAcrossPagesBanner");
+            if (banner) banner.style.display = "none";
+
+            let directBtn = document.getElementById("btnDirectSelectAllStatus");
+            let directBtnText = document.getElementById("directSelectAllBtnText");
+            if (directBtn) {
+                directBtn.classList.remove('active');
+                if (directBtnText) directBtnText.textContent = 'Select All (' + totalMatchingInStatus + ')';
+            }
+        }
+
+        function toggleSelectAllStatusDirectly() {
+            if (isSelectAllPagesActive) {
+                clearAllPagesSelection();
+            } else {
+                selectAllAcrossPages(true);
+            }
+        }
+
+        // Header Checkbox click listener
         let selectAllEl = document.getElementById("selectAll");
         if (selectAllEl) {
             selectAllEl.addEventListener("click", function() {
                 let checkboxes = document.querySelectorAll(".invoiceCheckbox");
                 checkboxes.forEach(checkbox => checkbox.checked = this.checked);
+
+                let banner = document.getElementById("selectAllAcrossPagesBanner");
+                if (this.checked) {
+                    if (banner) banner.style.display = "block";
+                    selectAllAcrossPages(false); // Show banner with option to select all across pages
+                } else {
+                    clearAllPagesSelection();
+                }
             });
         }
+
+        // Row Checkboxes change listener
+        document.querySelectorAll(".invoiceCheckbox").forEach(cb => {
+            cb.addEventListener("change", function() {
+                if (!this.checked && isSelectAllPagesActive) {
+                    isSelectAllPagesActive = false;
+                    let directBtn = document.getElementById("btnDirectSelectAllStatus");
+                    let directBtnText = document.getElementById("directSelectAllBtnText");
+                    if (directBtn) {
+                        directBtn.classList.remove('active');
+                        if (directBtnText) directBtnText.textContent = 'Select All (' + totalMatchingInStatus + ')';
+                    }
+                    let allPagesMsg = document.getElementById("selectAllBannerAllPagesMsg");
+                    let curPageMsg = document.getElementById("selectAllBannerCurrentPageMsg");
+                    let btnSelectAllPages = document.getElementById("btnSelectAllAcrossPages");
+                    if (allPagesMsg) allPagesMsg.style.display = "none";
+                    if (curPageMsg) curPageMsg.style.display = "inline";
+                    if (btnSelectAllPages) btnSelectAllPages.style.display = "inline";
+                }
+                let checkedCount = document.querySelectorAll(".invoiceCheckbox:checked").length;
+                let totalRowCheckboxes = document.querySelectorAll(".invoiceCheckbox").length;
+                if (selectAllEl) {
+                    selectAllEl.checked = (checkedCount === totalRowCheckboxes && totalRowCheckboxes > 0);
+                }
+                let banner = document.getElementById("selectAllAcrossPagesBanner");
+                if (checkedCount === 0 && !isSelectAllPagesActive) {
+                    if (banner) banner.style.display = "none";
+                }
+            });
+        });
 
         function openClearDuesModal() {
             let selectedInvoices = document.querySelectorAll(".invoiceCheckbox:checked");
 
-            if (selectedInvoices.length === 0) {
+            if (!isSelectAllPagesActive && selectedInvoices.length === 0) {
                 if (typeof toastMagic !== 'undefined' && toastMagic.error) {
                     toastMagic.error("{{ __('Please select at least one invoice to clear due.') }}");
                 } else {
@@ -1258,20 +1417,27 @@
             let ids = [];
             let totalDue = 0;
 
-            selectedInvoices.forEach(cb => {
-                ids.push(cb.value);
-                let row = cb.closest('tr');
-                if (row) {
-                    let dueCell = row.querySelector('.invoice-due-val');
-                    if (dueCell) {
-                        totalDue += parseFloat(dueCell.textContent.replace(/[^0-9.-]+/g, '')) || 0;
+            if (isSelectAllPagesActive) {
+                document.getElementById("modalSelectAllPagesInput").value = "1";
+                document.getElementById("selectedInvoiceIdsInput").value = "[]";
+                document.getElementById("modalSelectedCount").textContent = "{{ $totalDueMatchingCount ?? $totalMatchingCount }} (All in {{ ucwords(str_replace('_', ' ', $curStatus ?? 'All')) }})";
+                document.getElementById("modalTotalDue").textContent = "TK {{ number_format($totalDueAllMatching ?? 0, 2) }}";
+            } else {
+                document.getElementById("modalSelectAllPagesInput").value = "0";
+                selectedInvoices.forEach(cb => {
+                    ids.push(cb.value);
+                    let row = cb.closest('tr');
+                    if (row) {
+                        let dueCell = row.querySelector('.invoice-due-val');
+                        if (dueCell) {
+                            totalDue += parseFloat(dueCell.textContent.replace(/[^0-9.-]+/g, '')) || 0;
+                        }
                     }
-                }
-            });
-
-            document.getElementById("selectedInvoiceIdsInput").value = JSON.stringify(ids);
-            document.getElementById("modalSelectedCount").textContent = ids.length;
-            document.getElementById("modalTotalDue").textContent = "TK " + totalDue.toFixed(2);
+                });
+                document.getElementById("selectedInvoiceIdsInput").value = JSON.stringify(ids);
+                document.getElementById("modalSelectedCount").textContent = ids.length;
+                document.getElementById("modalTotalDue").textContent = "TK " + totalDue.toFixed(2);
+            }
 
             $('#clearDuesModal').modal('show');
         }
@@ -1279,12 +1445,18 @@
         function printSelectedInvoices() {
             let selectedInvoices = document.querySelectorAll(".invoiceCheckbox:checked");
 
-            if (selectedInvoices.length === 0) {
+            if (!isSelectAllPagesActive && selectedInvoices.length === 0) {
                 if (typeof toastMagic !== 'undefined' && toastMagic.error) {
                     toastMagic.error("{{ __('Please select at least one invoice to print.') }}");
                 } else {
                     alert("{{ __('Please select at least one invoice to print.') }}");
                 }
+                return;
+            }
+
+            if (isSelectAllPagesActive) {
+                var printUrl = `{{ route('invoice.bulk-print') }}?select_all_pages=1&filter_status={{ urlencode($curStatus) }}&startDate={{ urlencode($startDate ?? '') }}&endDate={{ urlencode($endDate ?? '') }}&customer_id={{ urlencode($customer_id ?? '') }}&product_id={{ urlencode($product_id ?? '') }}&platform_id={{ urlencode($platform_id ?? '') }}&invoice_no={{ urlencode($invoice_no ?? '') }}&barcode={{ urlencode($barcode ?? ($invoice_no ?? '')) }}`;
+                window.open(printUrl, '_blank');
                 return;
             }
 
@@ -1473,21 +1645,37 @@
             var selectedIds = [];
             document.querySelectorAll('.invoiceCheckbox:checked').forEach(cb => selectedIds.push(cb.value));
 
-            if (selectedIds.length === 0) {
+            if (!isSelectAllPagesActive && selectedIds.length === 0) {
                 alert('Please select at least one invoice.');
                 return;
             }
 
-            var confirmMsg = "Update " + selectedIds.length + " selected order(s) to '" + newStatus.toUpperCase() + "'?";
+            var totalCount = isSelectAllPagesActive ? {{ $totalMatchingCount ?? $invoices->total() }} : selectedIds.length;
+            var confirmMsg = "Update " + totalCount + (isSelectAllPagesActive ? " orders (ALL in '{{ ucwords(str_replace('_', ' ', $curStatus ?? 'All')) }}')" : " selected order(s)") + " to '" + newStatus.toUpperCase() + "'?";
             if (newStatus === 'returned' || newStatus === 'cancelled') {
                 confirmMsg += "\n\n⚠️ IMPORTANT: Products for these orders will be RESTORED to stock inventory!";
             } else if (newStatus === 'in_courier' || newStatus === 'all_in_courier') {
-                confirmMsg = "Update " + selectedIds.length + " selected order(s) to 'ALL IN COURIER'?\n\nOrders not yet sent to courier will be automatically dispatched to Courier API (Steadfast/Pathao) and assigned Consignment IDs.";
+                confirmMsg = "Update " + totalCount + (isSelectAllPagesActive ? " orders (ALL in '{{ ucwords(str_replace('_', ' ', $curStatus ?? 'All')) }}')" : " selected order(s)") + " to 'ALL IN COURIER'?\n\nOrders not yet sent to courier will be automatically dispatched to Courier API (Steadfast/Pathao) and assigned Consignment IDs.";
             }
 
             if (!confirm(confirmMsg)) {
                 return;
             }
+
+            var payload = {
+                invoice_ids: isSelectAllPagesActive ? [] : selectedIds,
+                select_all_pages: isSelectAllPagesActive ? 1 : 0,
+                filter_status: '{{ $curStatus }}',
+                startDate: '{{ $startDate }}',
+                endDate: '{{ $endDate }}',
+                customer_id: '{{ $customer_id }}',
+                product_id: '{{ $product_id }}',
+                platform_id: '{{ $platform_id }}',
+                barcode: '{{ $barcode ?? ($invoice_no ?? '') }}',
+                invoice_no: '{{ $invoice_no ?? '' }}',
+                order_status: newStatus,
+                status: newStatus
+            };
 
             fetch(`{{ route('invoice.online.bulk-status') }}`, {
                 method: 'POST',
@@ -1496,11 +1684,7 @@
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                     'Accept': 'application/json'
                 },
-                body: JSON.stringify({
-                    invoice_ids: selectedIds,
-                    order_status: newStatus,
-                    status: newStatus
-                })
+                body: JSON.stringify(payload)
             })
             .then(async res => {
                 const ct = res.headers.get('content-type') || '';
@@ -1602,11 +1786,13 @@
         function sendSelectedToCourier() {
             var selectedIds = [];
             document.querySelectorAll('.invoiceCheckbox:checked').forEach(cb => selectedIds.push(cb.value));
-            if (selectedIds.length === 0) {
+            if (!isSelectAllPagesActive && selectedIds.length === 0) {
                 alert('Please select at least one order to send to courier.');
                 return;
             }
-            if (!confirm("Send " + selectedIds.length + " selected order(s) to Steadfast Courier?")) {
+
+            var totalCount = isSelectAllPagesActive ? {{ $totalMatchingCount ?? $invoices->total() }} : selectedIds.length;
+            if (!confirm("Send " + totalCount + (isSelectAllPagesActive ? " orders (ALL in '{{ ucwords(str_replace('_', ' ', $curStatus ?? 'All')) }}')" : " selected order(s)") + " to Steadfast Courier?")) {
                 return;
             }
 
@@ -1617,6 +1803,19 @@
                 btn.innerHTML = '<i class="feather icon-loader fa-spin mr-1"></i> <span>Sending...</span>';
             }
 
+            var payload = {
+                invoice_ids: isSelectAllPagesActive ? [] : selectedIds,
+                select_all_pages: isSelectAllPagesActive ? 1 : 0,
+                filter_status: '{{ $curStatus }}',
+                startDate: '{{ $startDate }}',
+                endDate: '{{ $endDate }}',
+                customer_id: '{{ $customer_id }}',
+                product_id: '{{ $product_id }}',
+                platform_id: '{{ $platform_id }}',
+                barcode: '{{ $barcode ?? ($invoice_no ?? '') }}',
+                invoice_no: '{{ $invoice_no ?? '' }}'
+            };
+
             fetch(`{{ route('invoice.online.send-courier') }}`, {
                 method: 'POST',
                 headers: {
@@ -1624,9 +1823,7 @@
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                     'Accept': 'application/json'
                 },
-                body: JSON.stringify({
-                    invoice_ids: selectedIds
-                })
+                body: JSON.stringify(payload)
             })
             .then(async res => {
                 const data = await res.json().catch(() => ({}));
@@ -1635,9 +1832,9 @@
             .then(({ ok, data }) => {
                 if (ok && data.success) {
                     if (typeof toastr !== 'undefined') {
-                        toastr.success(data.message || (selectedIds.length + ' orders dispatched to courier successfully!'));
+                        toastr.success(data.message || (totalCount + ' orders dispatched to courier successfully!'));
                     } else {
-                        alert(data.message || (selectedIds.length + ' orders dispatched to courier successfully!'));
+                        alert(data.message || (totalCount + ' orders dispatched to courier successfully!'));
                     }
                     setTimeout(() => location.reload(), 1200);
                 } else {
@@ -1667,8 +1864,9 @@
             var selectedIds = [];
             document.querySelectorAll('.invoiceCheckbox:checked').forEach(cb => selectedIds.push(cb.value));
 
-            var confirmMsg = selectedIds.length > 0 
-                ? "Sync live courier delivery status for " + selectedIds.length + " selected order(s)?"
+            var totalCount = isSelectAllPagesActive ? {{ $totalMatchingCount ?? $invoices->total() }} : selectedIds.length;
+            var confirmMsg = totalCount > 0 
+                ? "Sync live courier delivery status for " + totalCount + (isSelectAllPagesActive ? " orders (ALL in this status)?" : " selected order(s)?")
                 : "Sync live courier delivery status for all orders?";
 
             if (!confirm(confirmMsg)) {
@@ -1682,6 +1880,19 @@
                 btn.innerHTML = '<i class="feather icon-loader fa-spin mr-1"></i> <span>Syncing...</span>';
             }
 
+            var payload = {
+                invoice_ids: isSelectAllPagesActive ? [] : (selectedIds.length > 0 ? selectedIds : null),
+                select_all_pages: isSelectAllPagesActive ? 1 : 0,
+                filter_status: '{{ $curStatus }}',
+                startDate: '{{ $startDate }}',
+                endDate: '{{ $endDate }}',
+                customer_id: '{{ $customer_id }}',
+                product_id: '{{ $product_id }}',
+                platform_id: '{{ $platform_id }}',
+                barcode: '{{ $barcode ?? ($invoice_no ?? '') }}',
+                invoice_no: '{{ $invoice_no ?? '' }}'
+            };
+
             fetch(`{{ route('invoice.online.sync-courier') }}`, {
                 method: 'POST',
                 headers: {
@@ -1689,9 +1900,7 @@
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                     'Accept': 'application/json'
                 },
-                body: JSON.stringify({
-                    invoice_ids: selectedIds.length > 0 ? selectedIds : null
-                })
+                body: JSON.stringify(payload)
             })
             .then(async res => {
                 const data = await res.json().catch(() => ({}));

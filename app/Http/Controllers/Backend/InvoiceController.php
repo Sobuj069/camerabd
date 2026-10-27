@@ -451,7 +451,7 @@ class InvoiceController extends Controller
                 'cancelled' => 'Cancelled',
             ];
 
-            $rawStatus = $request->input('order_status', $request->input('status', 'Processing'));
+            $rawStatus = $request->input('order_status', $request->input('new_status', ($request->has('order_status') ? $request->input('order_status') : $request->input('status', 'Processing'))));
             $statusKey = strtolower(trim((string)$rawStatus));
             $status = $validStatusesMap[$statusKey] ?? (function_exists('mapCourierStatus') ? mapCourierStatus($statusKey) : ucfirst($statusKey));
 
@@ -2731,6 +2731,11 @@ class InvoiceController extends Controller
         if ($request->filled('invoice_id')) {
             $query->where('id', $request->invoice_id);
             $singleSync = true;
+        } elseif ($request->input('select_all_pages') == 1 || $request->input('select_all_pages') === 'true' || $request->input('select_all_pages') === '1') {
+            $matchingIds = $this->buildOnlineSaleFilteredQuery($request)->pluck('id')->toArray();
+            if (!empty($matchingIds)) {
+                $query->whereIn('id', $matchingIds);
+            }
         } elseif (!empty($rawIds)) {
             $ids = is_array($rawIds) ? $rawIds : (json_decode($rawIds, true) ?? array_filter(explode(',', (string)$rawIds)));
             if (!empty($ids)) {
