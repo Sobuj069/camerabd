@@ -43,6 +43,7 @@
     <input type="hidden" name="cart_items" id="cart-items-input" value="[]" />
     <input type="hidden" name="shipping_cost" id="shipping-cost-input" value="0" />
     <input type="hidden" name="discount" id="discount-input" value="0" />
+    <input type="hidden" name="order_no" id="order-no-input" value="{{ $orderNo ?? ('CB-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4))) }}" />
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
       
@@ -567,7 +568,7 @@
     }
   }
 
-  // Form submit check with strict double-click guard & DataLayer Submit tracking
+  // Form submit check with strict double-click guard & DataLayer Purchase tracking
   let isCheckoutSubmitting = false;
   const checkoutFormEl = document.getElementById('checkout-form');
   const submitBtnEl = document.getElementById('submit-order-btn');
@@ -586,7 +587,6 @@
   window.addEventListener('pageshow', function() {
     isCheckoutSubmitting = false;
     if (submitBtnEl) {
-      submitBtnEl.disabled = false;
       submitBtnEl.style.pointerEvents = 'auto';
       submitBtnEl.classList.remove('opacity-75', 'cursor-not-allowed', 'pointer-events-none');
     }
@@ -612,16 +612,20 @@
         return true;
       }
 
-      // Lock immediately to prevent double submissions from fast clicks
+      // Set submitting flag immediately to prevent double submissions from fast clicks
       isCheckoutSubmitting = true;
+
+      // Visual loading state without synchronous disabled=true (disabling synchronously can cancel form POST in mobile WebKit/Chrome)
       if (submitBtnEl) {
-        submitBtnEl.disabled = true;
         submitBtnEl.style.pointerEvents = 'none';
         submitBtnEl.classList.add('opacity-75', 'cursor-not-allowed', 'pointer-events-none');
         submitBtnEl.innerHTML = `
           <span class="inline-block animate-spin mr-1">⏳</span>
           <span>Processing Order... Please wait</span>
         `;
+        setTimeout(function() {
+          try { submitBtnEl.disabled = true; } catch(e) {}
+        }, 300);
       }
 
       const cartInput = document.getElementById('cart-items-input');
@@ -633,7 +637,10 @@
         shippingInput.value = currentShippingCost;
       }
 
-      // Push add_payment_info and checkout_submit with full customer data before submission
+      const orderNoInput = document.getElementById('order-no-input');
+      const orderKey = orderNoInput ? orderNoInput.value : ('CB-' + Date.now());
+
+      // Push purchase, checkout_submit and add_payment_info to DataLayer before submission
       try {
         const cust = getCustomerData();
         const subtotal = window.CameraCart ? CameraCart.getSubtotal() : 0;
@@ -650,6 +657,70 @@
           };
         });
 
+        // 1. Mark dispatched in localStorage to prevent duplicate firing on confirmation page
+        try {
+          localStorage.setItem('cb_dispatched_order_' + orderKey, Date.now());
+        } catch(e) {}
+
+        // 2. Dispatch Purchase Event to DataLayer
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({ ecommerce: null }); // Clear previous ecommerce object per Google standard
+        window.dataLayer.push({
+          event: 'purchase',
+          order_id: orderKey,
+          transaction_id: orderKey,
+          value: parseFloat(grandTotal) || 0,
+          currency: 'BDT',
+          shipping: currentShippingCost,
+          tax: 0,
+          customer_name: cust.customer_name,
+          customer_phone: cust.customer_phone,
+          phone_number: cust.customer_phone,
+          customer_email: cust.customer_email,
+          customer_city: cust.customer_city,
+          customer_division: cust.customer_division,
+          customer_address: cust.customer_address,
+          customer: cust.customer,
+          customer_info: cust.customer_info,
+          user_data: cust.user_data,
+          items: dlCheckoutItems,
+          ecommerce: {
+            transaction_id: orderKey,
+            value: parseFloat(grandTotal) || 0,
+            currency: 'BDT',
+            shipping: currentShippingCost,
+            tax: 0,
+            items: dlCheckoutItems
+          }
+        });
+
+        // 3. Direct Meta Pixel (Browser) Purchase Event Dispatch ONLY when GTM is not active
+        if (!window._hasGtm && typeof window.fbq === 'function') {
+          var fbContents = [];
+          var fbContentIds = [];
+          dlCheckoutItems.forEach(function(item) {
+            fbContentIds.push(item.item_id);
+            fbContents.push({
+              id: item.item_id,
+              quantity: item.quantity,
+              item_price: item.price
+            });
+          });
+          window.fbq('track', 'Purchase', {
+            content_type: 'product',
+            contents: fbContents,
+            content_ids: fbContentIds,
+            value: parseFloat(grandTotal) || 0,
+            currency: 'BDT',
+            num_items: fbContents.length
+          }, {
+            eventID: orderKey
+          });
+        }
+
+        console.log('%c✅ [DataLayer] "purchase" event fired on checkout submit! Order: #' + orderKey, 'background: #10b981; color: white; font-weight: bold; padding: 6px 12px; border-radius: 4px;');
+
+        // Also push add_payment_info and checkout_submit for full funnel tracking
         if (typeof window.pushToDataLayer === 'function') {
           window.pushToDataLayer('add_payment_info', {
             currency: 'BDT',

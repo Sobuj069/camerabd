@@ -584,7 +584,11 @@ class FrontendController extends Controller
      */
     public function checkout()
     {
-        return view('frontend.checkout');
+        $todayStr = date('Ymd');
+        $randomSuffix = strtoupper(substr(uniqid(), -4));
+        $orderNo = 'CB-' . $todayStr . '-' . $randomSuffix;
+
+        return view('frontend.checkout', compact('orderNo'));
     }
 
     /**
@@ -605,6 +609,7 @@ class FrontendController extends Controller
             'delivery_method' => 'nullable|string|max:100',
             'shipping_cost' => 'nullable|numeric|min:0',
             'cart_items' => 'nullable|string',
+            'order_no' => 'nullable|string|max:50',
         ]);
 
         // -------------------------------------------------------------
@@ -679,10 +684,13 @@ class FrontendController extends Controller
             }
         }
 
-        // Generate unique Order Number: CB-YYYYMMDD-XXXX
-        $todayStr = date('Ymd');
-        $randomSuffix = strtoupper(substr(uniqid(), -4));
-        $orderNo = 'CB-' . $todayStr . '-' . $randomSuffix;
+        // Generate or use provided unique Order Number: CB-YYYYMMDD-XXXX
+        $orderNo = trim($request->input('order_no', ''));
+        if (empty($orderNo) || WebsiteOrder::where('order_no', $orderNo)->exists()) {
+            $todayStr = date('Ymd');
+            $randomSuffix = strtoupper(substr(uniqid(), -4));
+            $orderNo = 'CB-' . $todayStr . '-' . $randomSuffix;
+        }
 
         // Calculate pricing
         $subtotal = 0;
