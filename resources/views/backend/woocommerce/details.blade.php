@@ -938,8 +938,8 @@ html.dark-theme .wc-total-box-grand {
                         <div class="col-md-6">
                             <label class="wc-label">Shipping Note</label>
                             <div class="position-relative">
-                                <textarea name="shipping_note" id="shippingNoteInput" class="wc-textarea" rows="3" placeholder="Enter shipping note" maxlength="350"></textarea>
-                                <span class="char-count" id="shippingNoteCharCount">0/350</span>
+                                <textarea name="shipping_note" id="shippingNoteInput" class="wc-textarea" rows="3" placeholder="Enter shipping note" maxlength="350">{{ $cleanOrderNote ?? ($order->note ?? '') }}</textarea>
+                                <span class="char-count" id="shippingNoteCharCount">{{ strlen($cleanOrderNote ?? ($order->note ?? '')) }}/350</span>
                             </div>
                         </div>
 
@@ -1336,12 +1336,10 @@ html.dark-theme .wc-total-box-grand {
                         '/^\d{1,2} [A-Za-z]+, \d{1,2}:\d{2} [AP]M: Scanned & updated[^\n]*\r?\n?/mi'
                     ], '', $order->note ?? ''));
                 @endphp
-                @if(!empty($cleanOrderNote))
-                    <div class="existing-notes-box mt-3 p-2 border-top-dynamic">
-                        <small class="text-muted font-weight-bold d-block mb-1">Previous Notes:</small>
-                        <div class="small" style="white-space: pre-wrap; color: var(--wc-text-heading);" id="orderNotesDisplay">{!! nl2br(e($cleanOrderNote)) !!}</div>
-                    </div>
-                @endif
+                <div class="existing-notes-box mt-3 p-2 border-top-dynamic" id="notesBoxContainer" style="{{ empty($cleanOrderNote) ? 'display: none;' : '' }}">
+                    <small class="text-muted font-weight-bold d-block mb-1">Previous Notes:</small>
+                    <div class="small" style="white-space: pre-wrap; color: var(--wc-text-heading);" id="orderNotesDisplay">{!! nl2br(e($cleanOrderNote)) !!}</div>
+                </div>
             </div>
         </div>
     </div>
@@ -1565,14 +1563,20 @@ $('#orderNoteForm').on('submit', function(e) {
         success: function(res) {
             $btn.prop('disabled', false).html('<i class="fa fa-comment-alt me-1"></i> Add Note');
             $('#orderNoteInput').val('');
-            if (res.note) {
-                let cleanedResNote = (res.note || '')
+            var rawNote = res.note || res.notes || '';
+            if (rawNote) {
+                let cleanedResNote = (rawNote || '')
                     .replace(/^Imported from WooCommerce[^\n]*\r?\n?/gmi, '')
                     .replace(/^\[\d+ [A-Za-z]+, \d+:\d+ [AP]M\] Status changed[^\n]*\r?\n?/gmi, '')
                     .replace(/^\[\d+ [A-Za-z]+, \d+:\d+ [AP]M\] Order approved[^\n]*\r?\n?/gmi, '')
                     .replace(/^\d{1,2} [A-Za-z]+, \d{1,2}:\d{2} [AP]M: Scanned & updated[^\n]*\r?\n?/gmi, '')
                     .trim();
                 $('#orderNotesDisplay').text(cleanedResNote);
+                $('#notesBoxContainer').show();
+                if ($('#shippingNoteInput').length) {
+                    $('#shippingNoteInput').val(cleanedResNote);
+                    $('#shippingNoteCharCount').text(cleanedResNote.length + '/350');
+                }
             }
             alert('Note added successfully!');
         },

@@ -832,8 +832,8 @@
                                 <div class="note-cell-updated">
                                     {{ $order->note_updated_at ? 'Updated ' . (\Carbon\Carbon::parse($order->note_updated_at)->diffForHumans()) : 'Updated recently' }}
                                 </div>
-                                <div class="note-text-editable" onclick="editOrderNote({{ $order->id }}, '{{ addslashes($order->note ?? '') }}')" title="Click to edit note">
-                                    {{ !empty($order->note) ? Str::limit($order->note, 45) : '-' }}
+                                <div class="note-text-editable" onclick="editOrderNote({{ $order->id }}, '{{ addslashes($order->note ?: ($order->order_notes ?? '')) }}')" title="Click to edit note">
+                                    {{ !empty($order->note) ? Str::limit($order->note, 45) : (!empty($order->order_notes) ? Str::limit($order->order_notes, 45) : '-') }}
                                 </div>
                             </td>
 

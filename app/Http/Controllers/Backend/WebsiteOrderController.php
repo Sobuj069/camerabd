@@ -507,16 +507,18 @@ class WebsiteOrderController extends Controller
     public function updateNote(Request $request, $id)
     {
         $order = WebsiteOrder::findOrFail($id);
-        $order->update([
-            'note' => $request->input('note'),
-            'note_updated_at' => Carbon::now(),
-        ]);
+        $newNote = $request->input('note');
+        $order->note = $newNote;
+        $order->order_notes = $newNote;
+        $order->note_updated_at = Carbon::now();
+        $order->save();
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => 'নোট সফলভাবে আপডেট করা হয়েছে।',
                 'note' => $order->note,
+                'notes' => $order->note,
                 'updated_time' => Carbon::now()->diffForHumans(),
             ]);
         }
@@ -849,7 +851,33 @@ class WebsiteOrderController extends Controller
      */
     public function addOrderNote(Request $request, $id)
     {
-        return $this->updateNote($request, $id);
+        $request->validate([
+            'note' => 'required|string',
+        ]);
+
+        $order = WebsiteOrder::findOrFail($id);
+        $userNote = trim($request->input('note'));
+
+        if (!empty($userNote)) {
+            $existing = trim($order->note ?: ($order->order_notes ?: ''));
+            $combined = $existing ? ($existing . "\n" . $userNote) : $userNote;
+            $order->note = $combined;
+            $order->order_notes = $combined;
+            $order->note_updated_at = Carbon::now();
+            $order->save();
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Note added successfully!',
+                'note' => $order->note,
+                'notes' => $order->note,
+                'updated_time' => Carbon::now()->diffForHumans(),
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Note added successfully!');
     }
 
     /**

@@ -918,10 +918,19 @@ class WooCommerceController extends Controller
         $order->note = $order->note ? ($order->note . "\n" . $userNote) : $userNote;
         $order->save();
 
+        if ($order->websiteOrder) {
+            $wo = $order->websiteOrder;
+            $wo->note = $order->note;
+            $wo->order_notes = $order->note;
+            $wo->note_updated_at = \Carbon\Carbon::now();
+            $wo->saveQuietly();
+        }
+
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
                 'note' => $order->note,
+                'notes' => $order->note,
                 'message' => 'Note added successfully!'
             ]);
         }

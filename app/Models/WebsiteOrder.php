@@ -58,7 +58,14 @@ class WebsiteOrder extends Model
                 }
             }
 
+            // Sync note and order_notes
             if (!empty($order->order_notes) && empty($order->note)) {
+                $order->note = $order->order_notes;
+            } elseif (!empty($order->note) && empty($order->order_notes)) {
+                $order->order_notes = $order->note;
+            } elseif ($order->isDirty('note') && !$order->isDirty('order_notes')) {
+                $order->order_notes = $order->note;
+            } elseif ($order->isDirty('order_notes') && !$order->isDirty('note')) {
                 $order->note = $order->order_notes;
             }
 
@@ -73,6 +80,15 @@ class WebsiteOrder extends Model
                 $st = ucfirst($order->status ?: $order->order_status);
                 if ($invoice && $invoice->order_status !== $st) {
                     $invoice->order_status = $st;
+                    $invoice->saveQuietly();
+                }
+            }
+
+            if (($order->wasChanged('note') || $order->wasChanged('order_notes')) && !empty($order->invoice_id)) {
+                $invoice = Invoice::find($order->invoice_id);
+                $latestNote = $order->note ?: $order->order_notes;
+                if ($invoice && $invoice->note !== $latestNote) {
+                    $invoice->note = $latestNote;
                     $invoice->saveQuietly();
                 }
             }

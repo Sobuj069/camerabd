@@ -903,8 +903,8 @@ body.dark-theme .badge-web-pill, html.dark-theme .badge-web-pill {
                         <div class="col-md-6">
                             <label class="wc-label">Shipping Note</label>
                             <div class="position-relative">
-                                <textarea name="order_notes" id="shippingNoteInput" class="wc-textarea" rows="3" placeholder="Enter shipping note" maxlength="350" {{ $isApproved ? 'readonly' : '' }}>{{ $order->order_notes }}</textarea>
-                                <span class="char-count" id="shippingNoteCharCount">{{ strlen($order->order_notes ?? '') }}/350</span>
+                                <textarea name="order_notes" id="shippingNoteInput" class="wc-textarea" rows="3" placeholder="Enter shipping note" maxlength="350" {{ $isApproved ? 'readonly' : '' }}>{{ $order->order_notes ?: $order->note }}</textarea>
+                                <span class="char-count" id="shippingNoteCharCount">{{ strlen($order->order_notes ?: ($order->note ?? '')) }}/350</span>
                             </div>
                         </div>
 
@@ -1339,12 +1339,13 @@ body.dark-theme .badge-web-pill, html.dark-theme .badge-web-pill {
                     </form>
                 @endif
 
-                @if(!empty($order->order_notes))
-                    <div class="existing-notes-box mt-3 p-2 border-top-dynamic">
-                        <small class="text-muted font-weight-bold d-block mb-1">Previous Notes:</small>
-                        <div class="small" style="white-space: pre-wrap; color: var(--wc-text-heading);" id="orderNotesDisplay">{!! nl2br(e($order->order_notes)) !!}</div>
-                    </div>
-                @endif
+                @php
+                    $displayNotes = !empty($order->note) ? $order->note : (!empty($order->order_notes) ? $order->order_notes : '');
+                @endphp
+                <div class="existing-notes-box mt-3 p-2 border-top-dynamic" id="notesBoxContainer" style="{{ empty($displayNotes) ? 'display: none;' : '' }}">
+                    <small class="text-muted font-weight-bold d-block mb-1">Previous Notes:</small>
+                    <div class="small" style="white-space: pre-wrap; color: var(--wc-text-heading);" id="orderNotesDisplay">{!! nl2br(e($displayNotes)) !!}</div>
+                </div>
             </div>
         </div>
     </div>
@@ -1568,14 +1569,24 @@ $('#orderNoteForm').on('submit', function(e) {
         success: function(res) {
             $btn.prop('disabled', false).html('<i class="fa fa-comment-alt me-1"></i> Add Note');
             $('#orderNoteInput').val('');
-            if (res.notes) {
-                $('#orderNotesDisplay').text(res.notes);
+            var newNotes = res.note || res.notes || '';
+            if (newNotes) {
+                $('#orderNotesDisplay').text(newNotes);
+                $('#notesBoxContainer').show();
+                if ($('#shippingNoteInput').length) {
+                    $('#shippingNoteInput').val(newNotes);
+                    $('#shippingNoteCharCount').text(newNotes.length + '/350');
+                }
             }
             alert('Note added successfully!');
         },
-        error: function() {
+        error: function(xhr) {
             $btn.prop('disabled', false).html('<i class="fa fa-comment-alt me-1"></i> Add Note');
-            alert('Failed to add note');
+            var errMsg = 'Failed to add note';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errMsg = xhr.responseJSON.message;
+            }
+            alert(errMsg);
         }
     });
 });
