@@ -956,7 +956,7 @@
                             
                             $hlPreviewSrc = $hlBanImage 
                                 ? ((str_starts_with($hlBanImage, 'http://') || str_starts_with($hlBanImage, 'https://')) ? $hlBanImage : asset($hlBanImage))
-                                : '{{ asset('uploads/banners/banner_hollyland.webp') }}';
+                                : asset('uploads/banners/banner_hollyland.webp');
                         @endphp
 
                         <!-- Section 1: Header Bar Settings -->
