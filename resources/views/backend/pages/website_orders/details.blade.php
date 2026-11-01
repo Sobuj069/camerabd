@@ -337,6 +337,27 @@ body.dark-theme .badge-web-pill, html.dark-theme .badge-web-pill {
     line-height: 1.3 !important;
     color: var(--wc-text-heading) !important;
 }
+.btn-delete-item-action {
+    border: 1px solid #ef4444 !important;
+    background: #fff5f5 !important;
+    color: #ef4444 !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    padding: 4px 12px !important;
+    border-radius: 6px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+.btn-delete-item-action:hover {
+    background: #ef4444 !important;
+    color: #ffffff !important;
+    border-color: #ef4444 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3) !important;
+}
 .btn-delete-item {
     background: transparent !important;
     border: none !important;
@@ -997,8 +1018,13 @@ body.dark-theme .badge-web-pill, html.dark-theme .badge-web-pill {
                                             </div>
                                         </div>
                                         @if(!$isApproved)
-                                            <button type="button" class="btn-delete-item text-danger" onclick="removeOrderItem({{ $item->id }})" title="Delete Product" @if($itemsCount <= 1) style="display: none;" @endif>
-                                                <i class="fa fa-trash-alt"></i>
+                                            <button type="button" 
+                                                    class="btn-delete-item-action" 
+                                                    onclick="removeOrderItem({{ $item->id }})" 
+                                                    title="Remove this product from order"
+                                                    @if($itemsCount <= 1) style="display: none !important;" @endif>
+                                                <i class="feather icon-trash-2" style="font-size: 13px;"></i>
+                                                <span>Remove</span>
                                             </button>
                                         @endif
                                     </div>
@@ -1277,11 +1303,16 @@ body.dark-theme .badge-web-pill, html.dark-theme .badge-web-pill {
                             }
                             $mSku = $miniItem->product_barcode ?: ($mProd?->barcode ?: '12930');
                         @endphp
-                        <div class="d-flex align-items-center gap-2 mb-2">
+                        <div class="d-flex align-items-center gap-2 mb-2" id="mini-item-row-{{ $miniItem->id }}">
                             <img src="{{ $mImg }}" alt="Product" class="mini-thumb" onerror="this.src='{{ asset('backend/images/no_images.png') }}'">
                             <span class="sku-badge">{{ $mSku }}</span>
                             <span class="small font-weight-bold" style="color: var(--wc-text-heading);">৳{{ number_format($miniItem->unit_price) }}</span>
                             <span class="text-muted small ms-auto font-weight-bold">{{ (int)($miniItem->quantity ?? 1) }}x</span>
+                            @if(!$isApproved)
+                                <button type="button" class="btn-delete-item-action text-danger p-0 border-0 bg-transparent ml-2" onclick="removeOrderItem({{ $miniItem->id }})" title="Remove item" @if($itemsCount <= 1) style="display: none !important;" @endif>
+                                    <i class="feather icon-trash-2" style="font-size: 13px; color: #ef4444;"></i>
+                                </button>
+                            @endif
                         </div>
                     @endforeach
                 </div>
@@ -1464,7 +1495,8 @@ function removeOrderItem(itemId) {
     if (!confirm('আপনি কি নিশ্চিত যে এই প্রোডাক্টটি অর্ডার থেকে রিমুভ করতে চান?')) return;
 
     var $row = $('#order-item-row-' + itemId);
-    var $delBtn = $row.find('.btn-delete-item');
+    var $miniRow = $('#mini-item-row-' + itemId);
+    var $delBtn = $('.btn-delete-item-action, .btn-delete-item');
     $delBtn.prop('disabled', true);
 
     $.ajax({
@@ -1475,22 +1507,25 @@ function removeOrderItem(itemId) {
             _method: "DELETE"
         },
         success: function(res) {
+            $delBtn.prop('disabled', false);
             if (res.success) {
                 $row.fadeOut(300, function() {
                     $(this).remove();
                     var remaining = $('.ordered-product-card').length;
                     $('#orderedProductsCount').text(remaining);
                     if (remaining <= 1) {
-                        $('.btn-delete-item').hide();
+                        $('.btn-delete-item-action, .btn-delete-item').hide();
                     }
                 });
+                if ($miniRow.length) {
+                    $miniRow.fadeOut(300, function() { $(this).remove(); });
+                }
 
                 var newSubtotal = parseFloat(res.subtotal !== undefined ? res.subtotal : (res.items_subtotal || 0));
                 $('#orderSubTotalInput').val(newSubtotal);
                 $('#summarySubtotal').text('৳' + newSubtotal.toFixed(2));
                 recalculateOrderTotal();
             } else {
-                $delBtn.prop('disabled', false);
                 alert(res.message || 'Failed to remove product');
             }
         },

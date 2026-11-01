@@ -1165,8 +1165,9 @@
                         ${order.status !== 'approved' ? `
                             <td class="text-center">
                                 ${hasMultipleItems ? `
-                                    <button type="button" class="btn btn-xs btn-outline-danger" onclick="removeOrderItemFromModal(${order.id}, ${item.id})" title="Remove product from order" style="padding: 2px 8px; border-radius: 4px;">
+                                    <button type="button" class="btn btn-xs btn-outline-danger" onclick="removeOrderItemFromModal(${order.id}, ${item.id})" title="Remove product from order" style="padding: 3px 10px; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
                                         <i class="feather icon-trash-2"></i>
+                                        <span>Remove</span>
                                     </button>
                                 ` : `<span class="text-muted small" title="Minimum 1 product required">-</span>`}
                             </td>
