@@ -40,12 +40,50 @@
             }
         }
 
-        .table-responsive {
-            overflow: visible !important;
+        .table-responsive,
+        .online-table-responsive {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            touch-action: pan-x pan-y !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            position: relative;
         }
 
         .card_style {
-            overflow: visible !important;
+            overflow: hidden !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        .card-body {
+            max-width: 100% !important;
+        }
+
+        #datatable-buttons {
+            min-width: 1350px !important;
+            width: 100% !important;
+        }
+
+        /* Visible scrollbar on mobile and desktop so user easily sees they can scroll right */
+        .online-table-responsive::-webkit-scrollbar,
+        .table-responsive::-webkit-scrollbar {
+            height: 9px !important;
+            display: block !important;
+        }
+        .online-table-responsive::-webkit-scrollbar-track,
+        .table-responsive::-webkit-scrollbar-track {
+            background: #f1f5f9 !important;
+            border-radius: 4px;
+        }
+        .online-table-responsive::-webkit-scrollbar-thumb,
+        .table-responsive::-webkit-scrollbar-thumb {
+            background: #3b82f6 !important;
+            border-radius: 4px;
+        }
+        .online-table-responsive::-webkit-scrollbar-thumb:hover,
+        .table-responsive::-webkit-scrollbar-thumb:hover {
+            background: #1d4ed8 !important;
         }
 
         /* Details Modal Theme Adaptability */
@@ -713,8 +751,14 @@
                         </div>
                     </div>
 
-                    <div class="table-responsive mt-2">
-                        <table id="datatable-buttons" class="table table-bordered w-100" style="width: 100% !important;">
+                    <!-- Mobile Scroll Hint -->
+                    <div class="d-flex d-md-none align-items-center justify-content-between p-2 mb-2 rounded bg-light border text-muted" style="font-size: 11.5px;">
+                        <span><i class="feather icon-chevrons-right text-primary mr-1"></i> ডানে স্ক্রোল করে সব কলাম ও অ্যাকশন বাটন দেখুন</span>
+                        <span class="badge badge-primary font-weight-bold">Swipe 👉</span>
+                    </div>
+
+                    <div class="table-responsive online-table-responsive mt-2">
+                        <table id="datatable-buttons" class="table table-bordered w-100" style="width: 100% !important; min-width: 1350px !important;">
                             <thead class="royal-header">
                                 <tr class="text-center">
                                     <th style="width: 36px;"><input type="checkbox" id="selectAll"></th>

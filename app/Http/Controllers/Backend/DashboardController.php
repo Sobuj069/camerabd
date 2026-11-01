@@ -253,10 +253,10 @@ class DashboardController extends Controller
     public function parseDateRange($filter = 'Last-30-days', $startDate = null, $endDate = null)
     {
         if ($filter === 'custom' && $startDate && $endDate) {
-            return ['start' => Carbon::parse($startDate), 'end' => Carbon::parse($endDate)];
+            return ['start' => Carbon::parse($startDate)->startOfDay(), 'end' => Carbon::parse($endDate)->endOfDay()];
         }
         if ($filter === 'single_date' && $startDate) {
-            return ['start' => Carbon::parse($startDate), 'end' => Carbon::parse($startDate)];
+            return ['start' => Carbon::parse($startDate)->startOfDay(), 'end' => Carbon::parse($startDate)->endOfDay()];
         }
         switch ($filter) {
             case 'Today': case '1D':

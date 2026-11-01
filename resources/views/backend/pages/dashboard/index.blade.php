@@ -1899,6 +1899,7 @@
                                 <option value="This-month">{{ __('This Month') }}</option>
                                 <option value="Last-month">{{ __('Last Month') }}</option>
                                 <option value="Lifetime">{{ __('Lifetime') }}</option>
+                                <option value="custom">{{ __('Custom Date') }}</option>
                             </select>
                             <span class="px-2.5 py-1 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 text-xs font-bold rounded-full border border-blue-200 dark:border-blue-800/60">
                                 <i class="fas fa-shopping-bag mr-1"></i> <span id="manualOrdersBadgeCount">{{ number_format($manualTotalCount) }}</span>
@@ -1963,6 +1964,7 @@
                                     <option value="This-month">{{ __('This Month') }}</option>
                                     <option value="Last-month">{{ __('Last Month') }}</option>
                                     <option value="Lifetime">{{ __('Lifetime') }}</option>
+                                    <option value="custom">{{ __('Custom Date') }}</option>
                                 </select>
                                 <button type="button" id="btnGoToWooOrdersTab" title="Click to view WooCommerce Analytics" class="px-2.5 py-1 bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 text-xs font-black rounded-full border border-purple-300 dark:border-purple-800 hover:bg-purple-200 transition-all shadow-sm flex items-center gap-1 cursor-pointer">
                                     <i class="fab fa-wordpress text-purple-600"></i> {{ __('Woo') }}: <span id="onlineBadgeWooCount">{{ number_format($wooOrdersCount ?? 0) }}</span>
@@ -1988,6 +1990,7 @@
                                     <option value="This-month">{{ __('This Month') }}</option>
                                     <option value="Last-month">{{ __('Last Month') }}</option>
                                     <option value="Lifetime">{{ __('Lifetime') }}</option>
+                                    <option value="custom">{{ __('Custom Date') }}</option>
                                 </select>
                                 <a href="{{ route('website-orders.index') }}" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-1 transition-all">
                                     <i class="fas fa-external-link-alt text-[10px]"></i> {{ __('View List') }}
@@ -2004,6 +2007,7 @@
                                     <option value="This-month">{{ __('This Month') }}</option>
                                     <option value="Last-month">{{ __('Last Month') }}</option>
                                     <option value="Lifetime">{{ __('Lifetime') }}</option>
+                                    <option value="custom">{{ __('Custom Date') }}</option>
                                 </select>
                                 <a href="{{ route('woocommerce.orders.list') }}" class="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg shadow-sm flex items-center gap-1 transition-all">
                                     <i class="fas fa-external-link-alt text-[10px]"></i> {{ __('View List') }}
@@ -2036,6 +2040,7 @@
                                     <option value="Last-30-days">{{ __('30D') }}</option>
                                     <option value="This-month">{{ __('This Month') }}</option>
                                     <option value="Lifetime">{{ __('Lifetime') }}</option>
+                                    <option value="custom">{{ __('Custom Date') }}</option>
                                 </select>
                             </div>
                         </div>
@@ -2529,6 +2534,72 @@
     </div>
     </div>  </div>
 
+    <!-- Analytics Custom Date Range Modal -->
+    <div class="modal fade" id="analyticsCustomDateModal" tabindex="-1" role="dialog" aria-labelledby="analyticsCustomDateModalLabel" aria-hidden="true" style="z-index: 1060;">
+        <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: 440px;">
+            <div class="modal-content shadow-lg border-0 rounded-2xl overflow-hidden bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100" style="border-radius: 16px;">
+                <div class="modal-header border-b border-slate-100 dark:border-slate-700 p-3 px-4 flex items-center justify-between" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);">
+                    <h5 class="modal-title font-extrabold text-white text-sm flex items-center gap-2 m-0" id="analyticsCustomDateModalLabel">
+                        <i class="fas fa-calendar-alt text-purple-400"></i> {{ __('Select Custom Date Range') }}
+                    </h5>
+                    <button type="button" class="close text-white text-lg p-0 m-0 border-0 bg-transparent opacity-80 hover:opacity-100 cursor-pointer" data-dismiss="modal" aria-label="Close" style="color: #ffffff !important; opacity: 0.9;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-3" style="font-size: 12px;">
+                        {{ __('Choose custom start and end date to filter analytics.') }}
+                    </p>
+
+                    <!-- Quick presets pills -->
+                    <div class="flex items-center gap-1.5 mb-3.5 flex-wrap" style="gap: 6px;">
+                        <button type="button" class="btn-analytics-quick-preset px-2.5 py-1 text-[11px] font-bold rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-purple-100 dark:hover:bg-purple-900/40 text-slate-700 dark:text-slate-300 transition-all border border-slate-200 dark:border-slate-600 cursor-pointer" data-days="0">
+                            {{ __('Today') }}
+                        </button>
+                        <button type="button" class="btn-analytics-quick-preset px-2.5 py-1 text-[11px] font-bold rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-purple-100 dark:hover:bg-purple-900/40 text-slate-700 dark:text-slate-300 transition-all border border-slate-200 dark:border-slate-600 cursor-pointer" data-days="7">
+                            {{ __('7D') }}
+                        </button>
+                        <button type="button" class="btn-analytics-quick-preset px-2.5 py-1 text-[11px] font-bold rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-purple-100 dark:hover:bg-purple-900/40 text-slate-700 dark:text-slate-300 transition-all border border-slate-200 dark:border-slate-600 cursor-pointer" data-days="15">
+                            {{ __('15D') }}
+                        </button>
+                        <button type="button" class="btn-analytics-quick-preset px-2.5 py-1 text-[11px] font-bold rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-purple-100 dark:hover:bg-purple-900/40 text-slate-700 dark:text-slate-300 transition-all border border-slate-200 dark:border-slate-600 cursor-pointer" data-days="30">
+                            {{ __('30D') }}
+                        </button>
+                        <button type="button" class="btn-analytics-quick-preset px-2.5 py-1 text-[11px] font-bold rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-purple-100 dark:hover:bg-purple-900/40 text-slate-700 dark:text-slate-300 transition-all border border-slate-200 dark:border-slate-600 cursor-pointer" data-preset="this_month">
+                            {{ __('This Month') }}
+                        </button>
+                        <button type="button" class="btn-analytics-quick-preset px-2.5 py-1 text-[11px] font-bold rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-purple-100 dark:hover:bg-purple-900/40 text-slate-700 dark:text-slate-300 transition-all border border-slate-200 dark:border-slate-600 cursor-pointer" data-preset="last_month">
+                            {{ __('Last Month') }}
+                        </button>
+                    </div>
+
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="font-extrabold text-xs text-slate-700 dark:text-slate-300 mb-1 d-block" style="font-size: 11.5px;">
+                                {{ __('Start Date') }} <span class="text-danger">*</span>
+                            </label>
+                            <input type="date" id="analyticsCustomStartDate" class="form-control form-control-sm text-xs font-bold" value="{{ date('Y-m-d', strtotime('-29 days')) }}" style="font-size: 12px; height: 36px; border-radius: 8px;">
+                        </div>
+                        <div class="col-6">
+                            <label class="font-extrabold text-xs text-slate-700 dark:text-slate-300 mb-1 d-block" style="font-size: 11.5px;">
+                                {{ __('End Date') }} <span class="text-danger">*</span>
+                            </label>
+                            <input type="date" id="analyticsCustomEndDate" class="form-control form-control-sm text-xs font-bold" value="{{ date('Y-m-d') }}" style="font-size: 12px; height: 36px; border-radius: 8px;">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-t border-slate-100 dark:border-slate-700 p-3 px-4 flex items-center justify-between">
+                    <button type="button" class="btn btn-sm btn-light border text-xs font-bold px-3 py-1.5 rounded-lg" data-dismiss="modal" style="font-size: 12px; border-radius: 8px;">
+                        {{ __('Cancel') }}
+                    </button>
+                    <button type="button" id="btnApplyAnalyticsCustomDate" class="btn btn-sm btn-primary text-xs font-black px-4 py-1.5 rounded-lg shadow-sm" style="background: #2563eb; border-color: #2563eb; font-size: 12px; border-radius: 8px;">
+                        <i class="fas fa-check mr-1"></i> {{ __('Apply Range') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('js')
@@ -2625,11 +2696,161 @@
                 });
             }
 
-            function reloadManualSalesChart(range) {
+            // ==========================================
+            // CUSTOM DATE MODAL CONTROLLER FOR ANALYTICS
+            // ==========================================
+            let activeAnalyticsTarget = null;
+            let previousSelectValues = {};
+
+            function openCustomDateModal(target, $select) {
+                activeAnalyticsTarget = target;
+                if (!previousSelectValues[target]) {
+                    previousSelectValues[target] = $select.data('last-value') || 'Last-30-days';
+                }
+
+                let currentStart = $select.data('custom-start') || "{{ date('Y-m-d', strtotime('-29 days')) }}";
+                let currentEnd = $select.data('custom-end') || "{{ date('Y-m-d') }}";
+                $('#analyticsCustomStartDate').val(currentStart);
+                $('#analyticsCustomEndDate').val(currentEnd);
+
+                let title = "{{ __('Select Custom Date Range') }}";
+                if (target === 'manual') title = "{{ __('Manual / Outlet Sales Date Range') }}";
+                else if (target === 'online_platforms') title = "{{ __('Platforms Breakdown Date Range') }}";
+                else if (target === 'web_orders') title = "{{ __('Website Orders Date Range') }}";
+                else if (target === 'woo_orders') title = "{{ __('WooCommerce Orders Date Range') }}";
+                else if (target === 'orders_by_source') title = "{{ __('Orders by Source Date Range') }}";
+
+                $('#analyticsCustomDateModalLabel').html('<i class="fas fa-calendar-alt text-purple-400 mr-2"></i>' + title);
+                $('#analyticsCustomDateModal').modal('show');
+            }
+
+            $('.btn-analytics-quick-preset').on('click', function() {
+                let today = new Date();
+                let formatDate = function(d) {
+                    let year = d.getFullYear();
+                    let month = String(d.getMonth() + 1).padStart(2, '0');
+                    let day = String(d.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                };
+
+                let preset = $(this).data('preset');
+                let days = $(this).data('days');
+
+                let endStr = formatDate(today);
+                let startStr = endStr;
+
+                if (preset === 'this_month') {
+                    let firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+                    startStr = formatDate(firstDay);
+                } else if (preset === 'last_month') {
+                    let firstDayLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                    let lastDayLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+                    startStr = formatDate(firstDayLastMonth);
+                    endStr = formatDate(lastDayLastMonth);
+                } else if (typeof days !== 'undefined') {
+                    let daysInt = parseInt(days);
+                    if (daysInt > 0) {
+                        let pastDate = new Date();
+                        pastDate.setDate(today.getDate() - (daysInt - 1));
+                        startStr = formatDate(pastDate);
+                    } else {
+                        startStr = endStr;
+                    }
+                }
+
+                $('#analyticsCustomStartDate').val(startStr);
+                $('#analyticsCustomEndDate').val(endStr);
+            });
+
+            $('#btnApplyAnalyticsCustomDate').on('click', function() {
+                let sDate = $('#analyticsCustomStartDate').val();
+                let eDate = $('#analyticsCustomEndDate').val();
+
+                if (!sDate || !eDate) {
+                    alert('Please select both start and end dates.');
+                    return;
+                }
+                if (sDate > eDate) {
+                    alert('Start date cannot be after end date.');
+                    return;
+                }
+
+                $('#analyticsCustomDateModal').modal('hide');
+
+                let label = (sDate === eDate) ? sDate : `${sDate} to ${eDate}`;
+
+                if (activeAnalyticsTarget === 'manual') {
+                    let $sel = $('#manualSalesRangeSelect');
+                    $sel.data('last-value', 'custom').data('custom-start', sDate).data('custom-end', eDate);
+                    $sel.find('option[value="custom"]').text('Custom (' + label + ')');
+                    $sel.val('custom');
+                    reloadManualSalesChart('custom', sDate, eDate);
+                } else if (activeAnalyticsTarget === 'online_platforms') {
+                    let $sel = $('#onlinePlatformsRangeSelect');
+                    $sel.data('last-value', 'custom').data('custom-start', sDate).data('custom-end', eDate);
+                    $sel.find('option[value="custom"]').text('Custom (' + label + ')');
+                    $sel.val('custom');
+                    reloadOnlinePlatformsChart('custom', sDate, eDate);
+                } else if (activeAnalyticsTarget === 'web_orders') {
+                    let $sel = $('#webOrdersRangeSelect');
+                    $sel.data('last-value', 'custom').data('custom-start', sDate).data('custom-end', eDate);
+                    $sel.find('option[value="custom"]').text('Custom (' + label + ')');
+                    $sel.val('custom');
+                    reloadWebOrdersChart(currentWebOrdersType, 'custom', sDate, eDate);
+                } else if (activeAnalyticsTarget === 'woo_orders') {
+                    let $sel = $('#wooOrdersRangeSelect');
+                    $sel.data('last-value', 'custom').data('custom-start', sDate).data('custom-end', eDate);
+                    $sel.find('option[value="custom"]').text('Custom (' + label + ')');
+                    $sel.val('custom');
+                    reloadWooOrdersChart(currentWooOrdersType, 'custom', sDate, eDate);
+                } else if (activeAnalyticsTarget === 'orders_by_source') {
+                    let $sel = $('#ordersBySourceRangeSelect');
+                    $sel.data('last-value', 'custom').data('custom-start', sDate).data('custom-end', eDate);
+                    $sel.find('option[value="custom"]').text('Custom (' + label + ')');
+                    $sel.val('custom');
+                    reloadOrdersBySourceChart($('#ordersBySourceStatusSelect').val() || 'all', 'custom', sDate, eDate);
+                }
+            });
+
+            $('#analyticsCustomDateModal').on('hidden.bs.modal', function() {
+                if (activeAnalyticsTarget) {
+                    let $sel = null;
+                    if (activeAnalyticsTarget === 'manual') $sel = $('#manualSalesRangeSelect');
+                    else if (activeAnalyticsTarget === 'online_platforms') $sel = $('#onlinePlatformsRangeSelect');
+                    else if (activeAnalyticsTarget === 'web_orders') $sel = $('#webOrdersRangeSelect');
+                    else if (activeAnalyticsTarget === 'woo_orders') $sel = $('#wooOrdersRangeSelect');
+                    else if (activeAnalyticsTarget === 'orders_by_source') $sel = $('#ordersBySourceRangeSelect');
+
+                    if ($sel && $sel.val() === 'custom' && !$sel.data('custom-start')) {
+                        let prev = previousSelectValues[activeAnalyticsTarget] || 'Last-30-days';
+                        $sel.val(prev);
+                    }
+                }
+            });
+
+            // Re-open custom date modal if user clicks on select that is currently set to custom
+            $(document).on('click', '#manualSalesRangeSelect, #onlinePlatformsRangeSelect, #webOrdersRangeSelect, #wooOrdersRangeSelect, #ordersBySourceRangeSelect', function(e) {
+                if ($(this).val() === 'custom') {
+                    let id = $(this).attr('id');
+                    let target = 'manual';
+                    if (id === 'onlinePlatformsRangeSelect') target = 'online_platforms';
+                    else if (id === 'webOrdersRangeSelect') target = 'web_orders';
+                    else if (id === 'wooOrdersRangeSelect') target = 'woo_orders';
+                    else if (id === 'ordersBySourceRangeSelect') target = 'orders_by_source';
+                    openCustomDateModal(target, $(this));
+                }
+            });
+
+            function reloadManualSalesChart(range, sDate, eDate) {
+                let reqData = { filter: range };
+                if (range === 'custom') {
+                    reqData.start_date = sDate;
+                    reqData.end_date = eDate;
+                }
                 $.ajax({
                     url: "{{ route('dashboard.chart.manual-sales') }}",
                     type: "GET",
-                    data: { filter: range },
+                    data: reqData,
                     success: function(res) {
                         currentManualData = res;
                         $('#manualOrdersBadgeCount').text(Number(res.total_orders || 0).toLocaleString());
@@ -2652,7 +2873,14 @@
             }
 
             $('#manualSalesRangeSelect').on('change', function() {
-                reloadManualSalesChart($(this).val());
+                let val = $(this).val();
+                if (val === 'custom') {
+                    openCustomDateModal('manual', $(this));
+                } else {
+                    $(this).data('last-value', val);
+                    $(this).find('option[value="custom"]').text("{{ __('Custom Date') }}");
+                    reloadManualSalesChart(val);
+                }
             });
 
             // ==========================================
@@ -2715,11 +2943,16 @@
 
             renderOnlinePlatformsChart();
 
-            function reloadOnlinePlatformsChart(range) {
+            function reloadOnlinePlatformsChart(range, sDate, eDate) {
+                let reqData = { filter: range };
+                if (range === 'custom') {
+                    reqData.start_date = sDate;
+                    reqData.end_date = eDate;
+                }
                 $.ajax({
                     url: "{{ route('dashboard.chart.online-platforms') }}",
                     type: "GET",
-                    data: { filter: range },
+                    data: reqData,
                     success: function(res) {
                         currentPlatformData = res;
                         $('#onlineBadgeOrdersCount').text(Number(res.total_orders || 0).toLocaleString());
@@ -2760,7 +2993,14 @@
             }
 
             $('#onlinePlatformsRangeSelect').on('change', function() {
-                reloadOnlinePlatformsChart($(this).val());
+                let val = $(this).val();
+                if (val === 'custom') {
+                    openCustomDateModal('online_platforms', $(this));
+                } else {
+                    $(this).data('last-value', val);
+                    $(this).find('option[value="custom"]').text("{{ __('Custom Date') }}");
+                    reloadOnlinePlatformsChart(val);
+                }
             });
 
             // ==========================================
@@ -2820,11 +3060,16 @@
                 });
             }
 
-            function reloadWebOrdersChart(type, range) {
+            function reloadWebOrdersChart(type, range, sDate, eDate) {
+                let reqData = { type: type, filter: range, source: 'website' };
+                if (range === 'custom') {
+                    reqData.start_date = sDate;
+                    reqData.end_date = eDate;
+                }
                 $.ajax({
                     url: "{{ route('dashboard.chart.web-order-report') }}",
                     type: "GET",
-                    data: { type: type, filter: range, source: 'website' },
+                    data: reqData,
                     success: function(res) {
                         currentWebOrdersData = res;
                         $('#webOrdersTotalCount').text(Number(res.total_orders || 0).toLocaleString());
@@ -2867,11 +3112,23 @@
                 $('.web-order-subtab').removeClass('active');
                 $(this).addClass('active');
                 currentWebOrdersType = $(this).data('type');
-                reloadWebOrdersChart(currentWebOrdersType, $('#webOrdersRangeSelect').val());
+                let range = $('#webOrdersRangeSelect').val();
+                if (range === 'custom') {
+                    reloadWebOrdersChart(currentWebOrdersType, 'custom', $('#webOrdersRangeSelect').data('custom-start'), $('#webOrdersRangeSelect').data('custom-end'));
+                } else {
+                    reloadWebOrdersChart(currentWebOrdersType, range);
+                }
             });
 
             $('#webOrdersRangeSelect').on('change', function() {
-                reloadWebOrdersChart(currentWebOrdersType, $(this).val());
+                let val = $(this).val();
+                if (val === 'custom') {
+                    openCustomDateModal('web_orders', $(this));
+                } else {
+                    $(this).data('last-value', val);
+                    $(this).find('option[value="custom"]').text("{{ __('Custom Date') }}");
+                    reloadWebOrdersChart(currentWebOrdersType, val);
+                }
             });
 
             // ==========================================
@@ -2931,11 +3188,16 @@
                 });
             }
 
-            function reloadWooOrdersChart(type, range) {
+            function reloadWooOrdersChart(type, range, sDate, eDate) {
+                let reqData = { type: type, filter: range, source: 'woocommerce' };
+                if (range === 'custom') {
+                    reqData.start_date = sDate;
+                    reqData.end_date = eDate;
+                }
                 $.ajax({
                     url: "{{ route('dashboard.chart.web-order-report') }}",
                     type: "GET",
-                    data: { type: type, filter: range, source: 'woocommerce' },
+                    data: reqData,
                     success: function(res) {
                         currentWooOrdersData = res;
                         $('#wooOrdersTotalCount').text(Number(res.total_orders || 0).toLocaleString());
@@ -2978,11 +3240,23 @@
                 $('.woo-order-subtab').removeClass('active');
                 $(this).addClass('active');
                 currentWooOrdersType = $(this).data('type');
-                reloadWooOrdersChart(currentWooOrdersType, $('#wooOrdersRangeSelect').val());
+                let range = $('#wooOrdersRangeSelect').val();
+                if (range === 'custom') {
+                    reloadWooOrdersChart(currentWooOrdersType, 'custom', $('#wooOrdersRangeSelect').data('custom-start'), $('#wooOrdersRangeSelect').data('custom-end'));
+                } else {
+                    reloadWooOrdersChart(currentWooOrdersType, range);
+                }
             });
 
             $('#wooOrdersRangeSelect').on('change', function() {
-                reloadWooOrdersChart(currentWooOrdersType, $(this).val());
+                let val = $(this).val();
+                if (val === 'custom') {
+                    openCustomDateModal('woo_orders', $(this));
+                } else {
+                    $(this).data('last-value', val);
+                    $(this).find('option[value="custom"]').text("{{ __('Custom Date') }}");
+                    reloadWooOrdersChart(currentWooOrdersType, val);
+                }
             });
 
             // ==========================================
@@ -3040,11 +3314,16 @@
                 });
             }
 
-            function reloadOrdersBySourceChart(status, range) {
+            function reloadOrdersBySourceChart(status, range, sDate, eDate) {
+                let reqData = { status: status, filter: range };
+                if (range === 'custom') {
+                    reqData.start_date = sDate;
+                    reqData.end_date = eDate;
+                }
                 $.ajax({
                     url: "{{ route('dashboard.chart.orders-by-source') }}",
                     type: "GET",
-                    data: { status: status, filter: range },
+                    data: reqData,
                     success: function(res) {
                         currentOrdersBySourceData = res;
                         $('#sourceTotalOrders').text(Number(res.total_orders || 0).toLocaleString());
@@ -3111,10 +3390,26 @@
                 }
             });
 
-            $('#ordersBySourceStatusSelect, #ordersBySourceRangeSelect').on('change', function() {
-                const status = $('#ordersBySourceStatusSelect').val();
+            $('#ordersBySourceStatusSelect').on('change', function() {
+                const status = $(this).val();
                 const range = $('#ordersBySourceRangeSelect').val();
-                reloadOrdersBySourceChart(status, range);
+                if (range === 'custom') {
+                    reloadOrdersBySourceChart(status, 'custom', $('#ordersBySourceRangeSelect').data('custom-start'), $('#ordersBySourceRangeSelect').data('custom-end'));
+                } else {
+                    reloadOrdersBySourceChart(status, range);
+                }
+            });
+
+            $('#ordersBySourceRangeSelect').on('change', function() {
+                let val = $(this).val();
+                if (val === 'custom') {
+                    openCustomDateModal('orders_by_source', $(this));
+                } else {
+                    $(this).data('last-value', val);
+                    $(this).find('option[value="custom"]').text("{{ __('Custom Date') }}");
+                    const status = $('#ordersBySourceStatusSelect').val();
+                    reloadOrdersBySourceChart(status, val);
+                }
             });
 
             // ==========================================

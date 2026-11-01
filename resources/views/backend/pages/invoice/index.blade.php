@@ -28,10 +28,16 @@
             overflow: visible !important;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 1200px) {
             .table-responsive {
                 overflow-x: auto !important;
-                overflow-y: hidden !important;
+                -webkit-overflow-scrolling: touch !important;
+                touch-action: pan-x pan-y !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            .table-responsive table {
+                min-width: 1100px !important;
             }
         }
 
