@@ -841,7 +841,7 @@
                             <td>
                                 @if($order->items->isNotEmpty())
                                     @php $firstItem = $order->items->first(); @endphp
-                                    <div class="item-preview-box">
+                                    <div class="item-preview-box" onclick="openOrderModal({{ $order->id }})" style="cursor: pointer;" title="{{ __('Click to view & manage ordered items') }}">
                                         <img src="{{ $firstItem->image_url }}" alt="{{ $firstItem->product_name }}" class="item-thumbnail">
                                         <div class="item-details-box">
                                             <div class="item-code-qty">
@@ -971,6 +971,9 @@
             </div>
             <div class="modal-footer" style="background: #f8fafc; border-top: 1px solid #e2e8f0; border-radius: 0 0 12px 12px;">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <a href="#" id="btnModalFullDetails" class="btn btn-outline-primary" style="font-weight: 600;">
+                    <i class="feather icon-external-link mr-1"></i> Full Details Page
+                </a>
                 <button type="button" class="btn btn-primary" id="btnModalApprove" style="background: #7c3aed; border-color: #7c3aed;">
                     <i class="feather icon-check mr-1"></i> Approve to Online Sale
                 </button>
@@ -1130,9 +1133,11 @@
         if (!order) return;
 
         $('#modalOrderTitle').text(`Order Details - ${order.order_no}`);
+        $('#btnModalFullDetails').attr('href', `{{ url('/website-orders/details') }}/${order.id}`);
         
         let itemsHtml = '';
         let canApprove = true;
+        const hasMultipleItems = order.items && order.items.length > 1;
 
         if (order.items && order.items.length > 0) {
             order.items.forEach(item => {
@@ -1142,7 +1147,7 @@
                 if (!inStock) canApprove = false;
 
                 itemsHtml += `
-                    <tr>
+                    <tr id="modal-item-row-${item.id}">
                         <td>
                             <div class="d-flex align-items-center gap-2">
                                 <img src="${item.image_url}" style="width: 44px; height: 44px; border-radius: 6px; object-fit: cover;" alt="">
@@ -1157,10 +1162,22 @@
                         </td>
                         <td class="text-right font-weight-bold">৳${parseFloat(item.unit_price).toFixed(2)}</td>
                         <td class="text-right font-weight-bold">৳${parseFloat(item.subtotal).toFixed(2)}</td>
+                        ${order.status !== 'approved' ? `
+                            <td class="text-center">
+                                ${hasMultipleItems ? `
+                                    <button type="button" class="btn btn-xs btn-outline-danger" onclick="removeOrderItemFromModal(${order.id}, ${item.id})" title="Remove product from order" style="padding: 2px 8px; border-radius: 4px;">
+                                        <i class="feather icon-trash-2"></i>
+                                    </button>
+                                ` : `<span class="text-muted small" title="Minimum 1 product required">-</span>`}
+                            </td>
+                        ` : ''}
                     </tr>
                 `;
             });
         }
+
+        const deliveryChargeVal = parseFloat(order.shipping_fee !== undefined && order.shipping_fee !== null ? order.shipping_fee : (order.shipping_cost || 0));
+        const subtotalVal = parseFloat(order.subtotal || (order.items ? order.items.reduce((acc, i) => acc + parseFloat(i.subtotal || 0), 0) : order.total_amount));
 
         const modalBody = `
             <div class="row mb-3">
@@ -1187,7 +1204,17 @@
                                 : `<span class="badge badge-info text-capitalize">${order.status}</span>`}
                         </div>
                         <div class="d-flex justify-content-between"><span>Payment Method:</span> <span class="font-weight-bold">${order.payment_method}</span></div>
-                        <div class="d-flex justify-content-between"><span>Total Amount:</span> <span class="font-weight-bold text-purple font-size-16">৳${parseFloat(order.total_amount).toFixed(2)}</span></div>
+                        <div class="d-flex justify-content-between"><span>Subtotal:</span> <span class="font-weight-bold" id="modalSubtotalVal">৳${subtotalVal.toFixed(2)}</span></div>
+                        <div class="d-flex justify-content-between align-items-center my-1">
+                            <span>Delivery Charge:</span>
+                            ${order.status !== 'approved' ? `
+                                <div class="d-flex align-items-center gap-1" style="width: 130px;">
+                                    <span class="mr-1">৳</span>
+                                    <input type="number" id="modalDeliveryCharge-${order.id}" class="form-control form-control-sm text-right py-0 px-1" style="height: 26px; font-weight: 700;" value="${deliveryChargeVal}" min="0" onchange="updateModalDeliveryCharge(${order.id}, this.value)">
+                                </div>
+                            ` : `<span class="font-weight-bold">৳${deliveryChargeVal.toFixed(2)}</span>`}
+                        </div>
+                        <div class="d-flex justify-content-between border-top pt-1 mt-1"><span>Total Amount:</span> <span class="font-weight-bold text-purple font-size-16" id="modalTotalVal">৳${parseFloat(order.total_amount).toFixed(2)}</span></div>
                     </div>
                 </div>
             </div>
@@ -1207,6 +1234,7 @@
                             <th class="text-center">Stock Check</th>
                             <th class="text-right">Price</th>
                             <th class="text-right">Subtotal</th>
+                            ${order.status !== 'approved' ? '<th class="text-center" style="width: 70px;">Action</th>' : ''}
                         </tr>
                     </thead>
                     <tbody>
@@ -1236,6 +1264,99 @@
         }
 
         $('#orderDetailsModal').modal('show');
+    }
+
+    function removeOrderItemFromModal(orderId, itemId) {
+        const order = ordersData.find(o => o.id == orderId);
+        if (!order) return;
+        if (order.items && order.items.length <= 1) {
+            alert('অর্ডারে কমপক্ষে ১টি প্রোডাক্ট থাকতে হবে। শেষ প্রোডাক্টটি রিমুভ করা যাবে না।');
+            return;
+        }
+
+        if (!confirm('আপনি কি নিশ্চিত যে এই প্রোডাক্টটি অর্ডার থেকে রিমুভ করতে চান?')) return;
+
+        $.ajax({
+            url: "{{ url('/website-orders') }}/" + orderId + "/item/" + itemId,
+            type: "POST",
+            data: {
+                _token: "{{ csrf_token() }}",
+                _method: "DELETE"
+            },
+            success: function(res) {
+                if (res.success) {
+                    order.items = order.items.filter(i => i.id != itemId);
+                    order.subtotal = res.subtotal;
+                    order.total_amount = res.grand_total;
+                    if (res.shipping_fee !== undefined) {
+                        order.shipping_fee = res.shipping_fee;
+                        order.shipping_cost = res.shipping_fee;
+                    }
+                    openOrderModal(orderId);
+                    updateTableRowItems(order);
+                    alert(res.message || 'Product removed successfully');
+                } else {
+                    alert(res.message || 'Failed to remove product');
+                }
+            },
+            error: function(xhr) {
+                var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Failed to remove product';
+                alert(msg);
+            }
+        });
+    }
+
+    function updateModalDeliveryCharge(orderId, newCharge) {
+        const order = ordersData.find(o => o.id == orderId);
+        if (!order) return;
+
+        var chargeVal = parseFloat(newCharge);
+        if (isNaN(chargeVal) || chargeVal < 0) chargeVal = 0;
+
+        $.ajax({
+            url: "{{ url('/website-orders/details') }}/" + orderId,
+            type: "POST",
+            data: {
+                _token: "{{ csrf_token() }}",
+                delivery_charge: chargeVal
+            },
+            success: function(res) {
+                if (res.success) {
+                    order.shipping_cost = chargeVal;
+                    order.shipping_fee = chargeVal;
+                    order.total_amount = res.grand_total !== undefined ? res.grand_total : Math.max(0, (order.subtotal || 0) + chargeVal - (order.discount || 0));
+                    $('#modalTotalVal').text('৳' + parseFloat(order.total_amount).toFixed(2));
+                }
+            },
+            error: function() {
+                alert('Failed to update delivery charge');
+            }
+        });
+    }
+
+    function updateTableRowItems(order) {
+        var $row = $('#orderRow-' + order.id);
+        if (!$row.length) return;
+        if (order.items && order.items.length > 0) {
+            var first = order.items[0];
+            var moreBadge = order.items.length > 1 ? `<span class="badge badge-light ml-1" style="font-size: 10px;">+${order.items.length - 1} more</span>` : '';
+            var html = `
+                <div class="item-preview-box" onclick="openOrderModal(${order.id})" style="cursor: pointer;" title="Click to view & manage ordered items">
+                    <img src="${first.image_url}" alt="${first.product_name}" class="item-thumbnail">
+                    <div class="item-details-box">
+                        <div class="item-code-qty">
+                            <span>${first.product_code || 'N/A'}</span>
+                            <span class="text-muted ml-1">${first.quantity}x</span>
+                        </div>
+                        <div class="item-price">
+                            ৳${parseFloat(first.subtotal).toFixed(0)}
+                            ${moreBadge}
+                        </div>
+                    </div>
+                </div>
+            `;
+            $row.find('td:nth-child(4)').html(html);
+        }
     }
 
     // Bulk actions

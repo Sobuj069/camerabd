@@ -617,10 +617,10 @@ body.dark-theme .badge-web-pill, html.dark-theme .badge-web-pill {
         $createdTimeAgo = $order->created_at ? (\Carbon\Carbon::parse($order->created_at)->diffForHumans()) : 'Recently';
         $updatedTimeAgo = $order->updated_at ? (\Carbon\Carbon::parse($order->updated_at)->diffForHumans()) : 'Recently';
         $orderDateFormatted = $order->created_at ? (\Carbon\Carbon::parse($order->created_at)->format('M d, Y, h:i A')) : date('M d, Y, h:i A');
-        $deliveryCharge = (float)($order->shipping_cost ?? 0);
+        $deliveryCharge = (float)($order->shipping_fee ?? $order->shipping_cost ?? 0);
         $discountAmount = (float)($order->discount ?? 0);
         $subtotalAmount = (float)($order->subtotal ?? ($order->items->sum('total_price') ?: $order->total_amount));
-        $grandTotal = (float)($order->total_amount ?: ($subtotalAmount + $deliveryCharge - $discountAmount));
+        $grandTotal = (float)($order->total_amount ?? max(0, $subtotalAmount + $deliveryCharge - $discountAmount));
         
         $cards = $fraudStats['cards'] ?? [
             'overall' => ['label' => 'Overall', 'rate' => '100%', 'total' => 13, 'success' => 13, 'cancelled' => 0, 'header_bg' => '#a855f7'],
@@ -997,7 +997,7 @@ body.dark-theme .badge-web-pill, html.dark-theme .badge-web-pill {
                                             </div>
                                         </div>
                                         @if(!$isApproved)
-                                            <button type="button" class="btn-delete-item text-danger" onclick="removeOrderItem({{ $item->id }})" title="Delete Product">
+                                            <button type="button" class="btn-delete-item text-danger" onclick="removeOrderItem({{ $item->id }})" title="Delete Product" @if($itemsCount <= 1) style="display: none;" @endif>
                                                 <i class="fa fa-trash-alt"></i>
                                             </button>
                                         @endif
@@ -1067,7 +1067,14 @@ body.dark-theme .badge-web-pill, html.dark-theme .badge-web-pill {
 
             <!-- ORDER TOTAL Section -->
             <div class="wc-section-card mb-4">
-                <div class="section-title mb-3">ORDER TOTAL</div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="section-title mb-0">ORDER TOTAL</div>
+                    @if(!$isApproved)
+                        <button type="button" id="btnSaveTotals" class="btn btn-sm btn-purple-save" style="font-size: 12px; padding: 4px 14px; border-radius: 6px;">
+                            <i class="fa fa-save me-1"></i> Save Changes
+                        </button>
+                    @endif
+                </div>
 
                 <div class="row g-2">
                     <!-- Discount -->
@@ -1108,6 +1115,8 @@ body.dark-theme .badge-web-pill, html.dark-theme .badge-web-pill {
                 <!-- APPROVE & MOVE TO ONLINE SALE LIST Card -->
                 <form action="{{ route('website-orders.approve', $order->id) }}" method="POST" id="approveOrderForm">
                     @csrf
+                    <input type="hidden" name="delivery_charge" id="approveDeliveryCharge" value="{{ (int)$deliveryCharge }}">
+                    <input type="hidden" name="discount_amount" id="approveDiscountAmount" value="{{ (int)$discountAmount }}">
                     <div class="wc-section-card mb-4">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <div class="section-title mb-0 d-flex align-items-center gap-2">
@@ -1409,6 +1418,8 @@ function recalculateOrderTotal() {
 // Bind real-time input change on order totals
 $('#orderDiscountInput, #orderDeliveryChargeInput, #orderAdvanceInput').on('input change keyup', function() {
     recalculateOrderTotal();
+    $('#approveDeliveryCharge').val($('#orderDeliveryChargeInput').val() || 0);
+    $('#approveDiscountAmount').val($('#orderDiscountInput').val() || 0);
 });
 
 // Sync courier type with approve form
@@ -1428,20 +1439,33 @@ function sendItemUpdate(itemId, qty, price) {
         },
         success: function(res) {
             if (res.success) {
-                $('#item-subtotal-' + itemId).text(parseFloat(res.item_subtotal).toFixed(2));
-                $('#orderSubTotalInput').val(parseInt(res.items_subtotal));
-                $('#summarySubtotal').text('৳' + parseFloat(res.items_subtotal).toFixed(2));
+                var itemSub = parseFloat(res.item_total !== undefined ? res.item_total : (res.item_subtotal || 0));
+                $('#item-subtotal-' + itemId).text(itemSub.toFixed(2));
+                var orderSub = parseFloat(res.subtotal !== undefined ? res.subtotal : (res.items_subtotal || 0));
+                $('#orderSubTotalInput').val(orderSub);
+                $('#summarySubtotal').text('৳' + orderSub.toFixed(2));
                 recalculateOrderTotal();
             }
         },
-        error: function() {
-            alert('Failed to update product');
+        error: function(xhr) {
+            var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Failed to update product';
+            alert(msg);
         }
     });
 }
 
 function removeOrderItem(itemId) {
-    if (!confirm('Are you sure you want to remove this product from the order?')) return;
+    var totalCards = $('.ordered-product-card').length;
+    if (totalCards <= 1) {
+        alert('অর্ডারে কমপক্ষে ১টি প্রোডাক্ট থাকতে হবে। শেষ প্রোডাক্টটি রিমুভ করা যাবে না।');
+        return;
+    }
+
+    if (!confirm('আপনি কি নিশ্চিত যে এই প্রোডাক্টটি অর্ডার থেকে রিমুভ করতে চান?')) return;
+
+    var $row = $('#order-item-row-' + itemId);
+    var $delBtn = $row.find('.btn-delete-item');
+    $delBtn.prop('disabled', true);
 
     $.ajax({
         url: "{{ url('/website-orders/' . $order->id . '/item') }}/" + itemId,
@@ -1452,16 +1476,31 @@ function removeOrderItem(itemId) {
         },
         success: function(res) {
             if (res.success) {
-                $('#order-item-row-' + itemId).fadeOut(300, function() { $(this).remove(); });
-                $('#orderSubTotalInput').val(parseInt(res.items_subtotal));
-                $('#summarySubtotal').text('৳' + parseFloat(res.items_subtotal).toFixed(2));
-                var curCount = parseInt($('#orderedProductsCount').text()) || 1;
-                $('#orderedProductsCount').text(Math.max(0, curCount - 1));
+                $row.fadeOut(300, function() {
+                    $(this).remove();
+                    var remaining = $('.ordered-product-card').length;
+                    $('#orderedProductsCount').text(remaining);
+                    if (remaining <= 1) {
+                        $('.btn-delete-item').hide();
+                    }
+                });
+
+                var newSubtotal = parseFloat(res.subtotal !== undefined ? res.subtotal : (res.items_subtotal || 0));
+                $('#orderSubTotalInput').val(newSubtotal);
+                $('#summarySubtotal').text('৳' + newSubtotal.toFixed(2));
                 recalculateOrderTotal();
+            } else {
+                $delBtn.prop('disabled', false);
+                alert(res.message || 'Failed to remove product');
             }
         },
-        error: function() {
-            alert('Failed to remove product');
+        error: function(xhr) {
+            $delBtn.prop('disabled', false);
+            var errMsg = 'Failed to remove product';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errMsg = xhr.responseJSON.message;
+            }
+            alert(errMsg);
         }
     });
 }
@@ -1533,21 +1572,55 @@ $(document).on('click', function(e) {
 $('#orderMainForm').on('submit', function(e) {
     e.preventDefault();
     var $btn = $('#btnSaveOrderDetails');
+    var $btnTotals = $('#btnSaveTotals');
     $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Saving...');
+    $btnTotals.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Saving...');
+
+    var postData = $(this).serialize();
+    var deliveryVal = $('#orderDeliveryChargeInput').val();
+    if (deliveryVal !== undefined && deliveryVal !== '') {
+        postData += '&delivery_charge=' + encodeURIComponent(deliveryVal);
+    }
+    var discountVal = $('#orderDiscountInput').val();
+    if (discountVal !== undefined && discountVal !== '') {
+        postData += '&discount_amount=' + encodeURIComponent(discountVal);
+    }
+    var advanceVal = $('#orderAdvanceInput').val();
+    if (advanceVal !== undefined && advanceVal !== '') {
+        postData += '&advance_amount=' + encodeURIComponent(advanceVal);
+    }
 
     $.ajax({
         url: $(this).attr('action'),
         type: "POST",
-        data: $(this).serialize(),
+        data: postData,
         success: function(res) {
             $btn.prop('disabled', false).html('<i class="fa fa-save me-1"></i> Save');
+            $btnTotals.prop('disabled', false).html('<i class="fa fa-save me-1"></i> Save Changes');
             alert(res.message || 'Saved successfully');
         },
-        error: function() {
+        error: function(xhr) {
             $btn.prop('disabled', false).html('<i class="fa fa-save me-1"></i> Save');
-            alert('Failed to save order details');
+            $btnTotals.prop('disabled', false).html('<i class="fa fa-save me-1"></i> Save Changes');
+            var errMsg = 'Failed to save order details';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errMsg = xhr.responseJSON.message;
+            }
+            alert(errMsg);
         }
     });
+});
+
+$('#btnSaveTotals').on('click', function() {
+    $('#orderMainForm').trigger('submit');
+});
+
+// Always ensure current delivery charge & discount are passed when approving
+$('#approveOrderForm').on('submit', function() {
+    var deliveryVal = $('#orderDeliveryChargeInput').val() || 0;
+    var discountVal = $('#orderDiscountInput').val() || 0;
+    $('#approveDeliveryCharge').val(deliveryVal);
+    $('#approveDiscountAmount').val(discountVal);
 });
 
 // Add Note AJAX

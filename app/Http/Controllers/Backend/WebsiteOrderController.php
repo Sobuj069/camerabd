@@ -300,6 +300,21 @@ class WebsiteOrderController extends Controller
 
         // If transitioning to 'approved'
         if ($newStatus === 'approved') {
+            // Update delivery charge and discount if provided in the approval request
+            if ($request->has('delivery_charge') && $request->input('delivery_charge') !== null && $request->input('delivery_charge') !== '') {
+                $order->shipping_cost = (float)$request->input('delivery_charge');
+                $order->shipping_fee = $order->shipping_cost;
+            }
+            if ($request->has('discount_amount') && $request->input('discount_amount') !== null && $request->input('discount_amount') !== '') {
+                $order->discount = (float)$request->input('discount_amount');
+            }
+            $currentSubtotal = $order->items->sum('total_price') ?: (float)($order->subtotal ?? 0);
+            $order->subtotal = $currentSubtotal;
+            $orderShipping = (float)($order->shipping_fee ?? $order->shipping_cost ?? 0);
+            $orderDiscount = (float)($order->discount ?? 0);
+            $order->total_amount = max(0, $currentSubtotal + $orderShipping - $orderDiscount);
+            $order->save();
+
             // Determine stock mode: 'with_manage' vs 'without_manage'
             $rawStockMode = strtolower(trim($request->input('stock_mode', 'without_manage')));
             $isWithManage = in_array($rawStockMode, ['with_manage', 'manage_stock', 'manage stock (fifo)']) 
@@ -385,12 +400,14 @@ class WebsiteOrderController extends Controller
                     $invoice->order_status = 'processing';
                     $rawService = strtolower(trim($request->input('courier_type') ?: ($order->courier_service ?? $order->delivery_method ?? '')));
                     $invoice->courier_type = str_contains($rawService, 'pathao') ? 'Pathao' : (str_contains($rawService, 'redx') ? 'RedX' : 'Steadfast');
-                    $invoice->total_amount = $order->total_amount;
-                    $invoice->delivery_charge = $order->shipping_fee ?? 0;
-                    $invoice->discount = $order->discount ?? 0;
-                    $invoice->discount_amount = $order->discount ?? 0;
-                    $invoice->total_paid = 0;
-                    $invoice->total_due = $order->total_amount;
+                    $delCharge = (float)($order->shipping_fee ?? $order->shipping_cost ?? 0);
+                    $discAmount = (float)($order->discount ?? 0);
+                    $invoice->total_amount = (float)$order->total_amount;
+                    $invoice->delivery_charge = $delCharge;
+                    $invoice->discount = $discAmount;
+                    $invoice->discount_amount = $discAmount;
+                    $invoice->total_paid = (float)($order->total_paid ?? 0);
+                    $invoice->total_due = max(0, (float)$order->total_amount - (float)$invoice->total_paid);
                     $invoice->note = $order->note;
                     $invoice->source_link = $order->order_no;
                     $invoice->status = 1;
@@ -727,21 +744,57 @@ class WebsiteOrderController extends Controller
             $order->order_notes = $request->input('order_notes');
             $order->note = $order->order_notes;
         }
-        if ($request->has('delivery_charge')) {
+        if ($request->has('delivery_charge') && $request->input('delivery_charge') !== null && $request->input('delivery_charge') !== '') {
             $order->shipping_cost = (float)$request->input('delivery_charge');
             $order->shipping_fee = $order->shipping_cost;
         }
-        if ($request->has('discount_amount')) {
+        if ($request->has('discount_amount') && $request->input('discount_amount') !== null && $request->input('discount_amount') !== '') {
             $order->discount = (float)$request->input('discount_amount');
         }
+        if ($request->has('advance_amount') && $request->input('advance_amount') !== null && $request->input('advance_amount') !== '') {
+            $order->total_paid = (float)$request->input('advance_amount');
+            if ($order->total_paid >= $order->total_amount && $order->total_amount > 0) {
+                $order->payment_status = 'paid';
+            } elseif ($order->total_paid > 0) {
+                $order->payment_status = 'partial';
+            } else {
+                $order->payment_status = 'unpaid';
+            }
+        }
 
-        $subtotal = $order->items()->sum('total_price') ?: $order->subtotal;
-        $order->subtotal = $subtotal;
-        $order->total_amount = max(0, $subtotal + $order->shipping_cost - $order->discount);
+        $subtotal = $order->items()->sum('total_price');
+        if ($subtotal > 0 || $order->items()->count() > 0) {
+            $order->subtotal = (float)$subtotal;
+        } else {
+            $order->subtotal = (float)($order->subtotal ?? 0);
+        }
+        $shipping = (float)($order->shipping_fee ?? $order->shipping_cost ?? 0);
+        $discount = (float)($order->discount ?? 0);
+        $order->total_amount = max(0, $order->subtotal + $shipping - $discount);
         $order->save();
 
+        if (!empty($order->invoice_id)) {
+            $inv = Invoice::find($order->invoice_id);
+            if ($inv) {
+                $inv->delivery_charge = $shipping;
+                $inv->discount = $discount;
+                $inv->discount_amount = $discount;
+                $inv->total_amount = (float)$order->total_amount;
+                $inv->total_paid = (float)($order->total_paid ?? $inv->total_paid);
+                $inv->total_due = max(0, (float)$order->total_amount - (float)$inv->total_paid);
+                $inv->saveQuietly();
+            }
+        }
+
         if ($request->ajax() || $request->wantsJson()) {
-            return response()->json(['success' => true, 'message' => 'Order details updated successfully!']);
+            return response()->json([
+                'success' => true,
+                'message' => 'Order details updated successfully!',
+                'subtotal' => $order->subtotal,
+                'delivery_charge' => $shipping,
+                'discount' => $discount,
+                'grand_total' => $order->total_amount,
+            ]);
         }
         return redirect()->back()->with('success', 'Order details updated successfully!');
     }
@@ -761,16 +814,29 @@ class WebsiteOrderController extends Controller
         $item->save();
 
         $order = WebsiteOrder::findOrFail($id);
-        $subtotal = $order->items()->sum('total_price');
+        $subtotal = (float)$order->items()->sum('total_price');
         $order->subtotal = $subtotal;
-        $order->total_amount = max(0, $subtotal + $order->shipping_cost - $order->discount);
+        $shipping = (float)($order->shipping_fee ?? $order->shipping_cost ?? 0);
+        $discount = (float)($order->discount ?? 0);
+        $order->total_amount = max(0, $subtotal + $shipping - $discount);
         $order->save();
+
+        if (!empty($order->invoice_id)) {
+            $inv = Invoice::find($order->invoice_id);
+            if ($inv) {
+                $inv->total_amount = (float)$order->total_amount;
+                $inv->total_due = max(0, (float)$order->total_amount - (float)$inv->total_paid);
+                $inv->saveQuietly();
+            }
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Quantity updated',
             'item_total' => $item->total_price,
+            'item_subtotal' => $item->total_price,
             'subtotal' => $order->subtotal,
+            'items_subtotal' => $order->subtotal,
             'grand_total' => $order->total_amount,
         ]);
     }
@@ -807,17 +873,30 @@ class WebsiteOrderController extends Controller
         ]);
 
         $order = WebsiteOrder::findOrFail($id);
-        $subtotal = $order->items()->sum('total_price');
+        $subtotal = (float)$order->items()->sum('total_price');
         $order->subtotal = $subtotal;
-        $order->total_amount = max(0, $subtotal + $order->shipping_cost - $order->discount);
+        $shipping = (float)($order->shipping_fee ?? $order->shipping_cost ?? 0);
+        $discount = (float)($order->discount ?? 0);
+        $order->total_amount = max(0, $subtotal + $shipping - $discount);
         $order->save();
+
+        if (!empty($order->invoice_id)) {
+            $inv = Invoice::find($order->invoice_id);
+            if ($inv) {
+                $inv->total_amount = (float)$order->total_amount;
+                $inv->total_due = max(0, (float)$order->total_amount - (float)$inv->total_paid);
+                $inv->saveQuietly();
+            }
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Product added to order',
             'item' => $item,
             'subtotal' => $order->subtotal,
+            'items_subtotal' => $order->subtotal,
             'grand_total' => $order->total_amount,
+            'items_count' => $order->items()->count(),
         ]);
     }
 
@@ -826,24 +905,56 @@ class WebsiteOrderController extends Controller
      */
     public function removeOrderItem(Request $request, $id, $itemId)
     {
+        $order = WebsiteOrder::with('items')->findOrFail($id);
+
+        // Enforce: Minimum 1 product must remain in the order!
+        if ($order->items->count() <= 1) {
+            $msg = 'অর্ডারে কমপক্ষে ১টি প্রোডাক্ট থাকতে হবে। শেষ প্রোডাক্টটি রিমুভ করা যাবে না।';
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $msg,
+                ], 422);
+            }
+            return redirect()->back()->with('error', $msg);
+        }
+
         $item = WebsiteOrderItem::where('website_order_id', $id)->where('id', $itemId)->firstOrFail();
         $item->delete();
 
-        $order = WebsiteOrder::findOrFail($id);
-        $subtotal = $order->items()->sum('total_price');
+        $order->load('items');
+        $subtotal = (float)$order->items->sum('total_price');
         $order->subtotal = $subtotal;
-        $order->total_amount = max(0, $subtotal + $order->shipping_cost - $order->discount);
+        $shipping = (float)($order->shipping_fee ?? $order->shipping_cost ?? 0);
+        $discount = (float)($order->discount ?? 0);
+        $order->total_amount = max(0, $subtotal + $shipping - $discount);
         $order->save();
+
+        if (!empty($order->invoice_id)) {
+            InvoiceItem::where('invoice_id', $order->invoice_id)
+                ->where('product_id', $item->product_id)
+                ->when($item->product_variation_id, fn($q) => $q->where('product_variation_id', $item->product_variation_id))
+                ->delete();
+            $inv = Invoice::find($order->invoice_id);
+            if ($inv) {
+                $inv->total_amount = (float)$order->total_amount;
+                $inv->total_due = max(0, (float)$order->total_amount - (float)$inv->total_paid);
+                $inv->saveQuietly();
+            }
+        }
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Item removed from order',
-                'subtotal' => $order->subtotal,
+                'message' => 'প্রোডাক্টটি সফলভাবে রিমুভ করা হয়েছে।',
+                'subtotal' => $subtotal,
+                'items_subtotal' => $subtotal,
                 'grand_total' => $order->total_amount,
+                'shipping_fee' => $shipping,
+                'items_count' => $order->items->count(),
             ]);
         }
-        return redirect()->back()->with('success', 'Item removed from order');
+        return redirect()->back()->with('success', 'প্রোডাক্টটি সফলভাবে রিমুভ করা হয়েছে।');
     }
 
     /**

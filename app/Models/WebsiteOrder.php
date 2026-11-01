@@ -69,8 +69,15 @@ class WebsiteOrder extends Model
                 $order->note = $order->order_notes;
             }
 
-            if (isset($order->shipping_cost) && !isset($order->shipping_fee)) {
-                $order->shipping_fee = $order->shipping_cost;
+            // Sync shipping_cost and shipping_fee alias attributes
+            if ($order->isDirty('shipping_cost') && !$order->isDirty('shipping_fee')) {
+                $order->shipping_fee = (float)$order->shipping_cost;
+            } elseif ($order->isDirty('shipping_fee') && !$order->isDirty('shipping_cost')) {
+                $order->shipping_cost = (float)$order->shipping_fee;
+            } elseif ($order->shipping_cost !== null && $order->shipping_fee === null) {
+                $order->shipping_fee = (float)$order->shipping_cost;
+            } elseif ($order->shipping_fee !== null && $order->shipping_cost === null) {
+                $order->shipping_cost = (float)$order->shipping_fee;
             }
         });
 
@@ -89,6 +96,19 @@ class WebsiteOrder extends Model
                 $latestNote = $order->note ?: $order->order_notes;
                 if ($invoice && $invoice->note !== $latestNote) {
                     $invoice->note = $latestNote;
+                    $invoice->saveQuietly();
+                }
+            }
+
+            if (($order->wasChanged('shipping_cost') || $order->wasChanged('shipping_fee') || $order->wasChanged('discount') || $order->wasChanged('total_amount')) && !empty($order->invoice_id)) {
+                $invoice = Invoice::find($order->invoice_id);
+                if ($invoice) {
+                    $delCharge = (float)($order->shipping_fee ?? $order->shipping_cost ?? 0);
+                    $invoice->delivery_charge = $delCharge;
+                    $invoice->discount = (float)($order->discount ?? 0);
+                    $invoice->discount_amount = (float)($order->discount ?? 0);
+                    $invoice->total_amount = (float)$order->total_amount;
+                    $invoice->total_due = max(0, (float)$order->total_amount - (float)$invoice->total_paid);
                     $invoice->saveQuietly();
                 }
             }
@@ -163,6 +183,6 @@ class WebsiteOrder extends Model
 
     public function getShippingFeeAttribute($value)
     {
-        return $value !== null ? $value : ($this->shipping_cost ?? 0);
+        return $value !== null ? (float)$value : (float)($this->shipping_cost ?? 0);
     }
 }
