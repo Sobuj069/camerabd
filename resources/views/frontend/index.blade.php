@@ -1974,7 +1974,7 @@
       }
 
       updateCountdown();
-      setTimeout(function() { setInterval(updateCountdown, 1000); }, 4000);
+      setTimeout(function() { setInterval(updateCountdown, 1000); }, 8000);
     })();
 
     // Auto-Sliding Category Carousel
@@ -2039,7 +2039,7 @@
         });
       }
 
-      setTimeout(startAutoSlide, 4500);
+      // Category slider is user-controlled via swipe and prev/next buttons
     })();
 
     // Hollyland Showcase Slider Controls
@@ -2085,7 +2085,6 @@
           }
         });
       }
-      setTimeout(loadRemainingHeroSlides, 2500);
       window.goToHeroSlide = function(index) {
         loadRemainingHeroSlides();
         if (totalHeroSlides <= 1) return;
@@ -2152,7 +2151,7 @@
       }
 
       if (totalHeroSlides > 1) {
-        setTimeout(resetHeroTimer, 5000);
+        setTimeout(resetHeroTimer, 8000);
         const dSlider = document.getElementById('desktop-hero-slider');
         if (dSlider) {
           dSlider.addEventListener('mouseenter', () => clearInterval(heroSliderTimer));
