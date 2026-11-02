@@ -59,9 +59,13 @@
 <script>
   (function() {
     var gtmLoaded = false;
+    var userEvents = ['scroll', 'touchstart', 'mousemove', 'click', 'keydown', 'wheel'];
     function initGTM() {
       if (gtmLoaded) return;
       gtmLoaded = true;
+      userEvents.forEach(function(e) {
+        window.removeEventListener(e, initGTM, { passive: true });
+      });
       var el = document.getElementById('deferred-gtm-script');
       if (el) {
         var s = document.createElement('script');
@@ -69,14 +73,10 @@
         document.head.appendChild(s);
       }
     }
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(function() { setTimeout(initGTM, 1800); });
-    } else {
-      window.addEventListener('load', function() { setTimeout(initGTM, 1800); });
-    }
-    ['scroll', 'touchstart', 'mousemove', 'click', 'keydown'].forEach(function(e) {
+    userEvents.forEach(function(e) {
       window.addEventListener(e, initGTM, { once: true, passive: true });
     });
+    setTimeout(initGTM, 7500);
   })();
 </script>
 <script type="text/plain" id="deferred-gtm-script">
@@ -88,23 +88,23 @@
 <script>
   (function() {
     var gtmLoaded = false;
+    var userEvents = ['scroll', 'touchstart', 'mousemove', 'click', 'keydown', 'wheel'];
     function loadGtmContainer() {
       if (gtmLoaded) return;
       gtmLoaded = true;
+      userEvents.forEach(function(e) {
+        window.removeEventListener(e, loadGtmContainer, { passive: true });
+      });
       (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
       new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
       j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
       })(window,document,'script','dataLayer','{{ $gtmId }}');
     }
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(function() { setTimeout(loadGtmContainer, 1800); });
-    } else {
-      window.addEventListener('load', function() { setTimeout(loadGtmContainer, 1800); });
-    }
-    ['scroll', 'touchstart', 'mousemove', 'click', 'keydown'].forEach(function(e) {
+    userEvents.forEach(function(e) {
       window.addEventListener(e, loadGtmContainer, { once: true, passive: true });
     });
+    setTimeout(loadGtmContainer, 7500);
   })();
 </script>
 <!-- End Google Tag Manager Container -->

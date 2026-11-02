@@ -2,7 +2,7 @@
 <html class="light" lang="bn">
 <head>
   <meta charset="utf-8"/>
-  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
   <meta content="{{ $siteName ?? 'CAMERA BD' }} | Premier Pro Camera & Broadcast Solutions Bangladesh" name="description"/>
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>{{ $siteName ?? 'CAMERA BD' }} | Premier Pro Camera & Broadcast Solutions Bangladesh</title>
@@ -386,7 +386,7 @@
                 <a href="{{ $mBanner->link ?: '#' }}" 
                    class="desktop-hero-slide absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out {{ $idx === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none' }}"
                    data-slide-index="{{ $idx }}">
-                  <img alt="{{ $mBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out" width="900" height="478" src="{{ $mBanner->image_url }}" @if($idx === 0) fetchpriority="high" loading="eager" @else loading="lazy" @endif decoding="async"/>
+                  <img alt="{{ $mBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out" width="900" height="478" src="{{ $mBanner->image_url }}" loading="lazy" decoding="async"/>
                 </a>
               @endforeach
             </div>
@@ -412,7 +412,7 @@
           @else
             <!-- Fallback Billboard -->
             <a href="{{ url('/product-details/dji-osmo-pocket-4p') }}" class="block w-full h-full">
-              <img alt="DJI Osmo Pocket 4P Dual-Lens Camera" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out" width="900" height="478" src="{{ asset('uploads/banners/banner_pocket4p.webp') }}" fetchpriority="high" loading="eager" decoding="async"/>
+              <img alt="DJI Osmo Pocket 4P Dual-Lens Camera" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out" width="900" height="478" src="{{ asset('uploads/banners/banner_pocket4p.webp') }}" loading="lazy" decoding="async"/>
             </a>
           @endif
         </div>
@@ -1678,10 +1678,24 @@
     }
 
     // Initialize cart & wishlist on load
-    document.addEventListener('DOMContentLoaded', function() {
-      CameraCart.sync();
-      CameraWishlist.sync();
-    });
+    function initCartWishlist() {
+      if (window.requestIdleCallback) {
+        requestIdleCallback(function() {
+          CameraCart.sync();
+          CameraWishlist.sync();
+        });
+      } else {
+        setTimeout(function() {
+          CameraCart.sync();
+          CameraWishlist.sync();
+        }, 100);
+      }
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initCartWishlist);
+    } else {
+      initCartWishlist();
+    }
 
     // Mobile Search Modal Handlers
     const searchModal = document.getElementById('mobile-search-modal');
@@ -1952,7 +1966,7 @@
       }
 
       updateCountdown();
-      setInterval(updateCountdown, 1000);
+      setTimeout(function() { setInterval(updateCountdown, 1000); }, 4000);
     })();
 
     // Auto-Sliding Category Carousel
@@ -2017,7 +2031,7 @@
         });
       }
 
-      startAutoSlide();
+      setTimeout(startAutoSlide, 4500);
     })();
 
     // Hollyland Showcase Slider Controls
@@ -2119,7 +2133,7 @@
       }
 
       if (totalHeroSlides > 1) {
-        resetHeroTimer();
+        setTimeout(resetHeroTimer, 5000);
         const dSlider = document.getElementById('desktop-hero-slider');
         if (dSlider) {
           dSlider.addEventListener('mouseenter', () => clearInterval(heroSliderTimer));

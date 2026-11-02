@@ -2,7 +2,7 @@
 <html class="light" lang="en">
 <head>
   <meta charset="utf-8"/>
-  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/>
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
   <title>@yield('title', ($siteName ?? 'CAMERA BD') . ' | Bangladesh Premier Cine & Broadcast Audio Store')</title>
   
   <!-- Dynamic Favicon / System Icon -->

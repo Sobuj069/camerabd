@@ -9,7 +9,7 @@
       <!-- Col 1 & 2: About (Col Span 2) -->
       <div class="md:col-span-2 space-y-4">
         <div class="flex items-center gap-3">
-          <img alt="{{ $siteName ?? 'CAMERA BD' }}" class="h-8 w-auto object-contain max-w-[140px]" src="{{ $siteLogo ?? '' }}"/>
+          <img alt="{{ $siteName ?? 'CAMERA BD' }}" class="h-8 w-auto object-contain max-w-[140px]" width="140" height="32" loading="lazy" decoding="async" src="{{ $siteLogo ?? '' }}"/>
           <span class="text-base font-extrabold text-[#090D16] uppercase tracking-wider">{{ $siteName ?? 'CAMERA BD' }}</span>
         </div>
         <p class="text-[13px] leading-[22px] text-slate-500 pr-0 md:pr-6">
@@ -90,31 +90,31 @@
         <div class="flex flex-wrap items-center justify-center gap-2">
           <!-- bKash -->
           <div class="h-8 px-2.5 bg-white rounded-lg flex items-center justify-center shadow-xs border border-slate-200 hover:border-slate-400 transition-colors" title="bKash">
-            <img src="{{ asset('frontend/images/payments/bkash.svg') }}" alt="bKash" class="h-4.5 max-h-5 w-auto object-contain"/>
+            <img src="{{ asset('frontend/images/payments/bkash.svg') }}" alt="bKash" width="48" height="20" loading="lazy" decoding="async" class="h-4.5 max-h-5 w-auto object-contain"/>
           </div>
           <!-- Nagad -->
           <div class="h-8 px-2.5 bg-white rounded-lg flex items-center justify-center shadow-xs border border-slate-200 hover:border-slate-400 transition-colors" title="Nagad">
-            <img src="{{ asset('frontend/images/payments/nagad.svg') }}" alt="Nagad" class="h-4.5 max-h-5 w-auto object-contain"/>
+            <img src="{{ asset('frontend/images/payments/nagad.svg') }}" alt="Nagad" width="48" height="20" loading="lazy" decoding="async" class="h-4.5 max-h-5 w-auto object-contain"/>
           </div>
           <!-- SSLCommerz -->
           <div class="h-8 px-2.5 bg-white rounded-lg flex items-center justify-center shadow-xs border border-slate-200 hover:border-slate-400 transition-colors" title="SSLCommerz">
-            <img src="{{ asset('frontend/images/payments/sslcommerz.png') }}" alt="SSLCommerz" class="h-4 max-h-4.5 w-auto object-contain"/>
+            <img src="{{ asset('frontend/images/payments/sslcommerz.png') }}" alt="SSLCommerz" width="48" height="20" loading="lazy" decoding="async" class="h-4 max-h-4.5 w-auto object-contain"/>
           </div>
           <!-- Visa -->
           <div class="h-8 px-2.5 bg-white rounded-lg flex items-center justify-center shadow-xs border border-slate-200 hover:border-slate-400 transition-colors" title="VISA">
-            <img src="{{ asset('frontend/images/payments/visa.svg') }}" alt="VISA" class="h-3.5 max-h-4 w-auto object-contain"/>
+            <img src="{{ asset('frontend/images/payments/visa.svg') }}" alt="VISA" width="48" height="16" loading="lazy" decoding="async" class="h-3.5 max-h-4 w-auto object-contain"/>
           </div>
           <!-- MasterCard -->
           <div class="h-8 px-2.5 bg-white rounded-lg flex items-center justify-center shadow-xs border border-slate-200 hover:border-slate-400 transition-colors" title="MasterCard">
-            <img src="{{ asset('frontend/images/payments/mastercard.svg') }}" alt="MasterCard" class="h-4.5 max-h-5 w-auto object-contain"/>
+            <img src="{{ asset('frontend/images/payments/mastercard.svg') }}" alt="MasterCard" width="48" height="20" loading="lazy" decoding="async" class="h-4.5 max-h-5 w-auto object-contain"/>
           </div>
           <!-- Amex -->
           <div class="h-8 px-2.5 bg-white rounded-lg flex items-center justify-center shadow-xs border border-slate-200 hover:border-slate-400 transition-colors" title="American Express">
-            <img src="{{ asset('frontend/images/payments/amex.svg') }}" alt="American Express" class="h-4 max-h-4.5 w-auto object-contain"/>
+            <img src="{{ asset('frontend/images/payments/amex.svg') }}" alt="American Express" width="48" height="18" loading="lazy" decoding="async" class="h-4 max-h-4.5 w-auto object-contain"/>
           </div>
           <!-- City Bank EMI -->
           <div class="h-8 px-2.5 bg-white rounded-lg flex items-center justify-center gap-1.5 shadow-xs border border-slate-200 hover:border-slate-400 transition-colors" title="City Bank EMI">
-            <img src="{{ asset('frontend/images/payments/citybank.svg') }}" alt="City Bank" class="h-4.5 max-h-5 w-auto object-contain"/>
+            <img src="{{ asset('frontend/images/payments/citybank.svg') }}" alt="City Bank" width="48" height="20" loading="lazy" decoding="async" class="h-4.5 max-h-5 w-auto object-contain"/>
             <span class="text-[10px] font-bold text-[#090D16] uppercase tracking-wider bg-slate-100 px-1 py-0.2 rounded border border-slate-200">EMI</span>
           </div>
         </div>
