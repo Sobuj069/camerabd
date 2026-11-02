@@ -640,8 +640,8 @@ body.dark-theme .badge-web-pill, html.dark-theme .badge-web-pill {
         $orderDateFormatted = $order->created_at ? (\Carbon\Carbon::parse($order->created_at)->format('M d, Y, h:i A')) : date('M d, Y, h:i A');
         $deliveryCharge = (float)($order->shipping_fee ?? $order->shipping_cost ?? 0);
         $discountAmount = (float)($order->discount ?? 0);
-        $subtotalAmount = (float)($order->subtotal ?? ($order->items->sum('total_price') ?: $order->total_amount));
-        $grandTotal = (float)($order->total_amount ?? max(0, $subtotalAmount + $deliveryCharge - $discountAmount));
+        $subtotalAmount = (float)($order->items->sum('total_price') ?: ($order->subtotal ?? $order->total_amount));
+        $grandTotal = max(0, $subtotalAmount + $deliveryCharge - $discountAmount);
         
         $cards = $fraudStats['cards'] ?? [
             'overall' => ['label' => 'Overall', 'rate' => '100%', 'total' => 13, 'success' => 13, 'cancelled' => 0, 'header_bg' => '#a855f7'],
@@ -1444,13 +1444,18 @@ function recalculateOrderTotal() {
     $('#btnApproveAmountText').text(grandTotal.toFixed(2) + '৳');
     $('#summaryDelivery').text('৳' + delivery.toFixed(2));
     $('#summaryGrandTotal').text('৳' + grandTotal.toFixed(2));
+    $('#approveDeliveryCharge').val(delivery);
+    $('#approveDiscountAmount').val(discount);
 }
+
+// Auto recalculate on initial page load
+$(document).ready(function() {
+    recalculateOrderTotal();
+});
 
 // Bind real-time input change on order totals
 $('#orderDiscountInput, #orderDeliveryChargeInput, #orderAdvanceInput').on('input change keyup', function() {
     recalculateOrderTotal();
-    $('#approveDeliveryCharge').val($('#orderDeliveryChargeInput').val() || 0);
-    $('#approveDiscountAmount').val($('#orderDiscountInput').val() || 0);
 });
 
 // Sync courier type with approve form
@@ -1633,6 +1638,14 @@ $('#orderMainForm').on('submit', function(e) {
             $btn.prop('disabled', false).html('<i class="fa fa-save me-1"></i> Save');
             $btnTotals.prop('disabled', false).html('<i class="fa fa-save me-1"></i> Save Changes');
             alert(res.message || 'Saved successfully');
+            if (res.grand_total !== undefined) {
+                $('#grandTotalDisplayVal').text(parseFloat(res.grand_total).toFixed(0));
+                $('#btnApproveAmountText').text(parseFloat(res.grand_total).toFixed(2) + '৳');
+                $('#summaryGrandTotal').text('৳' + parseFloat(res.grand_total).toFixed(2));
+            }
+            if (res.delivery_charge !== undefined) {
+                $('#summaryDelivery').text('৳' + parseFloat(res.delivery_charge).toFixed(2));
+            }
         },
         error: function(xhr) {
             $btn.prop('disabled', false).html('<i class="fa fa-save me-1"></i> Save');

@@ -675,6 +675,19 @@ class WebsiteOrderController extends Controller
     {
         $order = WebsiteOrder::with(['items.product.unit', 'items.variation', 'customer', 'branch', 'invoice'])->findOrFail($id);
 
+        // Ensure subtotal and total_amount are synchronized accurately
+        $itemsSubtotal = (float)$order->items->sum('total_price');
+        if ($itemsSubtotal > 0 || $order->items->isNotEmpty()) {
+            $shipping = (float)($order->shipping_fee ?? $order->shipping_cost ?? 0);
+            $discount = (float)($order->discount ?? 0);
+            $correctTotal = max(0, $itemsSubtotal + $shipping - $discount);
+            if (abs((float)$order->subtotal - $itemsSubtotal) > 0.01 || abs((float)$order->total_amount - $correctTotal) > 0.01) {
+                $order->subtotal = $itemsSubtotal;
+                $order->total_amount = $correctTotal;
+                $order->saveQuietly();
+            }
+        }
+
         $fraudStats = [];
         try {
             $phone = $order->phone ?: $order->customer_phone;
@@ -751,11 +764,15 @@ class WebsiteOrderController extends Controller
         if ($request->has('discount_amount') && $request->input('discount_amount') !== null && $request->input('discount_amount') !== '') {
             $order->discount = (float)$request->input('discount_amount');
         }
+        $advance = null;
         if ($request->has('advance_amount') && $request->input('advance_amount') !== null && $request->input('advance_amount') !== '') {
-            $order->total_paid = (float)$request->input('advance_amount');
-            if ($order->total_paid >= $order->total_amount && $order->total_amount > 0) {
+            $advance = (float)$request->input('advance_amount');
+            if (\Illuminate\Support\Facades\Schema::hasColumn('website_orders', 'total_paid')) {
+                $order->total_paid = $advance;
+            }
+            if ($advance >= $order->total_amount && $order->total_amount > 0) {
                 $order->payment_status = 'paid';
-            } elseif ($order->total_paid > 0) {
+            } elseif ($advance > 0) {
                 $order->payment_status = 'partial';
             } else {
                 $order->payment_status = 'unpaid';
@@ -770,7 +787,12 @@ class WebsiteOrderController extends Controller
         }
         $shipping = (float)($order->shipping_fee ?? $order->shipping_cost ?? 0);
         $discount = (float)($order->discount ?? 0);
-        $order->total_amount = max(0, $order->subtotal + $shipping - $discount);
+        $order->total_amount = max(0, $subtotal + $shipping - $discount);
+
+        if (!\Illuminate\Support\Facades\Schema::hasColumn('website_orders', 'total_paid') && isset($order->total_paid)) {
+            unset($order->total_paid);
+        }
+
         $order->save();
 
         if (!empty($order->invoice_id)) {
@@ -780,7 +802,9 @@ class WebsiteOrderController extends Controller
                 $inv->discount = $discount;
                 $inv->discount_amount = $discount;
                 $inv->total_amount = (float)$order->total_amount;
-                $inv->total_paid = (float)($order->total_paid ?? $inv->total_paid);
+                if ($advance !== null) {
+                    $inv->total_paid = $advance;
+                }
                 $inv->total_due = max(0, (float)$order->total_amount - (float)$inv->total_paid);
                 $inv->saveQuietly();
             }

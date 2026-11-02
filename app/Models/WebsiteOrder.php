@@ -185,4 +185,19 @@ class WebsiteOrder extends Model
     {
         return $value !== null ? (float)$value : (float)($this->shipping_cost ?? 0);
     }
+
+    public function getTotalPaidAttribute($value)
+    {
+        if ($value !== null) {
+            return (float)$value;
+        }
+        return (float)($this->invoice->total_paid ?? 0);
+    }
+
+    public function setTotalPaidAttribute($value)
+    {
+        if (\Illuminate\Support\Facades\Schema::hasColumn('website_orders', 'total_paid')) {
+            $this->attributes['total_paid'] = (float)$value;
+        }
+    }
 }
