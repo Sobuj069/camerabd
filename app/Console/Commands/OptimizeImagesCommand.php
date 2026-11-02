@@ -31,6 +31,7 @@ class OptimizeImagesCommand extends Command
         $directories = [
             public_path('uploads/banners') => ['maxWidth' => 1200, 'maxHeight' => 675, 'quality' => 82],
             public_path('uploads/categories') => ['maxWidth' => 400, 'maxHeight' => 400, 'quality' => 82],
+            public_path('uploads/brands') => ['maxWidth' => 300, 'maxHeight' => 150, 'quality' => 82],
             public_path('uploads/products') => ['maxWidth' => 800, 'maxHeight' => 800, 'quality' => 82],
             public_path('uploads/logo') => ['maxWidth' => 400, 'maxHeight' => 200, 'quality' => 85],
         ];

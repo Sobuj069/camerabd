@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Backend;
 use App\Models\Brand;
 use App\Models\Branch;
 use App\Models\BranchBrand;
+use App\Services\ImageOptimizer;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -48,14 +49,14 @@ class BrandController extends Controller
         $brand->slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $request->name)));
 
         if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = 'brand_' . time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-            $path = public_path('uploads/brands');
-            if (!File::exists($path)) {
-                File::makeDirectory($path, 0777, true, true);
-            }
-            $image->move($path, $imageName);
-            $brand->image = $imageName;
+            $brand->image = ImageOptimizer::convertUploadedFileToWebp(
+                $request->file('image'),
+                public_path('uploads/brands'),
+                'brand',
+                300,
+                150,
+                82
+            );
         }
 
         DB::transaction(function () use ($request, $brand) {
@@ -103,14 +104,19 @@ class BrandController extends Controller
             if (!empty($brand->image) && File::exists(public_path('uploads/brands/' . $brand->image))) {
                 File::delete(public_path('uploads/brands/' . $brand->image));
             }
-            $image = $request->file('image');
-            $imageName = 'brand_' . time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-            $path = public_path('uploads/brands');
-            if (!File::exists($path)) {
-                File::makeDirectory($path, 0777, true, true);
+            $base = pathinfo($brand->image ?? '', PATHINFO_FILENAME);
+            if (!empty($base) && File::exists(public_path('uploads/brands/' . $base . '.webp'))) {
+                File::delete(public_path('uploads/brands/' . $base . '.webp'));
             }
-            $image->move($path, $imageName);
-            $brand->image = $imageName;
+
+            $brand->image = ImageOptimizer::convertUploadedFileToWebp(
+                $request->file('image'),
+                public_path('uploads/brands'),
+                'brand',
+                300,
+                150,
+                82
+            );
         }
 
         DB::transaction(function () use ($request, $brand) {

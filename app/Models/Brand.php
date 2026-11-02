@@ -23,6 +23,10 @@ class Brand extends Model
             if (filter_var($this->image, FILTER_VALIDATE_URL)) {
                 return $this->image;
             }
+            $base = pathinfo($this->image, PATHINFO_FILENAME);
+            if (file_exists(public_path('uploads/brands/' . $base . '.webp'))) {
+                return asset('uploads/brands/' . $base . '.webp');
+            }
             if (file_exists(public_path('uploads/brands/' . $this->image))) {
                 return asset('uploads/brands/' . $this->image);
             }

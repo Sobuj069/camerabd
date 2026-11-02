@@ -5,6 +5,12 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
+// Enable output compression if not enabled at server level
+if (extension_loaded('zlib') && !ini_get('zlib.output_compression')) {
+    @ini_set('zlib.output_compression', 'On');
+    @ini_set('zlib.output_compression_level', '6');
+}
+
 /*
 |--------------------------------------------------------------------------
 | Check If The Application Is Under Maintenance
