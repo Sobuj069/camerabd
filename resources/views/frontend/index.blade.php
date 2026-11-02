@@ -327,7 +327,11 @@
                 <a href="{{ $mBanner->link ?: '#' }}" 
                    class="mobile-hero-slide absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out {{ $idx === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none' }}"
                    data-slide-index="{{ $idx }}">
-                  <img alt="{{ $mBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover" width="700" height="350" src="{{ $mBanner->image_url }}" @if($idx === 0) fetchpriority="high" loading="eager" @else loading="lazy" @endif decoding="async"/>
+                  @if($idx === 0)
+                    <img alt="{{ $mBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover" width="700" height="350" src="{{ $mBanner->image_url }}" fetchpriority="high" loading="eager" decoding="async"/>
+                  @else
+                    <img alt="{{ $mBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover" width="700" height="350" data-src="{{ $mBanner->image_url }}" loading="lazy" decoding="async"/>
+                  @endif
                 </a>
               @endforeach
             </div>
@@ -386,7 +390,11 @@
                 <a href="{{ $mBanner->link ?: '#' }}" 
                    class="desktop-hero-slide absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out {{ $idx === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none' }}"
                    data-slide-index="{{ $idx }}">
-                  <img alt="{{ $mBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out" width="900" height="478" src="{{ $mBanner->image_url }}" loading="lazy" decoding="async"/>
+                  @if($idx === 0)
+                    <img alt="{{ $mBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out" width="900" height="478" src="{{ $mBanner->image_url }}" fetchpriority="high" loading="eager" decoding="async"/>
+                  @else
+                    <img alt="{{ $mBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out" width="900" height="478" data-src="{{ $mBanner->image_url }}" loading="lazy" decoding="async"/>
+                  @endif
                 </a>
               @endforeach
             </div>
@@ -2068,7 +2076,18 @@
       const totalHeroSlides = Math.max(desktopHeroSlides.length, mobileHeroSlides.length);
       let heroSliderTimer = null;
 
+      function loadRemainingHeroSlides() {
+        document.querySelectorAll('.mobile-hero-slide img[data-src], .desktop-hero-slide img[data-src]').forEach(function(img) {
+          var ds = img.getAttribute('data-src');
+          if (ds) {
+            img.src = ds;
+            img.removeAttribute('data-src');
+          }
+        });
+      }
+      setTimeout(loadRemainingHeroSlides, 2500);
       window.goToHeroSlide = function(index) {
+        loadRemainingHeroSlides();
         if (totalHeroSlides <= 1) return;
         currentHeroSlideIndex = (index + totalHeroSlides) % totalHeroSlides;
 

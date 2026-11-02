@@ -76,7 +76,6 @@
     userEvents.forEach(function(e) {
       window.addEventListener(e, initGTM, { once: true, passive: true });
     });
-    setTimeout(initGTM, 7500);
   })();
 </script>
 <script type="text/plain" id="deferred-gtm-script">
@@ -104,7 +103,6 @@
     userEvents.forEach(function(e) {
       window.addEventListener(e, loadGtmContainer, { once: true, passive: true });
     });
-    setTimeout(loadGtmContainer, 7500);
   })();
 </script>
 <!-- End Google Tag Manager Container -->
