@@ -63,6 +63,11 @@ class Banner extends Model
             return $this->image;
         }
 
+        $baseName = pathinfo($this->image, PATHINFO_FILENAME);
+        if (file_exists(public_path('uploads/banners/' . $baseName . '.webp'))) {
+            return asset('uploads/banners/' . $baseName . '.webp');
+        }
+
         return asset('uploads/banners/' . $this->image);
     }
 }

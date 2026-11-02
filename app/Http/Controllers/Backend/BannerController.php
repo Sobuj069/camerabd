@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
 use App\Models\Banner;
+use App\Services\ImageOptimizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 
@@ -72,14 +73,14 @@ class BannerController extends Controller
 
         // Handle Image Upload
         if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = 'banner_' . date('YmdHis') . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-            $uploadPath = public_path('uploads/banners');
-            if (!File::isDirectory($uploadPath)) {
-                File::makeDirectory($uploadPath, 0755, true, true);
-            }
-            $image->move($uploadPath, $imageName);
-            $banner->image = $imageName;
+            $banner->image = ImageOptimizer::convertUploadedFileToWebp(
+                $request->file('image'),
+                public_path('uploads/banners'),
+                'banner',
+                1200,
+                675,
+                82
+            );
         }
 
         $banner->save();
@@ -123,23 +124,26 @@ class BannerController extends Controller
 
         // Handle Image Upload Replacement
         if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = 'banner_' . date('YmdHis') . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-            $uploadPath = public_path('uploads/banners');
-            if (!File::isDirectory($uploadPath)) {
-                File::makeDirectory($uploadPath, 0755, true, true);
-            }
-
             // Remove old image file if local
             if (!empty($banner->image) && !str_starts_with($banner->image, 'http')) {
                 $oldFile = public_path('uploads/banners/' . $banner->image);
                 if (File::exists($oldFile)) {
                     File::delete($oldFile);
                 }
+                $base = pathinfo($banner->image, PATHINFO_FILENAME);
+                if (File::exists(public_path('uploads/banners/' . $base . '.webp'))) {
+                    File::delete(public_path('uploads/banners/' . $base . '.webp'));
+                }
             }
 
-            $image->move($uploadPath, $imageName);
-            $banner->image = $imageName;
+            $banner->image = ImageOptimizer::convertUploadedFileToWebp(
+                $request->file('image'),
+                public_path('uploads/banners'),
+                'banner',
+                1200,
+                675,
+                82
+            );
         }
 
         $banner->save();

@@ -22,6 +22,7 @@ use App\Models\BusinessSetting;
 use App\Models\ProductVariation;
 use App\Models\Warranty;
 use App\Models\HomepageSection;
+use App\Services\ImageOptimizer;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -314,8 +315,14 @@ class ProductController extends Controller
         if ($request->hasFile('thumbnail')) {
             $thumbFile = $request->file('thumbnail');
             if ($thumbFile && $thumbFile->isValid()) {
-                $thumbnailName = 'thumb_' . date('YmdHis') . '_' . uniqid() . '.' . $thumbFile->getClientOriginalExtension();
-                $thumbFile->move(public_path('uploads/products/'), $thumbnailName);
+                $thumbnailName = ImageOptimizer::convertUploadedFileToWebp(
+                    $thumbFile,
+                    public_path('uploads/products/'),
+                    'thumb',
+                    800,
+                    800,
+                    82
+                );
             }
         }
 
@@ -326,8 +333,14 @@ class ProductController extends Controller
             $files = is_array($galleryInput) ? $galleryInput : [$galleryInput];
             foreach ($files as $index => $file) {
                 if ($file && $file->isValid()) {
-                    $imgName = 'gallery_' . date('YmdHis') . '_' . $index . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                    $file->move(public_path('uploads/products/'), $imgName);
+                    $imgName = ImageOptimizer::convertUploadedFileToWebp(
+                        $file,
+                        public_path('uploads/products/'),
+                        'gallery_' . $index,
+                        1000,
+                        1000,
+                        82
+                    );
                     $uploadedGalleryImages[] = $imgName;
                 }
             }
@@ -767,10 +780,19 @@ class ProductController extends Controller
                     if (file_exists($oldThumbPath) && is_file($oldThumbPath)) {
                         @unlink($oldThumbPath);
                     }
+                    $base = pathinfo($currentThumbnail, PATHINFO_FILENAME);
+                    if (file_exists(public_path('uploads/products/' . $base . '.webp'))) {
+                        @unlink(public_path('uploads/products/' . $base . '.webp'));
+                    }
                 }
-                $newThumbName = 'thumb_' . date('YmdHis') . '_' . uniqid() . '.' . $thumbFile->getClientOriginalExtension();
-                $thumbFile->move(public_path('uploads/products/'), $newThumbName);
-                $product->thumbnail = $newThumbName;
+                $product->thumbnail = ImageOptimizer::convertUploadedFileToWebp(
+                    $thumbFile,
+                    public_path('uploads/products/'),
+                    'thumb',
+                    800,
+                    800,
+                    82
+                );
             }
         } elseif ($request->has('remove_thumbnail') && $request->remove_thumbnail == '1') {
             if (!empty($currentThumbnail) && !str_starts_with($currentThumbnail, 'http')) {

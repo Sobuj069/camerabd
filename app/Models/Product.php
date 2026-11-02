@@ -171,6 +171,10 @@ class Product extends Model
             }
             return $img;
         }
+        $baseName = pathinfo($img, PATHINFO_FILENAME);
+        if (file_exists(public_path('uploads/products/' . $baseName . '.webp'))) {
+            return asset('uploads/products/' . $baseName . '.webp');
+        }
         return asset('uploads/products/' . $img);
     }
 

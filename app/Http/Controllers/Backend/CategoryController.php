@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Backend;
 
 use App\Models\Branch;
 use App\Models\Category;
+use App\Services\ImageOptimizer;
 use Illuminate\Http\Request;
 use App\Models\BranchCategory;
 use App\Models\Product;
@@ -50,14 +51,14 @@ class CategoryController extends Controller
         $category->top_order = intval($request->input('top_order', 0));
 
         if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = 'cat_' . time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-            $path = public_path('uploads/categories');
-            if (!File::exists($path)) {
-                File::makeDirectory($path, 0777, true, true);
-            }
-            $image->move($path, $imageName);
-            $category->image = $imageName;
+            $category->image = ImageOptimizer::convertUploadedFileToWebp(
+                $request->file('image'),
+                public_path('uploads/categories'),
+                'cat',
+                400,
+                400,
+                82
+            );
         }
 
         DB::transaction(function () use ($request, $category) {
@@ -107,14 +108,19 @@ class CategoryController extends Controller
             if (!empty($category->image) && File::exists(public_path('uploads/categories/' . $category->image))) {
                 File::delete(public_path('uploads/categories/' . $category->image));
             }
-            $image = $request->file('image');
-            $imageName = 'cat_' . time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-            $path = public_path('uploads/categories');
-            if (!File::exists($path)) {
-                File::makeDirectory($path, 0777, true, true);
+            $base = pathinfo($category->image ?? '', PATHINFO_FILENAME);
+            if (!empty($base) && File::exists(public_path('uploads/categories/' . $base . '.webp'))) {
+                File::delete(public_path('uploads/categories/' . $base . '.webp'));
             }
-            $image->move($path, $imageName);
-            $category->image = $imageName;
+
+            $category->image = ImageOptimizer::convertUploadedFileToWebp(
+                $request->file('image'),
+                public_path('uploads/categories'),
+                'cat',
+                400,
+                400,
+                82
+            );
         }
 
         DB::transaction(function () use ($request, $category) {

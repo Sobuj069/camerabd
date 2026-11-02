@@ -17,132 +17,28 @@
   <!-- Google Fonts: Plus Jakarta Sans -->
   <link rel="dns-prefetch" href="https://fonts.googleapis.com"/>
   <link rel="dns-prefetch" href="https://fonts.gstatic.com"/>
-  <link rel="dns-prefetch" href="https://cdn.tailwindcss.com"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'"/>
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/></noscript>
   
   <!-- Material Symbols Outlined -->
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'"/>
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/></noscript>
+
+  @php
+    $firstHeroBannerUrl = null;
+    if (isset($heroMainBanners) && $heroMainBanners->count() > 0) {
+        $firstHeroBannerUrl = $heroMainBanners[0]->image_url;
+    }
+  @endphp
+  @if($firstHeroBannerUrl)
+    <link rel="preload" as="image" href="{{ $firstHeroBannerUrl }}" fetchpriority="high"/>
+  @endif
 
   
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script id="tailwind-config">
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          colors: {
-            "primary": "#b70011",
-            "primary-container": "#dc2626",
-            "on-primary": "#ffffff",
-            "on-primary-container": "#fff6f5",
-            "primary-fixed": "#ffdad6",
-            "primary-fixed-dim": "#ffb4ab",
-            "on-primary-fixed": "#410002",
-            "on-primary-fixed-variant": "#93000b",
-            "rec-red-base": "#DC2626",
-            "rec-red-hover": "#B91C1C",
-            "rec-red-subtle": "#FEF2F2",
-            "broadcast-teal": "#0D9488",
-            "broadcast-teal-subtle": "#F0FDFA",
-            "secondary": "#006a61",
-            "secondary-container": "#86f2e4",
-            "secondary-fixed": "#89f5e7",
-            "secondary-fixed-dim": "#6bd8cb",
-            "on-secondary": "#ffffff",
-            "on-secondary-fixed": "#00201d",
-            "on-secondary-fixed-variant": "#005049",
-            "on-secondary-container": "#006f66",
-            "surface": "#f8f9ff",
-            "surface-base": "#F8FAFC",
-            "surface-card": "#FFFFFF",
-            "surface-border": "#E2E8F0",
-            "surface-container": "#e5eeff",
-            "surface-container-low": "#eff4ff",
-            "surface-container-high": "#dce9ff",
-            "surface-container-highest": "#d3e4fe",
-            "surface-container-lowest": "#ffffff",
-            "surface-bright": "#f8f9ff",
-            "surface-dim": "#cbdbf5",
-            "surface-variant": "#d3e4fe",
-            "surface-tint": "#bf0715",
-            "on-surface": "#0b1c30",
-            "on-surface-variant": "#5c403c",
-            "inverse-surface": "#213145",
-            "inverse-on-surface": "#eaf1ff",
-            "inverse-primary": "#ffb4ab",
-            "text-display": "#090D16",
-            "text-muted": "#64748B",
-            "price-tk": "#0F172A",
-            "stock-available": "#16A34A",
-            "outline": "#916f6b",
-            "outline-variant": "#e6bdb8",
-            "tertiary": "#51596f",
-            "tertiary-container": "#6a7188",
-            "tertiary-fixed": "#dae2fd",
-            "tertiary-fixed-dim": "#bec6e0",
-            "on-tertiary": "#ffffff",
-            "on-tertiary-fixed": "#131b2e",
-            "on-tertiary-fixed-variant": "#3f465c",
-            "on-tertiary-container": "#f8f7ff",
-            "error": "#ba1a1a",
-            "error-container": "#ffdad6",
-            "on-error": "#ffffff",
-            "on-error-container": "#93000a"
-          },
-          borderRadius: {
-            "DEFAULT": "0.25rem",
-            "lg": "0.5rem",
-            "xl": "0.75rem",
-            "2xl": "1rem",
-            "full": "9999px"
-          },
-          spacing: {
-            "space-xs": "0.25rem",
-            "space-sm": "0.5rem",
-            "space-md": "0.75rem",
-            "space-lg": "1.25rem",
-            "space-xl": "2rem",
-            "gutter": "0.75rem",
-            "gutter-desktop": "1.25rem",
-            "margin": "1rem",
-            "margin-desktop": "2rem"
-          },
-          fontFamily: {
-            "sans": ["Plus Jakarta Sans", "sans-serif"],
-            "headline-lg": ["Plus Jakarta Sans", "sans-serif"],
-            "headline-md": ["Plus Jakarta Sans", "sans-serif"],
-            "headline-sm": ["Plus Jakarta Sans", "sans-serif"],
-            "display-lg": ["Plus Jakarta Sans", "sans-serif"],
-            "body-lg": ["Plus Jakarta Sans", "sans-serif"],
-            "body-md": ["Plus Jakarta Sans", "sans-serif"],
-            "body-sm": ["Plus Jakarta Sans", "sans-serif"],
-            "price-headline": ["Plus Jakarta Sans", "sans-serif"],
-            "price-strikethrough": ["Plus Jakarta Sans", "sans-serif"],
-            "label-lg": ["Plus Jakarta Sans", "sans-serif"],
-            "label-md": ["Plus Jakarta Sans", "sans-serif"],
-            "label-sm": ["Plus Jakarta Sans", "sans-serif"]
-          },
-          fontSize: {
-            "display-lg": ["32px", { lineHeight: "38px", letterSpacing: "-0.03em", fontWeight: "800" }],
-            "headline-lg": ["22px", { lineHeight: "28px", letterSpacing: "-0.02em", fontWeight: "700" }],
-            "headline-md": ["18px", { lineHeight: "24px", letterSpacing: "-0.015em", fontWeight: "700" }],
-            "headline-sm": ["15px", { lineHeight: "20px", letterSpacing: "-0.01em", fontWeight: "600" }],
-            "body-lg": ["15px", { lineHeight: "22px", fontWeight: "400" }],
-            "body-md": ["13px", { lineHeight: "18px", fontWeight: "400" }],
-            "body-sm": ["12px", { lineHeight: "16px", fontWeight: "400" }],
-            "price-headline": ["16px", { lineHeight: "20px", letterSpacing: "-0.01em", fontWeight: "800" }],
-            "price-strikethrough": ["11px", { lineHeight: "14px", fontWeight: "500" }],
-            "label-lg": ["13px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "600" }],
-            "label-md": ["11px", { lineHeight: "14px", letterSpacing: "0.02em", fontWeight: "600" }],
-            "label-sm": ["10px", { lineHeight: "12px", letterSpacing: "0.04em", fontWeight: "700" }]
-          }
-        }
-      }
-    };
-  </script>
+  <!-- Compiled High-Performance Production Tailwind CSS -->
+  <link rel="stylesheet" href="{{ asset('frontend/css/theme.min.css') }}"/>
 
   <style>
     @layer base {
