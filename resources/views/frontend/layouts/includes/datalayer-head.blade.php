@@ -55,16 +55,58 @@
 </script>
 
 @if(!empty($gtmHeaderScript))
-<!-- Dynamic Google Tag Manager Header Script -->
-{!! $gtmHeaderScript !!}
+<!-- Dynamic Google Tag Manager Header Script (Deferred for Mobile Performance) -->
+<script>
+  (function() {
+    var gtmLoaded = false;
+    function initGTM() {
+      if (gtmLoaded) return;
+      gtmLoaded = true;
+      var el = document.getElementById('deferred-gtm-script');
+      if (el) {
+        var s = document.createElement('script');
+        s.text = el.textContent;
+        document.head.appendChild(s);
+      }
+    }
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(function() { setTimeout(initGTM, 1800); });
+    } else {
+      window.addEventListener('load', function() { setTimeout(initGTM, 1800); });
+    }
+    ['scroll', 'touchstart', 'mousemove', 'click', 'keydown'].forEach(function(e) {
+      window.addEventListener(e, initGTM, { once: true, passive: true });
+    });
+  })();
+</script>
+<script type="text/plain" id="deferred-gtm-script">
+{!! str_replace(['<script>', '</script>'], '', $gtmHeaderScript) !!}
+</script>
 <!-- End Dynamic Google Tag Manager Header Script -->
 @elseif(!empty($gtmId))
-<!-- Google Tag Manager Container -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','{{ $gtmId }}');</script>
+<!-- Google Tag Manager Container (Deferred for Mobile Performance) -->
+<script>
+  (function() {
+    var gtmLoaded = false;
+    function loadGtmContainer() {
+      if (gtmLoaded) return;
+      gtmLoaded = true;
+      (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+      'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+      })(window,document,'script','dataLayer','{{ $gtmId }}');
+    }
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(function() { setTimeout(loadGtmContainer, 1800); });
+    } else {
+      window.addEventListener('load', function() { setTimeout(loadGtmContainer, 1800); });
+    }
+    ['scroll', 'touchstart', 'mousemove', 'click', 'keydown'].forEach(function(e) {
+      window.addEventListener(e, loadGtmContainer, { once: true, passive: true });
+    });
+  })();
+</script>
 <!-- End Google Tag Manager Container -->
 @endif
 
