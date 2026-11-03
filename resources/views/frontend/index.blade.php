@@ -313,20 +313,85 @@
   <main class="flex-1 w-full pt-[92px] lg:pt-[132px] pb-24 lg:pb-0 bg-surface-base">
 
     <!-- ========================================== -->
-    <!-- SECTION 1: HERO SECTION (UNIFIED RESPONSIVE) -->
+    <!-- SECTION 1: HERO SECTION (DESKTOP & MOBILE OPTIMIZED) -->
     <!-- ========================================== -->
     <section class="max-w-7xl mx-auto px-4 lg:px-6 pt-4 lg:pt-6 pb-2 w-full">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-5 items-stretch">
-        <!-- Main Billboard Slider (Full width on mobile, 8 columns on desktop) -->
-        <div class="lg:col-span-8 relative bg-surface-card rounded-2xl shadow-sm overflow-hidden border border-surface-border group aspect-[2/1] lg:aspect-[16/8.5]" id="hero-slider">
+      
+      <!-- MOBILE HERO (Visible on < lg) -->
+      <div class="lg:hidden flex flex-col gap-3">
+        <!-- Main Featured Hero Slider / Banner (Mobile) -->
+        <div class="relative w-full rounded-2xl overflow-hidden shadow-sm aspect-[2/1] bg-surface-card border border-surface-border group" id="mobile-hero-slider">
           @if(isset($heroMainBanners) && $heroMainBanners->count() > 0)
             <div class="relative w-full h-full overflow-hidden">
               @foreach($heroMainBanners as $idx => $mBanner)
                 <a href="{{ $mBanner->link ?: '#' }}" 
-                   class="hero-slide absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out {{ $idx === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none' }}"
+                   class="mobile-hero-slide absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out {{ $idx === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none' }}"
                    data-slide-index="{{ $idx }}">
                   @if($idx === 0)
-                    <img alt="{{ $mBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out" width="900" height="478" sizes="(max-width: 1024px) 100vw, 813px" src="{{ $mBanner->image_url }}" fetchpriority="high" loading="eager" decoding="async"/>
+                    <img alt="{{ $mBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover" width="700" height="350" src="{{ $mBanner->image_url }}" fetchpriority="high" loading="eager" decoding="async"/>
+                  @else
+                    <img alt="{{ $mBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover" width="700" height="350" data-src="{{ $mBanner->image_url }}" loading="lazy" decoding="async"/>
+                  @endif
+                </a>
+              @endforeach
+            </div>
+
+            @if($heroMainBanners->count() > 1)
+              <!-- Mobile Dot Indicators -->
+              <div class="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-black/40 backdrop-blur-xs px-2.5 py-1 rounded-full">
+                @foreach($heroMainBanners as $idx => $mBanner)
+                  <button type="button" onclick="goToHeroSlide({{ $idx }})" 
+                          class="hero-dot w-2 h-2 rounded-full transition-all {{ $idx === 0 ? 'bg-white w-4' : 'bg-white/50' }}" 
+                          aria-label="Slide {{ $idx + 1 }}"></button>
+                @endforeach
+              </div>
+            @endif
+          @else
+            <!-- Fallback Hero Banner -->
+            <a href="{{ url('/product-details/dji-osmo-pocket-4p') }}" class="block w-full h-full">
+              <img alt="DJI Osmo Pocket 4P" class="w-full h-full object-cover" width="700" height="350" src="{{ asset('uploads/banners/banner_pocket4p.webp') }}" fetchpriority="high" loading="eager" decoding="async"/>
+            </a>
+          @endif
+        </div>
+
+        <!-- Secondary Hero Quick Tiles (2 Columns Side-by-Side on Mobile) -->
+        <div class="grid grid-cols-2 gap-2.5">
+          <!-- Card 1: Side Top Promo -->
+          @if(isset($heroSideTopBanner) && $heroSideTopBanner)
+            <a class="block rounded-xl overflow-hidden bg-surface-card shadow-sm border border-surface-border aspect-[16/9] group active:scale-[0.99] transition-transform" href="{{ $heroSideTopBanner->link ?: '#' }}">
+              <img alt="{{ $heroSideTopBanner->title ?? (($siteName ?? 'CAMERA BD') . ' Promo') }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" width="340" height="191" src="{{ $heroSideTopBanner->image_url }}" loading="lazy" fetchpriority="low" decoding="async"/>
+            </a>
+          @else
+            <a class="block rounded-xl overflow-hidden bg-surface-card shadow-sm border border-surface-border aspect-[16/9] group active:scale-[0.99] transition-transform" href="{{ route('frontend.category', ['slug' => 'drone']) }}">
+              <img alt="DJI Neo 2 Drone" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" width="340" height="191" src="{{ asset('uploads/banners/banner_neo2.webp') }}" loading="lazy" fetchpriority="low" decoding="async"/>
+            </a>
+          @endif
+
+          <!-- Card 2: Side Bottom Promo -->
+          @if(isset($heroSideBottomBanner) && $heroSideBottomBanner)
+            <a class="block rounded-xl overflow-hidden bg-surface-card shadow-sm border border-surface-border aspect-[16/9] group active:scale-[0.99] transition-transform" href="{{ $heroSideBottomBanner->link ?: '#' }}">
+              <img alt="{{ $heroSideBottomBanner->title ?? (($siteName ?? 'CAMERA BD') . ' Promo') }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" width="340" height="191" src="{{ $heroSideBottomBanner->image_url }}" loading="lazy" fetchpriority="low" decoding="async"/>
+            </a>
+          @else
+            <a class="block rounded-xl overflow-hidden bg-surface-card shadow-sm border border-surface-border aspect-[16/9] group active:scale-[0.99] transition-transform" href="{{ route('frontend.category', ['slug' => 'digital-camera']) }}">
+              <img alt="Nikon Cinema Series" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" width="340" height="191" src="{{ asset('uploads/banners/banner_z30.webp') }}" loading="lazy" fetchpriority="low" decoding="async"/>
+            </a>
+          @endif
+        </div>
+      </div>
+
+      <!-- DESKTOP HERO (Visible on >= lg) -->
+      <div class="hidden lg:grid grid-cols-12 gap-5 items-stretch">
+        <!-- Main Billboard Slider: 8 Columns -->
+        <div class="col-span-8 relative bg-surface-card rounded-2xl shadow-sm overflow-hidden border border-surface-border group aspect-[16/8.5]" id="desktop-hero-slider">
+          @if(isset($heroMainBanners) && $heroMainBanners->count() > 0)
+            <div class="relative w-full h-full overflow-hidden">
+              @foreach($heroMainBanners as $idx => $mBanner)
+                <a href="{{ $mBanner->link ?: '#' }}" 
+                   class="desktop-hero-slide absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out {{ $idx === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none' }}"
+                   data-slide-index="{{ $idx }}">
+                  @if($idx === 0)
+                    <img alt="{{ $mBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out" width="900" height="478" src="{{ $mBanner->image_url }}" fetchpriority="high" loading="eager" decoding="async"/>
                   @else
                     <img alt="{{ $mBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out" width="900" height="478" data-src="{{ $mBanner->image_url }}" loading="lazy" decoding="async"/>
                   @endif
@@ -335,19 +400,19 @@
             </div>
 
             @if($heroMainBanners->count() > 1)
-              <!-- Left / Right Navigation Arrows (Visible on hover on desktop) -->
-              <button type="button" onclick="prevHeroSlide()" aria-label="Previous Slide" class="hidden lg:flex absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/40 hover:bg-black/70 text-white items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-md">
+              <!-- Left / Right Navigation Arrows -->
+              <button type="button" onclick="prevHeroSlide()" aria-label="Previous Slide" class="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/40 hover:bg-black/70 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-md">
                 <span class="material-symbols-outlined text-[24px]">chevron_left</span>
               </button>
-              <button type="button" onclick="nextHeroSlide()" aria-label="Next Slide" class="hidden lg:flex absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/40 hover:bg-black/70 text-white items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-md">
+              <button type="button" onclick="nextHeroSlide()" aria-label="Next Slide" class="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/40 hover:bg-black/70 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-md">
                 <span class="material-symbols-outlined text-[24px]">chevron_right</span>
               </button>
 
               <!-- Dot Indicators -->
-              <div class="absolute bottom-2 lg:bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 lg:gap-2 bg-black/40 backdrop-blur-xs px-2.5 lg:px-3 py-1 lg:py-1.5 rounded-full">
+              <div class="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-black/40 backdrop-blur-xs px-3 py-1.5 rounded-full">
                 @foreach($heroMainBanners as $idx => $mBanner)
                   <button type="button" onclick="goToHeroSlide({{ $idx }})" 
-                          class="hero-dot h-2 rounded-full transition-all duration-300 {{ $idx === 0 ? 'bg-white w-5 lg:w-6' : 'bg-white/50 w-2 hover:bg-white/80' }}" 
+                          class="desktop-hero-dot h-2 rounded-full transition-all duration-300 {{ $idx === 0 ? 'bg-white w-6' : 'bg-white/50 w-2 hover:bg-white/80' }}" 
                           aria-label="Slide {{ $idx + 1 }}"></button>
                 @endforeach
               </div>
@@ -360,27 +425,27 @@
           @endif
         </div>
 
-        <!-- Secondary Tiles (2 Columns on mobile, 4 Columns stacked on desktop) -->
-        <div class="lg:col-span-4 grid grid-cols-2 lg:flex lg:flex-col gap-2.5 lg:gap-5 justify-between">
+        <!-- Secondary Stacked Cards (4 Columns - Stacked Vertically to Fill Height) -->
+        <div class="col-span-4 flex flex-col gap-5 justify-between">
           <!-- Card 1: Side Top -->
           @if(isset($heroSideTopBanner) && $heroSideTopBanner)
-            <a href="{{ $heroSideTopBanner->link ?: '#' }}" class="lg:flex-1 block bg-surface-card rounded-xl lg:rounded-2xl shadow-sm overflow-hidden border border-surface-border group aspect-[16/9] lg:aspect-[16/7.5] active:scale-[0.99] transition-transform">
-              <img alt="{{ $heroSideTopBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" width="440" height="230" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 440 230'%3E%3Crect width='100%25' height='100%25' fill='%23f1f5f9'/%3E%3C/svg%3E" data-src="{{ $heroSideTopBanner->image_url }}" loading="lazy" fetchpriority="low" decoding="async"/>
+            <a href="{{ $heroSideTopBanner->link ?: '#' }}" class="flex-1 block bg-surface-card rounded-2xl shadow-sm overflow-hidden border border-surface-border group aspect-[16/7.5]">
+              <img alt="{{ $heroSideTopBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" width="440" height="230" src="{{ $heroSideTopBanner->image_url }}" loading="lazy" fetchpriority="low" decoding="async"/>
             </a>
           @else
-            <a href="{{ route('frontend.category', ['slug' => 'drone']) }}" class="lg:flex-1 block bg-surface-card rounded-xl lg:rounded-2xl shadow-sm overflow-hidden border border-surface-border group aspect-[16/9] lg:aspect-[16/7.5] active:scale-[0.99] transition-transform">
-              <img alt="DJI Neo 2 Drone" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" width="440" height="230" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 440 230'%3E%3Crect width='100%25' height='100%25' fill='%23f1f5f9'/%3E%3C/svg%3E" data-src="{{ asset('uploads/banners/banner_neo2.webp') }}" loading="lazy" fetchpriority="low" decoding="async"/>
+            <a href="{{ route('frontend.category', ['slug' => 'drone']) }}" class="flex-1 block bg-surface-card rounded-2xl shadow-sm overflow-hidden border border-surface-border group aspect-[16/7.5]">
+              <img alt="DJI Neo 2 Drone" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" width="440" height="230" src="{{ asset('uploads/banners/banner_neo2.webp') }}" loading="lazy" fetchpriority="low" decoding="async"/>
             </a>
           @endif
 
           <!-- Card 2: Side Bottom -->
           @if(isset($heroSideBottomBanner) && $heroSideBottomBanner)
-            <a href="{{ $heroSideBottomBanner->link ?: '#' }}" class="lg:flex-1 block bg-surface-card rounded-xl lg:rounded-2xl shadow-sm overflow-hidden border border-surface-border group aspect-[16/9] lg:aspect-[16/7.5] active:scale-[0.99] transition-transform">
-              <img alt="{{ $heroSideBottomBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" width="440" height="230" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 440 230'%3E%3Crect width='100%25' height='100%25' fill='%23f1f5f9'/%3E%3C/svg%3E" data-src="{{ $heroSideBottomBanner->image_url }}" loading="lazy" fetchpriority="low" decoding="async"/>
+            <a href="{{ $heroSideBottomBanner->link ?: '#' }}" class="flex-1 block bg-surface-card rounded-2xl shadow-sm overflow-hidden border border-surface-border group aspect-[16/7.5]">
+              <img alt="{{ $heroSideBottomBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" width="440" height="230" src="{{ $heroSideBottomBanner->image_url }}" loading="lazy" fetchpriority="low" decoding="async"/>
             </a>
           @else
-            <a href="{{ route('frontend.category', ['slug' => 'digital-camera']) }}" class="lg:flex-1 block bg-surface-card rounded-xl lg:rounded-2xl shadow-sm overflow-hidden border border-surface-border group aspect-[16/9] lg:aspect-[16/7.5] active:scale-[0.99] transition-transform">
-              <img alt="Nikon Z30 Cinema Body" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" width="440" height="230" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 440 230'%3E%3Crect width='100%25' height='100%25' fill='%23f1f5f9'/%3E%3C/svg%3E" data-src="{{ asset('uploads/banners/banner_z30.webp') }}" loading="lazy" fetchpriority="low" decoding="async"/>
+            <a href="{{ route('frontend.category', ['slug' => 'digital-camera']) }}" class="flex-1 block bg-surface-card rounded-2xl shadow-sm overflow-hidden border border-surface-border group aspect-[16/7.5]">
+              <img alt="Nikon Z30 Cinema Body" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" width="440" height="230" src="{{ asset('uploads/banners/banner_z30.webp') }}" loading="lazy" fetchpriority="low" decoding="async"/>
             </a>
           @endif
         </div>
@@ -784,7 +849,7 @@
                     <div class="w-full aspect-square flex items-center justify-center p-2 mb-1.5 overflow-hidden">
                       <a href="{{ route('frontend.product.details', $hlProduct->slug ?: $hlProduct->id) }}" class="w-full h-full flex items-center justify-center">
                         @if($hlProduct->has_real_image)
-                          <img src="{{ $hlProduct->thumbnail_url }}" alt="{{ $hlProduct->name }}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300" width="240" height="240" loading="lazy" decoding="async" loading="lazy" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full flex flex-col items-center justify-center text-[#006a61] bg-[#f0faf7] p-2 rounded-lg\'><span class=\'material-symbols-outlined text-[32px]\'>mic</span><span class=\'text-[10px] font-bold mt-1\'>Hollyland</span></div>';"/>
+                          <img src="{{ $hlProduct->thumbnail_url }}" alt="{{ $hlProduct->name }}" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300" width="240" height="240" loading="lazy" decoding="async" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full flex flex-col items-center justify-center text-[#006a61] bg-[#f0faf7] p-2 rounded-lg\'><span class=\'material-symbols-outlined text-[32px]\'>mic</span><span class=\'text-[10px] font-bold mt-1\'>Hollyland</span></div>';"/>
                         @else
                           <div class="w-full h-full flex items-center justify-center flex-col text-[#006a61] bg-gradient-to-br from-[#f0faf7] to-[#e0f4ee] rounded-xl p-3 text-center border border-[#d2efe7] group-hover:bg-[#e6f7f2] transition-colors">
                             <div class="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center text-[#006a61] mb-1 group-hover:scale-110 transition-transform">
