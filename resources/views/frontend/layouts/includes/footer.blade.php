@@ -1,7 +1,7 @@
 <!-- ========================================== -->
 <!-- LANDING PAGE EXACT FOOTER (UNIVERSAL) -->
 <!-- ========================================== -->
-<footer class="w-full bg-white text-slate-800 pt-14 pb-8 border-t border-slate-200 mt-12">
+<footer class="w-full bg-white text-slate-800 pt-14 pb-8 border-t border-slate-200 mt-12 content-visibility-auto">
   <div class="max-w-7xl mx-auto px-4 lg:px-6">
     
     <!-- 4 Columns Link Matrix -->

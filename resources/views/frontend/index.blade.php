@@ -80,6 +80,10 @@
     .animate-toast {
       animation: slideInDown 0.3s ease-out forwards;
     }
+    .content-visibility-auto {
+      content-visibility: auto;
+      contain-intrinsic-size: 1px 600px;
+    }
   </style>
 </head>
 
@@ -322,7 +326,7 @@
                    class="hero-slide absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out {{ $idx === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none' }}"
                    data-slide-index="{{ $idx }}">
                   @if($idx === 0)
-                    <img alt="{{ $mBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out" width="900" height="478" src="{{ $mBanner->image_url }}" fetchpriority="high" loading="eager" decoding="async"/>
+                    <img alt="{{ $mBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out" width="900" height="478" sizes="(max-width: 1024px) 100vw, 813px" src="{{ $mBanner->image_url }}" fetchpriority="high" loading="eager" decoding="async"/>
                   @else
                     <img alt="{{ $mBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700 ease-out" width="900" height="478" data-src="{{ $mBanner->image_url }}" loading="lazy" decoding="async"/>
                   @endif
@@ -459,12 +463,12 @@
     <!-- ========================================== -->
     <!-- SECTION 4: LIMITED-TIME FLASH DEALS -->
     <!-- ========================================== -->
-    <section id="hot-deals" class="max-w-7xl mx-auto px-4 lg:px-6 pt-8 lg:pt-10 w-full">
+    <section id="hot-deals" class="max-w-7xl mx-auto px-4 lg:px-6 pt-8 lg:pt-10 w-full content-visibility-auto">
       <div class="bg-surface-card rounded-2xl p-4 lg:p-8 shadow-sm border border-surface-border">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 lg:mb-6 pb-4 border-b border-surface-border">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-sm">
-              <span class="material-symbols-outlined text-[22px]">timer</span>
+              <span class="material-symbols-outlined text-[22px] w-[22px] h-[22px] inline-flex items-center justify-center leading-none">timer</span>
             </div>
             <div>
               <div class="flex items-center gap-2">
@@ -565,7 +569,7 @@
     <!-- ========================================== -->
     <!-- SECTION 5: POPULAR CINEMA & CREATOR GEAR -->
     <!-- ========================================== -->
-    <section id="popular-cinema" class="max-w-7xl mx-auto px-4 lg:px-6 pt-8 lg:pt-10 w-full">
+    <section id="popular-cinema" class="max-w-7xl mx-auto px-4 lg:px-6 pt-8 lg:pt-10 w-full content-visibility-auto">
       @php
         $popularCats = $popularProducts->pluck('category.name')->filter()->unique();
       @endphp
@@ -672,7 +676,7 @@
           $hlBannerSrc = asset('uploads/banners/banner_hollyland.webp');
       }
     @endphp
-    <section id="hollyland-audio" class="max-w-7xl mx-auto px-4 lg:px-6 pt-8 lg:pt-10 w-full">
+    <section id="hollyland-audio" class="max-w-7xl mx-auto px-4 lg:px-6 pt-8 lg:pt-10 w-full content-visibility-auto">
       <div class="bg-white rounded-3xl border border-[#c6eae1] p-4 sm:p-5 lg:p-6 shadow-xs">
         
         <!-- Top Header Strip -->
@@ -784,7 +788,7 @@
                         @else
                           <div class="w-full h-full flex items-center justify-center flex-col text-[#006a61] bg-gradient-to-br from-[#f0faf7] to-[#e0f4ee] rounded-xl p-3 text-center border border-[#d2efe7] group-hover:bg-[#e6f7f2] transition-colors">
                             <div class="w-10 h-10 rounded-full bg-white shadow-xs flex items-center justify-center text-[#006a61] mb-1 group-hover:scale-110 transition-transform">
-                              <span class="material-symbols-outlined text-[22px]">mic</span>
+                              <span class="material-symbols-outlined text-[22px] w-[22px] h-[22px] inline-flex items-center justify-center leading-none">mic</span>
                             </div>
                             <span class="text-[10px] text-[#006a61] font-bold uppercase tracking-wider line-clamp-1">{{ $hlProduct->category?->name ?? 'Microphone' }}</span>
                           </div>
@@ -842,7 +846,7 @@
     <!-- ========================================== -->
     <!-- SECTION 7: STUDIO ESSENTIALS & POWER RIGS -->
     <!-- ========================================== -->
-    <section id="studio-gear" class="max-w-7xl mx-auto px-4 lg:px-6 pt-8 lg:pt-10 w-full">
+    <section id="studio-gear" class="max-w-7xl mx-auto px-4 lg:px-6 pt-8 lg:pt-10 w-full content-visibility-auto">
       <div class="flex items-center justify-between mb-4 lg:mb-6">
         <div>
           <div class="flex items-center gap-1.5 mb-0.5">
@@ -921,7 +925,7 @@
           $secProducts = $customSec->products ?? collect();
         @endphp
         @if(count($secProducts) > 0)
-          <section id="custom-sec-{{ $customSec->id }}" class="max-w-7xl mx-auto px-4 lg:px-6 pt-8 lg:pt-10 w-full">
+          <section id="custom-sec-{{ $customSec->id }}" class="max-w-7xl mx-auto px-4 lg:px-6 pt-8 lg:pt-10 w-full content-visibility-auto">
             <div class="flex items-center justify-between mb-4 lg:mb-6">
               <div>
                 <div class="flex items-center gap-1.5 mb-0.5">
@@ -998,7 +1002,7 @@
     <!-- ========================================== -->
     <!-- SECTION 8: TRUSTED PARTNERS & LABELS -->
     <!-- ========================================== -->
-    <section id="brands" class="max-w-7xl mx-auto px-4 lg:px-6 pt-8 lg:pt-10 w-full">
+    <section id="brands" class="max-w-7xl mx-auto px-4 lg:px-6 pt-8 lg:pt-10 w-full content-visibility-auto">
       <div class="bg-[#f0f8f5] rounded-3xl p-6 lg:p-8 border border-[#d4ebe4] shadow-xs">
         
         <!-- Header -->
@@ -1035,7 +1039,7 @@
     <!-- SECTION 9: PHYSICAL FLAGSHIP STORES IN DHAKA (Temporarily Hidden) -->
     <!-- ========================================== -->
     {{--
-    <section id="flagship-stores" class="max-w-7xl mx-auto px-4 lg:px-6 pt-8 lg:pt-10 w-full">
+    <section id="flagship-stores" class="max-w-7xl mx-auto px-4 lg:px-6 pt-8 lg:pt-10 w-full content-visibility-auto">
       <div class="flex items-center gap-1.5 mb-4">
         <span class="material-symbols-outlined text-[20px] text-rec-red-base">location_on</span>
         <h2 class="text-headline-md lg:text-headline-lg font-headline-lg text-text-display font-bold">Physical Flagship Stores in Dhaka</h2>
@@ -1116,7 +1120,7 @@
     <!-- ========================================== -->
     <!-- SECTION 10: VIP CREATOR NEWSLETTER -->
     <!-- ========================================== -->
-    <section class="max-w-7xl mx-auto px-4 lg:px-6 pt-8 lg:pt-10 pb-6 w-full">
+    <section class="max-w-7xl mx-auto px-4 lg:px-6 pt-8 lg:pt-10 pb-6 w-full content-visibility-auto">
       <div class="bg-surface-container-high rounded-2xl p-5 lg:p-8 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-6 border border-surface-border">
         <div class="max-w-xl">
           <div class="flex items-center gap-2 mb-2">
@@ -1150,33 +1154,33 @@
     <div class="flex justify-around items-center h-16 px-1" id="mobile-nav-bar">
       <!-- Home -->
       <a aria-current="page" onclick="setActiveNav(this)" class="mobile-nav-item flex flex-col items-center justify-center gap-0.5 w-14 h-14 transition-colors text-primary font-bold" href="#">
-        <span class="material-symbols-outlined text-[22px]">home</span>
+        <span class="material-symbols-outlined text-[22px] w-[22px] h-[22px] inline-flex items-center justify-center leading-none">home</span>
         <span class="font-label-sm text-[10px]">Home</span>
       </a>
       <!-- Categories Drawer Trigger -->
       <button type="button" onclick="openMobileCategoryDrawer(); setActiveNav(this);" class="mobile-nav-item flex flex-col items-center justify-center gap-0.5 w-14 h-14 text-text-muted hover:text-on-surface transition-colors">
-        <span class="material-symbols-outlined text-[22px]">category</span>
+        <span class="material-symbols-outlined text-[22px] w-[22px] h-[22px] inline-flex items-center justify-center leading-none">category</span>
         <span class="font-label-sm text-[10px]">Categories</span>
       </button>
       <!-- Deals -->
       <a onclick="setActiveNav(this)" class="mobile-nav-item flex flex-col items-center justify-center gap-0.5 w-14 h-14 text-text-muted hover:text-on-surface transition-colors" href="#hot-deals">
-        <span class="material-symbols-outlined text-[22px]">local_fire_department</span>
+        <span class="material-symbols-outlined text-[22px] w-[22px] h-[22px] inline-flex items-center justify-center leading-none">local_fire_department</span>
         <span class="font-label-sm text-[10px]">Deals</span>
       </a>
       <!-- Orders -->
       <a onclick="setActiveNav(this)" class="mobile-nav-item flex flex-col items-center justify-center gap-0.5 w-14 h-14 text-text-muted hover:text-on-surface transition-colors" href="#orders" onclick="showToast('Loading your order history...', 'info')">
-        <span class="material-symbols-outlined text-[22px]">package_2</span>
+        <span class="material-symbols-outlined text-[22px] w-[22px] h-[22px] inline-flex items-center justify-center leading-none">package_2</span>
         <span class="font-label-sm text-[10px]">Orders</span>
       </a>
       <!-- Account -->
       @auth
         <a onclick="setActiveNav(this)" class="mobile-nav-item flex flex-col items-center justify-center gap-0.5 w-14 h-14 text-text-muted hover:text-on-surface transition-colors" href="{{ route('dashboard') }}">
-          <span class="material-symbols-outlined text-[22px]">dashboard</span>
+          <span class="material-symbols-outlined text-[22px] w-[22px] h-[22px] inline-flex items-center justify-center leading-none">dashboard</span>
           <span class="font-label-sm text-[10px]">Panel</span>
         </a>
       @else
         <a onclick="setActiveNav(this)" class="mobile-nav-item flex flex-col items-center justify-center gap-0.5 w-14 h-14 text-text-muted hover:text-on-surface transition-colors" href="{{ route('login') }}">
-          <span class="material-symbols-outlined text-[22px]">account_circle</span>
+          <span class="material-symbols-outlined text-[22px] w-[22px] h-[22px] inline-flex items-center justify-center leading-none">account_circle</span>
           <span class="font-label-sm text-[10px]">Account</span>
         </a>
       @endauth
