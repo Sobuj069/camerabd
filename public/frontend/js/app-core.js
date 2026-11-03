@@ -879,3 +879,41 @@
           }
         }
       })();
+
+
+// ============================================
+// ASYNC ASSET LOADERS (CRITICAL LCP PRESERVATION)
+// ============================================
+(function initDeferredAssets() {
+  function loadSecondaryImages() {
+    document.querySelectorAll('img[data-src]').forEach(function(img) {
+      var ds = img.getAttribute('data-src');
+      if (ds) {
+        img.src = ds;
+        img.removeAttribute('data-src');
+      }
+    });
+  }
+
+  function loadMaterialSymbols() {
+    if (document.getElementById('material-symbols-css')) return;
+    var link = document.createElement('link');
+    link.id = 'material-symbols-css';
+    link.rel = 'stylesheet';
+    link.href = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap';
+    document.head.appendChild(link);
+  }
+
+  function startDeferredLoading() {
+    loadSecondaryImages();
+    setTimeout(loadMaterialSymbols, 150);
+  }
+
+  if (document.readyState === 'complete') {
+    setTimeout(startDeferredLoading, 300);
+  } else {
+    window.addEventListener('load', function() {
+      setTimeout(startDeferredLoading, 300);
+    });
+  }
+})();

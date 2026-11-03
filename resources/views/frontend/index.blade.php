@@ -28,12 +28,12 @@
   <!-- 2. Compiled High-Performance Production Tailwind CSS -->
   <link rel="stylesheet" href="{{ asset('frontend/css/theme.min.css') }}"/>
 
-  <!-- 3. Deferred Asynchronous Google Fonts (Non-Blocking) -->
+  <!-- 3. Primary Body Font: Plus Jakarta Sans (~26 KB, Non-Blocking) -->
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" media="print" onload="this.media='all'"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" media="print" onload="this.media='all'"/>
   <noscript>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"/>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap"/>
   </noscript>
 
   <style>
@@ -365,22 +365,22 @@
           <!-- Card 1: Side Top -->
           @if(isset($heroSideTopBanner) && $heroSideTopBanner)
             <a href="{{ $heroSideTopBanner->link ?: '#' }}" class="lg:flex-1 block bg-surface-card rounded-xl lg:rounded-2xl shadow-sm overflow-hidden border border-surface-border group aspect-[16/9] lg:aspect-[16/7.5] active:scale-[0.99] transition-transform">
-              <img alt="{{ $heroSideTopBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" width="440" height="230" src="{{ $heroSideTopBanner->image_url }}" loading="lazy" fetchpriority="low" decoding="async"/>
+              <img alt="{{ $heroSideTopBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" width="440" height="230" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 440 230'%3E%3Crect width='100%25' height='100%25' fill='%23f1f5f9'/%3E%3C/svg%3E" data-src="{{ $heroSideTopBanner->image_url }}" loading="lazy" fetchpriority="low" decoding="async"/>
             </a>
           @else
             <a href="{{ route('frontend.category', ['slug' => 'drone']) }}" class="lg:flex-1 block bg-surface-card rounded-xl lg:rounded-2xl shadow-sm overflow-hidden border border-surface-border group aspect-[16/9] lg:aspect-[16/7.5] active:scale-[0.99] transition-transform">
-              <img alt="DJI Neo 2 Drone" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" width="440" height="230" src="{{ asset('uploads/banners/banner_neo2.webp') }}" loading="lazy" fetchpriority="low" decoding="async"/>
+              <img alt="DJI Neo 2 Drone" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" width="440" height="230" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 440 230'%3E%3Crect width='100%25' height='100%25' fill='%23f1f5f9'/%3E%3C/svg%3E" data-src="{{ asset('uploads/banners/banner_neo2.webp') }}" loading="lazy" fetchpriority="low" decoding="async"/>
             </a>
           @endif
 
           <!-- Card 2: Side Bottom -->
           @if(isset($heroSideBottomBanner) && $heroSideBottomBanner)
             <a href="{{ $heroSideBottomBanner->link ?: '#' }}" class="lg:flex-1 block bg-surface-card rounded-xl lg:rounded-2xl shadow-sm overflow-hidden border border-surface-border group aspect-[16/9] lg:aspect-[16/7.5] active:scale-[0.99] transition-transform">
-              <img alt="{{ $heroSideBottomBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" width="440" height="230" src="{{ $heroSideBottomBanner->image_url }}" loading="lazy" fetchpriority="low" decoding="async"/>
+              <img alt="{{ $heroSideBottomBanner->title ?? ($siteName ?? 'CAMERA BD') }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" width="440" height="230" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 440 230'%3E%3Crect width='100%25' height='100%25' fill='%23f1f5f9'/%3E%3C/svg%3E" data-src="{{ $heroSideBottomBanner->image_url }}" loading="lazy" fetchpriority="low" decoding="async"/>
             </a>
           @else
             <a href="{{ route('frontend.category', ['slug' => 'digital-camera']) }}" class="lg:flex-1 block bg-surface-card rounded-xl lg:rounded-2xl shadow-sm overflow-hidden border border-surface-border group aspect-[16/9] lg:aspect-[16/7.5] active:scale-[0.99] transition-transform">
-              <img alt="Nikon Z30 Cinema Body" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" width="440" height="230" src="{{ asset('uploads/banners/banner_z30.webp') }}" loading="lazy" fetchpriority="low" decoding="async"/>
+              <img alt="Nikon Z30 Cinema Body" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" width="440" height="230" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 440 230'%3E%3Crect width='100%25' height='100%25' fill='%23f1f5f9'/%3E%3C/svg%3E" data-src="{{ asset('uploads/banners/banner_z30.webp') }}" loading="lazy" fetchpriority="low" decoding="async"/>
             </a>
           @endif
         </div>
