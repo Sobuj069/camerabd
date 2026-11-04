@@ -15,9 +15,13 @@ class Product extends Model
     {
         static::saved(function () {
             \Illuminate\Support\Facades\Cache::forget('frontend_homepage_sections_v2');
+            \Illuminate\Support\Facades\Cache::forget('facebook_product_feed_xml');
+            \Illuminate\Support\Facades\Cache::forget('facebook_product_feed_csv');
         });
         static::deleted(function () {
             \Illuminate\Support\Facades\Cache::forget('frontend_homepage_sections_v2');
+            \Illuminate\Support\Facades\Cache::forget('facebook_product_feed_xml');
+            \Illuminate\Support\Facades\Cache::forget('facebook_product_feed_csv');
         });
     }
 

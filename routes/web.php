@@ -33,6 +33,7 @@ use App\Http\Controllers\Backend\WarrantyClaimController;
 use App\Http\Controllers\Backend\WarrantyDeliveryController;
 use App\Http\Controllers\Backend\WarrantyController;
 use App\Http\Controllers\Backend\SupplierClaimController;
+use App\Http\Controllers\FacebookFeedController;
 use App\Http\Controllers\Backend\CategoryController;
 use App\Http\Controllers\Backend\SubCategoryController;
 use App\Http\Controllers\Backend\CustomerController;
@@ -95,6 +96,12 @@ Route::get('/order-confirmation/{order_number?}', [FrontendController::class, 'o
 Route::get('/api/order-status/{order_number}', [FrontendController::class, 'checkOrderStatus'])->name('frontend.order-status-check');
 Route::get('/wishlist', [FrontendController::class, 'wishlist'])->name('frontend.wishlist');
 Route::post('/api/meta-capi/track', [FrontendController::class, 'trackCapiEvent'])->name('meta-capi.track');
+
+// Facebook / Meta Product Catalog XML & CSV Feeds (Dynamic & Real-time)
+Route::get('/facebook-feed.xml', [FacebookFeedController::class, 'xmlFeed'])->name('facebook.feed.xml');
+Route::get('/facebook-feed', [FacebookFeedController::class, 'xmlFeed']);
+Route::get('/feed/facebook-catalog.xml', [FacebookFeedController::class, 'xmlFeed']);
+Route::get('/facebook-feed.csv', [FacebookFeedController::class, 'csvFeed'])->name('facebook.feed.csv');
 
 // Legal, Policies & Sitemap Routes
 Route::get('/privacy-policy', [FrontendController::class, 'privacyPolicy'])->name('frontend.privacy-policy');
@@ -354,6 +361,12 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
         Route::delete('ad-cost/{id}', 'destroy')->name('ad-cost.destroy');
         Route::get('roi-tracking', 'roi')->name('roi.tracking');
         Route::get('courier-tracking', 'courierTracking')->name('courier.tracking');
+    });
+
+    // --------------------> facebook product feed management <--------------------
+    Route::controller(FacebookFeedController::class)->prefix('marketing')->name('facebook.feed.')->group(function () {
+        Route::get('facebook-feed', 'adminIndex')->name('admin');
+        Route::post('facebook-feed/clear-cache', 'clearCache')->name('clear-cache');
     });
 
     // --------------------> sms <--------------------

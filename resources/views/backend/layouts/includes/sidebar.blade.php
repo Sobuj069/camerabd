@@ -1008,7 +1008,7 @@
                 <p class="sidebar-label text-xs font-bold uppercase tracking-wider text-orange-400/80">{{ __('Marketing Analytics') }}</p>
             </div>
 
-            <div class="has-submenu {{ str_starts_with($currentUrl, 'ad-cost') || str_starts_with($currentUrl, 'roi-tracking') || str_starts_with($currentUrl, 'courier-tracking') ? 'open' : '' }} mb-0.5">
+            <div class="has-submenu {{ str_starts_with($currentUrl, 'ad-cost') || str_starts_with($currentUrl, 'roi-tracking') || str_starts_with($currentUrl, 'courier-tracking') || str_starts_with($currentUrl, 'marketing/facebook-feed') ? 'open' : '' }} mb-0.5">
                 <a href="javascript:void(0);" onclick="toggleSubmenu(this)"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14.5px] font-medium transition-all duration-200 cursor-pointer {{ str_starts_with($currentUrl, 'ad-cost') || str_starts_with($currentUrl, 'roi-tracking') || str_starts_with($currentUrl, 'courier-tracking') ? 'bg-slate-700/80 text-white' : 'text-slate-300 hover:bg-slate-700/60 hover:text-white' }}">
                     <span class="flex-shrink-0 w-[22px] h-[22px]">
@@ -1033,6 +1033,9 @@
                     </a>
                     <a href="{{ route('courier.tracking') }}" class="{{ $currentRoute === 'courier.tracking' ? 'active-sub' : '' }}">
                         <i class="feather icon-search"></i> {{ __('Search Invoice by Courier ID') }}
+                    </a>
+                    <a href="{{ route('facebook.feed.admin') }}" class="{{ $currentRoute === 'facebook.feed.admin' ? 'active-sub' : '' }}">
+                        <i class="feather icon-rss"></i> {{ __('Facebook Product Feed') }}
                     </a>
                 </div>
             </div>

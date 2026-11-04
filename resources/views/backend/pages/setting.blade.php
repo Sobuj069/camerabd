@@ -238,6 +238,30 @@
                         <textarea name="meta_capi_access_token" rows="3" placeholder="{{ __('EAAG... (Generate from Events Manager > Settings > Conversions API > Generate Access Token)') }}">{{ get_setting('meta_capi_access_token') }}</textarea>
                         <small class="text-muted">{{ __('Required for Server-Side conversion events to reach Meta with 100% bypass of ad-blockers and iOS privacy restrictions.') }}</small>
                     </div>
+
+                    <div class="field col-span-1 md:col-span-2 p-3 rounded-lg border border-blue-200 bg-blue-50/60 mt-1">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="mb-0 text-blue-900 font-bold flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.989C18.343 21.129 22 16.99 22 12c0-5.523-4.477-10-10-10z"/></svg>
+                                {{ __('Facebook Product Catalog Feed (XML URL)') }}
+                            </label>
+                            <a href="{{ route('facebook.feed.admin') }}" class="text-xs font-semibold text-blue-700 hover:text-blue-900 underline">
+                                {{ __('Manage Feed & Settings &rarr;') }}
+                            </a>
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="text" id="setting_feed_url" class="bg-white font-mono text-xs text-blue-950 font-bold flex-1 px-3 py-2 border rounded-md border-blue-300" value="{{ url('/facebook-feed.xml') }}" readonly>
+                            <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('setting_feed_url').value); alert('Feed URL copied to clipboard!');" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-2 font-bold rounded-md">
+                                {{ __('Copy URL') }}
+                            </button>
+                            <a href="{{ url('/facebook-feed.xml') }}" target="_blank" class="bg-white border border-blue-300 text-blue-800 text-xs px-3 py-2 font-bold rounded-md flex items-center">
+                                {{ __('View Feed') }}
+                            </a>
+                        </div>
+                        <small class="text-slate-600 mt-1 block">
+                            {{ __('Connect this Feed URL to Facebook Commerce Manager > Catalog > Data Sources for Dynamic Product Ads (DPA) and Instagram Shopping.') }}
+                        </small>
+                    </div>
                 </div>
 
                 <p class="section-label mt-6">{{ __('Google Tag Manager & DataLayer (GA4 / E-commerce Tracking)') }}</p>
