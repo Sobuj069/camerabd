@@ -497,6 +497,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
         Route::get('/woocommerce', 'woocommerceReport')->name('woocommerce');
         Route::get('/shop', 'shopReport')->name('shop');
         Route::get('/shop/print', 'shopReportPrint')->name('shop.print');
+        Route::get('/courier-delivery', 'courierDeliveryReport')->name('courier-delivery');
+        Route::get('/courier-daily', 'courierDeliveryReport')->name('courier-daily');
     });
     //------------------------- pdf ------------------
     Route::controller(PDFController::class)->prefix('report')->name('report.')->group(function () {

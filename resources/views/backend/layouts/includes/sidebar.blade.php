@@ -1373,6 +1373,7 @@
                 </svg>
             </a>
             <div class="sidebar-submenu">
+                <a href="{{ route('report.courier-delivery') }}" class="{{ Route::is('report.courier-delivery*') || Route::is('report.courier-daily*') ? 'active-sub' : '' }}"><i class="feather icon-truck text-emerald-400"></i> {{ __('Courier & Delivery Report') }}</a>
                 <a href="{{ route('report.shop') }}" class="{{ Route::is('report.shop*') ? 'active-sub' : '' }}"><i class="feather icon-shopping-bag text-sky-400"></i> {{ __('Online Shop Report') }}</a>
                 @if (env('APP_WOOCOMMERCE') == 'yes' && check_permission('report.woocommerce'))
                     <a href="{{ route('report.woocommerce') }}" class="{{ Route::is('report.woocommerce') ? 'active-sub' : '' }}"><i class="feather icon-shopping-cart text-purple-400"></i> {{ __('WooCommerce Report') }}</a>
