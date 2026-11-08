@@ -56,13 +56,13 @@
   <header class="lg:hidden fixed top-0 w-full z-50 pt-safe bg-surface-card/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
     <div class="h-14 px-4 flex items-center justify-between gap-2 border-b border-surface-border/60">
       <!-- Logo + Brand -->
-      <div class="flex items-center gap-2 min-w-0 flex-1">
+      <div class="flex items-center gap-2.5 min-w-0 flex-1">
         <a class="flex items-center shrink-0" href="{{ url('/') }}">
-          <img alt="{{ $siteName ?? 'CAMERA BD' }} Logo" class="h-7 w-auto object-contain max-w-[100px]" src="{{ $siteLogo }}"/>
+          <img alt="{{ $siteName ?? 'CAMERA BD' }} Logo" class="h-10 w-auto object-contain max-w-[140px]" src="{{ $siteLogo }}"/>
         </a>
         <div class="flex flex-col min-w-0">
-          <span class="text-[11px] text-slate-900 uppercase tracking-tight leading-none font-extrabold truncate">{{ $siteName ?? 'CAMERA BD' }}</span>
-          <span class="text-[8px] text-[#006241] truncate leading-tight font-bold uppercase tracking-wide">Pro Cine & Audio</span>
+          <span class="text-xs text-slate-900 uppercase tracking-tight leading-none font-extrabold truncate">{{ $siteName ?? 'CAMERA BD' }}</span>
+          <span class="text-[9px] text-[#006241] truncate leading-tight font-bold uppercase tracking-wide">Pro Cine & Audio</span>
         </div>
       </div>
       
@@ -115,11 +115,11 @@
     <!-- Main Navigation Bar -->
     <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between gap-6 border-b border-surface-border">
       <!-- Logo -->
-      <a class="flex items-center gap-2.5 shrink-0 group" href="{{ url('/') }}">
-        <img alt="{{ $siteName ?? 'CAMERA BD' }} Logo" class="h-8 md:h-9 w-auto object-contain max-w-[130px] transition-transform group-hover:scale-105" src="{{ $siteLogo }}"/>
+      <a class="flex items-center gap-3 shrink-0 group" href="{{ url('/') }}">
+        <img alt="{{ $siteName ?? 'CAMERA BD' }} Logo" class="h-11 md:h-12 lg:h-14 w-auto object-contain max-w-[170px] lg:max-w-[200px] transition-transform group-hover:scale-102" src="{{ $siteLogo }}"/>
         <div class="flex flex-col">
-          <span class="text-xs md:text-sm font-extrabold tracking-tight text-slate-900 uppercase leading-tight">{{ $siteName ?? 'CAMERA BD' }}</span>
-          <span class="text-[9px] text-[#006241] font-bold uppercase tracking-wider leading-none">Pro Cine & Broadcast</span>
+          <span class="text-sm md:text-base font-extrabold tracking-tight text-slate-900 uppercase leading-tight">{{ $siteName ?? 'CAMERA BD' }}</span>
+          <span class="text-[10px] text-[#006241] font-bold uppercase tracking-wider leading-none">Pro Cine & Broadcast</span>
         </div>
       </a>
 

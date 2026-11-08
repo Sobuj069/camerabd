@@ -119,7 +119,7 @@
           <span class="text-surface-border">|</span>
           <div class="flex items-center gap-1 text-stock-available font-bold">
             <span class="w-2 h-2 rounded-full bg-stock-available animate-pulse"></span>
-            <span>In Stock (Baitul Mukarram & Bashundhara City)</span>
+            <span>In Stock (Jamuna Future Park Flagship)</span>
           </div>
         </div>
 
@@ -149,48 +149,38 @@
           </div>
         </div>
 
-        <!-- Variant Selector Example -->
-        <div class="mb-6">
-          <label class="block text-xs uppercase font-extrabold text-text-muted tracking-wider mb-2">Configuration / Package:</label>
-          <div class="grid grid-cols-2 gap-2.5">
-            <button class="package-btn p-3 rounded-xl border-2 border-primary bg-primary/5 text-left text-xs transition-all">
-              <span class="font-bold block text-on-surface">Standard Package</span>
-              <span class="text-primary font-bold">৳ {{ number_format((float)($product['price'] ?? 0)) }} TK</span>
-            </button>
-            <button class="package-btn p-3 rounded-xl border border-surface-border hover:border-primary text-left text-xs transition-all">
-              <span class="font-bold block text-on-surface">Creator Pro Kit (+ Battery/Bag)</span>
-              <span class="text-text-muted">৳ {{ number_format(((float)($product['price'] ?? 0)) + 8500) }} TK</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Action Buttons (Add to Cart & Order Now) -->
-        <div class="space-y-3 pt-2">
-          <div class="flex items-center gap-3">
-            <!-- Quantity Counter -->
-            <div class="flex items-center border border-surface-border bg-surface-container rounded-xl p-1 shrink-0">
-              <button type="button" onclick="decrementQty()" class="w-8 h-8 rounded-lg bg-surface-card flex items-center justify-center text-on-surface hover:bg-primary hover:text-white transition-colors font-bold select-none cursor-pointer">-</button>
-              <input id="product-qty" type="number" value="1" min="1" max="10" class="w-12 text-center text-sm font-bold bg-transparent focus:outline-none" />
-              <button type="button" onclick="incrementQty()" class="w-8 h-8 rounded-lg bg-surface-card flex items-center justify-center text-on-surface hover:bg-primary hover:text-white transition-colors font-bold select-none cursor-pointer">+</button>
+        <!-- Action Buttons (Add to Cart & Buy Now Side-by-Side like Camera Bazar) -->
+        <div class="space-y-3 pt-2 mb-6">
+          <!-- Quantity Row + Hotline -->
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold text-text-muted uppercase">Quantity:</span>
+              <div class="flex items-center border border-surface-border bg-surface-container rounded-xl p-0.5 shrink-0">
+                <button type="button" onclick="decrementQty()" class="w-8 h-8 rounded-lg bg-surface-card flex items-center justify-center text-on-surface hover:bg-primary hover:text-white transition-colors font-bold select-none cursor-pointer">-</button>
+                <input id="product-qty" type="number" value="1" min="1" max="10" class="w-12 text-center text-sm font-bold bg-transparent focus:outline-none" />
+                <button type="button" onclick="incrementQty()" class="w-8 h-8 rounded-lg bg-surface-card flex items-center justify-center text-on-surface hover:bg-primary hover:text-white transition-colors font-bold select-none cursor-pointer">+</button>
+              </div>
             </div>
 
-            <!-- Add to Cart -->
-            <button type="button" onclick="handleAddToCart()" class="flex-1 bg-primary hover:bg-primary-hover text-white font-bold text-sm py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 cursor-pointer">
-              <span class="material-symbols-outlined text-[18px]">shopping_bag</span>
-              <span>Add to Cart</span>
-            </button>
-          </div>
-
-          <!-- Direct Order Now & Hotline -->
-          <div class="flex gap-2">
-            <button type="button" onclick="handleBuyNow()" class="flex-1 bg-rec-red-base hover:bg-rec-red-hover text-white font-bold text-sm py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 text-center cursor-pointer">
-              <span class="material-symbols-outlined text-[18px]">bolt</span>
-              <span>Order Now</span>
-            </button>
-            <a href="tel:{{ $whatsappDigits ?? '8801917256756' }}" class="px-4 py-3 bg-surface-container hover:bg-surface-container-low border border-surface-border rounded-xl text-xs font-bold text-on-surface flex items-center justify-center gap-1.5 transition-colors shrink-0">
+            <a href="tel:{{ $whatsappDigits ?? '8801917256756' }}" class="px-3.5 py-2 bg-surface-container hover:bg-surface-container-low border border-surface-border rounded-xl text-xs font-bold text-on-surface flex items-center gap-1.5 transition-colors shrink-0">
               <span class="material-symbols-outlined text-primary text-[18px]">support_agent</span>
               <span>Call Hotline</span>
             </a>
+          </div>
+
+          <!-- Main Action Row: Add to Cart & Buy Now Side-by-Side -->
+          <div class="flex items-center gap-3">
+            <!-- Add to Cart -->
+            <button type="button" onclick="handleAddToCart()" class="flex-1 bg-primary hover:bg-primary-hover text-white font-bold text-sm py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 cursor-pointer">
+              <span class="material-symbols-outlined text-[20px]">shopping_bag</span>
+              <span>Add to Cart</span>
+            </button>
+
+            <!-- Buy Now -->
+            <button type="button" onclick="handleBuyNow()" class="flex-1 bg-rec-red-base hover:bg-rec-red-hover text-white font-bold text-sm py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 text-center cursor-pointer">
+              <span class="material-symbols-outlined text-[20px]">bolt</span>
+              <span>Buy Now</span>
+            </button>
           </div>
         </div>
 
@@ -377,9 +367,10 @@
             </div>
             <div class="pt-2 border-t border-surface-border">
               <span class="text-sm font-bold text-primary block">৳ {{ number_format($rel['price']) }} TK</span>
-              <button onclick="addToCart('{{ $rel['name'] }}', {{ $rel['price'] }}, '{{ $rel['images'][0] ?? '' }}')" class="w-full mt-2 bg-surface-container hover:bg-primary hover:text-white text-on-surface text-xs font-bold py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1">
-                <span class="material-symbols-outlined text-[14px]">shopping_cart</span> Add
-              </button>
+              <a href="{{ url('/product-details/' . $rel['slug']) }}" class="w-full mt-2 bg-surface-container hover:bg-primary hover:text-white text-on-surface text-xs font-bold py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1">
+                <span>View Details</span>
+                <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+              </a>
             </div>
           </div>
         @endforeach

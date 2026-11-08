@@ -113,15 +113,21 @@
         <div class="pt-4 border-t border-surface-border">
           <div class="flex items-center justify-between mb-3">
             <h4 class="text-xs font-extrabold text-on-surface uppercase tracking-wider">Price Range (BDT)</h4>
-            @if(request()->filled('max_price'))
-              <a href="{{ request()->fullUrlWithQuery(['max_price' => null, 'page' => 1]) }}" class="text-[10px] text-primary hover:underline font-bold">Reset</a>
+            @if(request()->filled('max_price') || request()->filled('min_price'))
+              <a href="{{ request()->fullUrlWithQuery(['max_price' => null, 'min_price' => null, 'page' => 1]) }}" class="text-[10px] text-primary hover:underline font-bold">Reset</a>
             @endif
           </div>
           <div class="space-y-3">
-            <input type="range" name="max_price" min="{{ $priceMinBound }}" max="{{ $priceMaxBound }}" step="{{ max(500, round(($priceMaxBound - $priceMinBound) / 50)) }}" value="{{ request('max_price', $priceMaxBound) }}" class="w-full accent-primary cursor-pointer" oninput="updatePriceLabel(this.value)" onchange="this.form.submit()" />
+            <input type="range" name="max_price" min="{{ $priceMinBound }}" max="{{ $priceMaxBound }}" step="{{ max(100, round(($priceMaxBound - $priceMinBound) / 50)) }}" value="{{ request('max_price', $priceMaxBound) }}" class="w-full accent-primary cursor-pointer" oninput="updatePriceLabel(this.value)" onchange="this.form.submit()" />
             <div class="flex items-center justify-between text-xs font-bold text-on-surface">
               <span>৳ {{ number_format($priceMinBound) }}</span>
               <span id="price-range-label" class="text-primary font-extrabold">Max: ৳ {{ number_format(request('max_price', $priceMaxBound)) }}</span>
+            </div>
+            <div class="flex items-center gap-1.5 pt-1">
+              <input type="number" name="min_price" value="{{ request('min_price', $priceMinBound) }}" min="{{ $priceMinBound }}" max="{{ $priceMaxBound }}" placeholder="Min" class="w-1/2 p-1.5 text-xs border border-surface-border rounded-lg bg-surface-container text-on-surface font-semibold focus:outline-none focus:border-primary" />
+              <span class="text-text-muted text-xs">-</span>
+              <input type="number" name="max_price" value="{{ request('max_price', $priceMaxBound) }}" min="{{ $priceMinBound }}" max="{{ $priceMaxBound }}" placeholder="Max" class="w-1/2 p-1.5 text-xs border border-surface-border rounded-lg bg-surface-container text-on-surface font-semibold focus:outline-none focus:border-primary" />
+              <button type="submit" class="px-2.5 py-1.5 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary-hover transition-colors shrink-0">Go</button>
             </div>
           </div>
         </div>
@@ -137,7 +143,7 @@
             <label class="flex items-center gap-2 text-text-muted hover:text-on-surface cursor-pointer select-none">
               <input type="radio" name="stock" value="in_stock" {{ request('stock') === 'in_stock' ? 'checked' : '' }} onchange="this.form.submit()" class="text-primary focus:ring-primary" />
               <span class="text-stock-available font-bold flex items-center gap-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-stock-available"></span> In Stock Only
+                <span class="w-1.5 h-1.5 rounded-full bg-stock-available"></span> In Stock
               </span>
             </label>
             <label class="flex items-center gap-2 text-text-muted hover:text-on-surface cursor-pointer select-none">
@@ -172,9 +178,9 @@
         <div class="flex items-center gap-2 self-end sm:self-auto text-xs">
           <label class="text-text-muted font-bold">Sort By:</label>
           <select class="bg-surface-container-low rounded-xl px-3 py-2 border border-surface-border text-on-surface text-xs font-bold focus:outline-none focus:border-primary cursor-pointer" onchange="sortProducts(this.value)">
-            <option value="featured" {{ ($selectedSort ?? request('sort', 'featured')) === 'featured' ? 'selected' : '' }}>Featured & Popular</option>
-            <option value="price_low" {{ ($selectedSort ?? request('sort')) === 'price_low' ? 'selected' : '' }}>Price: Low to High</option>
+            <option value="price_low" {{ ($selectedSort ?? request('sort', 'price_low')) === 'price_low' ? 'selected' : '' }}>Price: Low to High</option>
             <option value="price_high" {{ ($selectedSort ?? request('sort')) === 'price_high' ? 'selected' : '' }}>Price: High to Low</option>
+            <option value="featured" {{ ($selectedSort ?? request('sort')) === 'featured' ? 'selected' : '' }}>Featured & Popular</option>
             <option value="newest" {{ ($selectedSort ?? request('sort')) === 'newest' ? 'selected' : '' }}>Newest Arrivals</option>
             <option value="name" {{ ($selectedSort ?? request('sort')) === 'name' ? 'selected' : '' }}>Name: A to Z</option>
           </select>
@@ -252,13 +258,10 @@
                   @endif
                 </div>
 
-                <div class="flex gap-1.5">
-                  <button onclick="addToCart('{{ $prod['name'] }}', {{ $prod['price'] }}, '{{ $prod['images'][0] ?? '' }}')" class="flex-1 bg-primary hover:bg-primary-hover text-white text-xs font-bold py-2 px-3 rounded-xl transition-all flex items-center justify-center gap-1 shadow-sm active:scale-95">
-                    <span class="material-symbols-outlined text-[16px]">shopping_bag</span>
-                    <span>Add to Cart</span>
-                  </button>
-                  <a href="{{ url('/product-details/' . ($prod['slug'] ?? 'sony-fx30')) }}" class="p-2 bg-surface-container hover:bg-surface-container-low text-on-surface rounded-xl border border-surface-border transition-colors flex items-center justify-center" title="Details">
-                    <span class="material-symbols-outlined text-[18px]">visibility</span>
+                <div>
+                  <a href="{{ url('/product-details/' . ($prod['slug'] ?? 'sony-fx30')) }}" class="w-full bg-surface-container hover:bg-primary hover:text-white text-on-surface text-xs font-bold py-2.5 px-3 rounded-xl transition-all border border-surface-border flex items-center justify-center gap-1.5 shadow-2xs group-hover:border-primary/50">
+                    <span>View Details</span>
+                    <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
                   </a>
                 </div>
               </div>
@@ -315,11 +318,16 @@
         @endif
 
         <div class="pt-4 border-t border-surface-border">
-          <h4 class="text-xs font-extrabold text-on-surface uppercase tracking-wider mb-2">Max Price</h4>
-          <input type="range" name="max_price" min="{{ $priceMinBound }}" max="{{ $priceMaxBound }}" step="{{ max(500, round(($priceMaxBound - $priceMinBound) / 50)) }}" value="{{ request('max_price', $priceMaxBound) }}" class="w-full accent-primary cursor-pointer" oninput="document.getElementById('mobile-price-range-label').textContent = 'Max: ৳ ' + parseInt(this.value).toLocaleString()" />
+          <h4 class="text-xs font-extrabold text-on-surface uppercase tracking-wider mb-2">Price Range (BDT)</h4>
+          <input type="range" name="max_price" min="{{ $priceMinBound }}" max="{{ $priceMaxBound }}" step="{{ max(100, round(($priceMaxBound - $priceMinBound) / 50)) }}" value="{{ request('max_price', $priceMaxBound) }}" class="w-full accent-primary cursor-pointer" oninput="document.getElementById('mobile-price-range-label').textContent = 'Max: ৳ ' + parseInt(this.value).toLocaleString()" />
           <div class="flex items-center justify-between text-xs font-bold text-on-surface mt-1">
             <span>৳ {{ number_format($priceMinBound) }}</span>
             <span id="mobile-price-range-label" class="text-primary font-extrabold">Max: ৳ {{ number_format(request('max_price', $priceMaxBound)) }}</span>
+          </div>
+          <div class="flex items-center gap-1.5 pt-2">
+            <input type="number" name="min_price" value="{{ request('min_price', $priceMinBound) }}" min="{{ $priceMinBound }}" max="{{ $priceMaxBound }}" placeholder="Min" class="w-1/2 p-2 text-xs border border-surface-border rounded-lg bg-surface-container text-on-surface font-semibold focus:outline-none" />
+            <span class="text-text-muted text-xs">-</span>
+            <input type="number" name="max_price" value="{{ request('max_price', $priceMaxBound) }}" min="{{ $priceMinBound }}" max="{{ $priceMaxBound }}" placeholder="Max" class="w-1/2 p-2 text-xs border border-surface-border rounded-lg bg-surface-container text-on-surface font-semibold focus:outline-none" />
           </div>
         </div>
 
@@ -332,7 +340,9 @@
             </label>
             <label class="flex items-center gap-2 text-text-muted cursor-pointer select-none">
               <input type="radio" name="stock" value="in_stock" {{ request('stock') === 'in_stock' ? 'checked' : '' }} class="text-primary focus:ring-primary" />
-              <span class="text-stock-available font-bold">In Stock Only</span>
+              <span class="text-stock-available font-bold flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-stock-available"></span> In Stock
+              </span>
             </label>
             <label class="flex items-center gap-2 text-text-muted cursor-pointer select-none">
               <input type="radio" name="stock" value="pre_order" {{ request('stock') === 'pre_order' ? 'checked' : '' }} class="text-primary focus:ring-primary" />
@@ -406,19 +416,10 @@
   }
 
   function sortProducts(criteria) {
-    const sortInput = document.getElementById('filter-sort-input');
-    if (sortInput) {
-      sortInput.value = criteria;
-    }
-    const form = document.getElementById('category-filter-form');
-    if (form) {
-      form.submit();
-    } else {
-      const url = new URL(window.location.href);
-      url.searchParams.set('sort', criteria);
-      url.searchParams.set('page', '1');
-      window.location.href = url.toString();
-    }
+    const url = new URL(window.location.href);
+    url.searchParams.set('sort', criteria);
+    url.searchParams.set('page', '1');
+    window.location.href = url.toString();
   }
 </script>
 @endpush

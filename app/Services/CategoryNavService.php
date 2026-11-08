@@ -16,9 +16,11 @@ class CategoryNavService
     public static function getMegaMenuCategories()
     {
         return \Illuminate\Support\Facades\Cache::remember('mega_menu_categories_v2', 86400, function () {
-            // 1. Fetch all real categories with their subcategories from database
+            // 1. Fetch all real categories with their subcategories from database (excluding system 'General' category)
             try {
                 $dbCategories = Category::with('subCategories')
+                    ->where('id', '!=', 1)
+                    ->where('name', '!=', 'General')
                     ->orderBy('is_top', 'desc')
                     ->orderBy('top_order', 'asc')
                     ->orderBy('id', 'asc')
@@ -32,6 +34,9 @@ class CategoryNavService
             foreach ($dbCategories as $cat) {
                 $rawName = trim($cat->name);
                 $normKey = strtolower($rawName);
+                if ($normKey === 'general' || $cat->id == 1) {
+                    continue;
+                }
                 $slug = Str::slug($rawName);
 
                 // Clean, professional title formatting for UI

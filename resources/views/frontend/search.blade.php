@@ -145,9 +145,9 @@
           <span class="text-xs text-slate-500 font-medium">Sort By:</span>
           <div class="relative">
             <select onchange="window.location.href = this.value" class="bg-surface-container text-xs font-bold text-slate-800 rounded-xl pl-3 pr-8 py-2 border border-surface-border outline-none cursor-pointer appearance-none">
-              <option value="{{ route('frontend.search', array_merge(request()->except(['sort', 'page']), ['sort' => 'latest'])) }}" {{ $sort === 'latest' ? 'selected' : '' }}>Latest Added</option>
               <option value="{{ route('frontend.search', array_merge(request()->except(['sort', 'page']), ['sort' => 'price_low'])) }}" {{ $sort === 'price_low' ? 'selected' : '' }}>Price: Low to High</option>
               <option value="{{ route('frontend.search', array_merge(request()->except(['sort', 'page']), ['sort' => 'price_high'])) }}" {{ $sort === 'price_high' ? 'selected' : '' }}>Price: High to Low</option>
+              <option value="{{ route('frontend.search', array_merge(request()->except(['sort', 'page']), ['sort' => 'latest'])) }}" {{ $sort === 'latest' ? 'selected' : '' }}>Latest Added</option>
               <option value="{{ route('frontend.search', array_merge(request()->except(['sort', 'page']), ['sort' => 'name'])) }}" {{ $sort === 'name' ? 'selected' : '' }}>Alphabetical (A-Z)</option>
             </select>
             <span class="material-symbols-outlined text-[16px] text-slate-500 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">expand_more</span>
@@ -222,14 +222,10 @@
                     @endif
                   </div>
 
-                  <div class="grid grid-cols-2 gap-1.5">
-                    <a href="{{ route('frontend.product.details', $p->slug ?: $p->id) }}" class="border border-surface-border hover:border-primary text-slate-700 hover:text-primary text-[11px] font-bold py-1.5 rounded-xl text-center transition-colors">
-                      Details
+                  <div>
+                    <a href="{{ route('frontend.product.details', $p->slug ?: $p->id) }}" class="block w-full border border-surface-border hover:border-primary bg-surface-container hover:bg-primary text-slate-700 hover:text-white text-[11px] font-bold py-1.5 rounded-xl text-center transition-colors">
+                      View Details
                     </a>
-                    <button type="button" class="bg-primary hover:bg-primary-hover text-white text-[11px] font-bold py-1.5 rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1 active:scale-95" onclick="addToCart('{{ addslashes($p->name) }}', {{ $pPrice }}, '{{ $p->featured_image }}')">
-                      <span class="material-symbols-outlined text-[14px]">add_shopping_cart</span>
-                      <span>Buy</span>
-                    </button>
                   </div>
                 </div>
 

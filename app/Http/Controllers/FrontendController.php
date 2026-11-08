@@ -37,7 +37,7 @@ class FrontendController extends Controller
                 'rating' => 4.9,
                 'reviews_count' => 38,
                 'in_stock' => true,
-                'stock_branches' => ['Baitul Mukarram Flagship', 'Bashundhara City Level 6'],
+                'stock_branches' => ['Jamuna Future Park Flagship Store, Level-4'],
                 'warranty' => '3 Years Official Service Warranty + 1 Year International',
                 'images' => [
                     'https://lh3.googleusercontent.com/aida/AEtjO1VlkIaGWo4pZtCfRCtGHkIOYCB_lwbnbvypPczrc0Zep_5j_I3I0x0272WYzgzQnR6mFOG1JpYO3uIg0xlKUhkOIXtcA6Qp2Zme48SvdFxUfa3pDyf7UYGMTt_0crdEY4IWr-fMPJE4HKv1wR8h0D3M29za-nyxKsI1baXPZpnRPPdiRDAor_1aq5t6z3orCGyAOsGo5fPLDHnPZOYuMkEEseZJU08eG_N6Eob7mwbRTy3H7IVw2Qc-BwY',
@@ -87,7 +87,7 @@ class FrontendController extends Controller
                 'rating' => 4.95,
                 'reviews_count' => 62,
                 'in_stock' => true,
-                'stock_branches' => ['Baitul Mukarram Flagship', 'Bashundhara City Level 6'],
+                'stock_branches' => ['Jamuna Future Park Flagship Store, Level-4'],
                 'warranty' => '1 Year Official DJI Replacement Warranty',
                 'images' => [
                     'https://lh3.googleusercontent.com/aida/AEtjO1Vqtovg_xZlDnZaVLXZXohSSKxOzwNsqMMehT2gASqjyOfoGneJMZFqoH9IPecShYtpwgk9u7piXxWXoxpDO3um1RY2TiwiV07r6eOYuayiVh2wtWy2mFCC7cRlyTcyGO5Oow-9tFRAkoIMevpq-fd1cgrFpY2jHKfVeiNgh_iTom9zUqW3Ma_1mf2SEbP2PjUTxpPZkHYWb_ZrFZhOob0QRha2GFauumTzaWXmI3sUn8DY_-RRBUeP5Kg',
@@ -132,7 +132,7 @@ class FrontendController extends Controller
                 'rating' => 5.0,
                 'reviews_count' => 45,
                 'in_stock' => true,
-                'stock_branches' => ['Baitul Mukarram Flagship', 'Bashundhara City Level 6'],
+                'stock_branches' => ['Jamuna Future Park Flagship Store, Level-4'],
                 'warranty' => '2 Years Official Hollyland Replacement Warranty',
                 'images' => [
                     'https://lh3.googleusercontent.com/aida/AEtjO1X-nc7VZD9tYHp6qutS95cjA-Xk5pOOzJwdae3Vi5yg75ZaanA4-bPFLwz-qoo-JoQi5TkDwO71GgUsiHVOVo5x8y535Jg4E3WEA_VzQl9ZAdT5TVIR5gEoikhv-Z2gFvZvSkGbsxQIifYqIgqsF8YhYzvl6tPc6smePHKqrg_ApXKYK0N-E5a5oijUQjPNmBCEz6Eh9i35JKinBfJI9ZCuzzIm1KilnSKr1gZmzV4bCV9tLBN_Y3w1T5o',
@@ -178,7 +178,7 @@ class FrontendController extends Controller
                 'rating' => 5.0,
                 'reviews_count' => 24,
                 'in_stock' => true,
-                'stock_branches' => ['Baitul Mukarram Flagship', 'Bashundhara City Level 6'],
+                'stock_branches' => ['Jamuna Future Park Flagship Store, Level-4'],
                 'warranty' => '2 Years Official Warranty',
                 'images' => [
                     'https://lh3.googleusercontent.com/aida/AEtjO1XfQAISMRxlwh3cRyS9KXfszcuI4qtAFy_2nh2DqmJbf1h9fIqhykPXfmvCQPC7aAs7sD-uZZLkJlCoUht1hYo0qIbn69xOpn2u7GyeKxYEclHmMzw_0XIcGZWyRMQ9fIi06tPoJvPMfMAX1AkCrYahcdfYa0CwM0hrSgbhHX7i8N4NNpyTatjOsoC6vj6ETcEjtqGdgXkhfW4kMX-Qs5oVf0HgZib8aeU_OxB6aZMTaG3RO-u4OKD6i3U'
@@ -215,7 +215,7 @@ class FrontendController extends Controller
                 'rating' => 4.9,
                 'reviews_count' => 19,
                 'in_stock' => true,
-                'stock_branches' => ['Baitul Mukarram Flagship'],
+                'stock_branches' => ['Jamuna Future Park Flagship Store, Level-4'],
                 'warranty' => '1 Year Official Warranty',
                 'images' => [
                     'https://lh3.googleusercontent.com/aida/AEtjO1UtwKYg6iZpMl5Fh535es5hvtVBj6b1J_gMRxIUJq70aHGREGvG8S8hHmMvJo3K6dh6OkcyvqZf9ZdrroGSyDV0UoPKAsNQNv1vXa_AIHpSzNA6UFVFi7BdXB0hXxLVKDfYOJ14c9GH9ehBwDeY0ZWokAVvKOoqR4NOj-c5cRHNmIY4O5KEKxj_ECnSFkJblKF5p9ROOClIvXKIS_yct4Dm4BgbKp4o50pNnPe30Z2sys-iwVTrbqw0_AI'
@@ -253,7 +253,7 @@ class FrontendController extends Controller
                 'rating' => 5.0,
                 'reviews_count' => 14,
                 'in_stock' => true,
-                'stock_branches' => ['Baitul Mukarram Flagship (Demo Ready)'],
+                'stock_branches' => ['Jamuna Future Park Flagship Store (Demo Ready)'],
                 'warranty' => '3 Years Official Importer Warranty with On-Site Training',
                 'images' => [
                     'https://lh3.googleusercontent.com/aida/AEtjO1UBDPEziCcfUcrZsVf0ztZ5r7q_PN_MC51xHqhHZ8fE9iYi_CLXiYp1-zXZihrrkt0z0zvXAiWGqXsqR80S9uScTtSgQAfQIYufte0A_cmBmS7INxkujstyrdcDTCmTKSjgUMi74qE-O7I2YRPobLot4y97ayawdrOkd-lWKufzVH5lFi4JqWKUCjFwtKnm0A6KHxzuNgN4Ykrf-eSDnBgKmmxOnvfiPphUB4yuOYuwrRhj96o2ZLUjh_A'
@@ -297,7 +297,7 @@ class FrontendController extends Controller
     {
         $q = trim($request->get('q', ''));
         $categorySlug = trim($request->get('category', 'all'));
-        $sort = $request->get('sort', 'latest');
+        $sort = $request->get('sort', 'price_low');
 
         $query = Product::with(['category', 'brand'])->where('is_service', 0)->where('show_on_website', 1);
 
@@ -336,17 +336,18 @@ class FrontendController extends Controller
         }
 
         switch ($sort) {
-            case 'price_low':
-                $query->orderBy('selling_price', 'asc');
-                break;
             case 'price_high':
                 $query->orderBy('selling_price', 'desc');
+                break;
+            case 'latest':
+                $query->latest('id');
                 break;
             case 'name':
                 $query->orderBy('name', 'asc');
                 break;
+            case 'price_low':
             default:
-                $query->latest('id');
+                $query->orderBy('selling_price', 'asc');
                 break;
         }
 
@@ -464,7 +465,7 @@ class FrontendController extends Controller
             'rating' => 4.9,
             'reviews_count' => 15 + ($dbProduct->id % 25),
             'in_stock' => true,
-            'stock_branches' => ['Baitul Mukarram Flagship', 'Bashundhara City Branch'],
+            'stock_branches' => ['Jamuna Future Park Flagship Store, Level-4'],
             'warranty' => $warrantyStr,
             'images' => $gallery,
             'description' => $rawDescription,
@@ -1087,22 +1088,24 @@ class FrontendController extends Controller
             });
         }
 
-        // Sorting
-        $selectedSort = $request->input('sort', 'featured');
+        // Sorting (default: low to high price)
+        $selectedSort = $request->input('sort', 'price_low');
         switch ($selectedSort) {
-            case 'price_low':
-                $filteredQuery->orderBy('selling_price', 'asc');
-                break;
             case 'price_high':
-                $filteredQuery->orderBy('selling_price', 'desc');
+                $filteredQuery->orderBy('selling_price', 'desc')->orderBy('id', 'asc');
                 break;
             case 'name':
                 $filteredQuery->orderBy('name', 'asc');
                 break;
             case 'newest':
-            case 'featured':
-            default:
                 $filteredQuery->latest('id');
+                break;
+            case 'featured':
+                $filteredQuery->orderBy('is_popular', 'desc')->orderBy('selling_price', 'asc');
+                break;
+            case 'price_low':
+            default:
+                $filteredQuery->orderBy('selling_price', 'asc')->orderBy('id', 'asc');
                 break;
         }
 

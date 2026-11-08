@@ -346,9 +346,11 @@ class AppServiceProvider extends ServiceProvider
                     $physicalStores = collect();
                 }
 
-                // Fetch top categories specifically
+                // Fetch top categories specifically (excluding system 'General' category)
                 try {
                     $topCategories = \App\Models\Category::where('is_top', 1)
+                        ->where('id', '!=', 1)
+                        ->where('name', '!=', 'General')
                         ->orderBy('top_order', 'asc')
                         ->orderBy('id', 'asc')
                         ->get();

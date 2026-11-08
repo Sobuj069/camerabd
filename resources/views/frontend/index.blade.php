@@ -99,13 +99,13 @@
   <header class="lg:hidden fixed top-0 w-full z-50 pt-safe bg-surface-card/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
     <div class="h-14 px-4 flex items-center justify-between gap-2 border-b border-surface-border/60">
       <!-- Logo + Tag -->
-      <div class="flex items-center gap-2 min-w-0 flex-1">
+      <div class="flex items-center gap-2.5 min-w-0 flex-1">
         <a class="flex items-center shrink-0" href="{{ url('/') }}">
-          <img alt="{{ $siteName ?? 'CAMERA BD' }} Logo" class="h-8 w-auto object-contain max-w-[120px]" width="120" height="32" src="{{ $siteLogo }}"/>
+          <img alt="{{ $siteName ?? 'CAMERA BD' }} Logo" class="h-10 w-auto object-contain max-w-[140px]" width="140" height="40" src="{{ $siteLogo }}"/>
         </a>
         <div class="flex flex-col min-w-0">
-          <span class="font-label-sm text-[10px] text-rec-red-base uppercase tracking-wider leading-none font-bold truncate">{{ $siteName ?? 'CAMERA BD' }}</span>
-          <span class="font-headline-sm text-xs text-on-surface truncate leading-tight font-bold">Pro Cine & Audio</span>
+          <span class="font-label-sm text-[11px] text-rec-red-base uppercase tracking-wider leading-none font-extrabold truncate">{{ $siteName ?? 'CAMERA BD' }}</span>
+          <span class="font-headline-sm text-[11px] text-on-surface truncate leading-tight font-bold">Pro Cine & Audio</span>
         </div>
       </div>
       
@@ -162,11 +162,11 @@
     <!-- Main Desktop Header Row -->
     <div class="h-20 max-w-7xl mx-auto px-6 flex items-center justify-between gap-6">
       <!-- Logo -->
-      <a href="{{ url('/') }}" class="flex items-center gap-2.5 flex-shrink-0">
-        <img alt="{{ $siteName ?? 'CAMERA BD' }} Logo" class="h-8 md:h-9 w-auto object-contain max-w-[130px]" width="130" height="36" src="{{ $siteLogo }}"/>
+      <a href="{{ url('/') }}" class="flex items-center gap-3 flex-shrink-0 group">
+        <img alt="{{ $siteName ?? 'CAMERA BD' }} Logo" class="h-11 md:h-12 lg:h-14 w-auto object-contain max-w-[170px] lg:max-w-[200px] transition-transform group-hover:scale-102" width="180" height="48" src="{{ $siteLogo }}"/>
         <div class="flex flex-col">
-          <span class="text-xs md:text-sm font-extrabold tracking-tight text-slate-900 uppercase leading-tight">{{ $siteName ?? 'CAMERA BD' }}</span>
-          <span class="text-[9px] text-[#006241] font-bold uppercase tracking-wider leading-none">Pro Cine & Broadcast</span>
+          <span class="text-sm md:text-base font-extrabold tracking-tight text-slate-900 uppercase leading-tight">{{ $siteName ?? 'CAMERA BD' }}</span>
+          <span class="text-[10px] text-[#006241] font-bold uppercase tracking-wider leading-none">Pro Cine & Broadcast</span>
         </div>
       </a>
 
@@ -480,6 +480,9 @@
       <div class="grid grid-cols-3 gap-2 sm:gap-3 md:hidden">
         @if(isset($navCategories) && count($navCategories) > 0)
           @foreach($navCategories as $cat)
+            @if(strtolower($cat['name'] ?? '') === 'general' || ($cat['id'] ?? 0) == 1 || ($cat['slug'] ?? '') === 'general')
+              @continue
+            @endif
             <a href="{{ $cat['view_all_url'] ?? route('frontend.category', $cat['slug']) }}" class="bg-white rounded-2xl border border-[#d0ece7]/80 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center group hover:border-secondary hover:shadow-md transition-all duration-200 shadow-xs">
               <div class="w-full aspect-square rounded-xl bg-gradient-to-b from-[#f2f9f8] to-[#e6f4f1] flex items-center justify-center p-2 mb-1.5 overflow-hidden group-hover:bg-[#d8efe9] transition-colors relative">
                 @if(!empty($cat['image']))
@@ -504,6 +507,9 @@
         <div id="category-slider-track" class="flex items-stretch gap-3 md:gap-4 overflow-x-auto scroll-smooth no-scrollbar py-2 px-0.5">
           @if(isset($navCategories) && count($navCategories) > 0)
             @foreach($navCategories as $cat)
+              @if(strtolower($cat['name'] ?? '') === 'general' || ($cat['id'] ?? 0) == 1 || ($cat['slug'] ?? '') === 'general')
+                @continue
+              @endif
               <a href="{{ $cat['view_all_url'] ?? route('frontend.category', $cat['slug']) }}" class="w-[125px] sm:w-[135px] md:w-[150px] lg:w-[160px] shrink-0 flex-none bg-white rounded-2xl border border-[#d0ece7] p-3 md:p-3.5 flex flex-col items-center justify-between text-center group hover:border-secondary hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 select-none">
                 <div class="w-full aspect-square rounded-xl bg-gradient-to-b from-[#f2f9f8] to-[#e6f4f1] flex items-center justify-center p-2 mb-2 overflow-hidden group-hover:bg-[#d8efe9] transition-colors relative">
                   @if(!empty($cat['image']))
@@ -613,10 +619,6 @@
                 @else
                   <span class="text-[11px] text-stock-available font-bold block">● In Stock</span>
                 @endif
-                <button onclick="addToCart('{{ addslashes($deal->name) }}', {{ $currentPrice }}, '{{ $deal->has_real_image ? $deal->thumbnail_url : '' }}')" class="w-full mt-3 bg-primary hover:bg-rec-red-hover text-on-primary text-label-md font-label-md py-2.5 rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm font-bold active:scale-95">
-                  <span class="material-symbols-outlined text-[16px]">shopping_cart</span>
-                  <span>Add to Cart</span>
-                </button>
               </div>
             </div>
           @empty
@@ -700,10 +702,6 @@
                 @endif
               </div>
             </div>
-            <button onclick="addToCart('{{ addslashes($popular->name) }}', {{ $pPrice }}, '{{ $popular->has_real_image ? $popular->thumbnail_url : '' }}')" class="w-full bg-on-surface hover:bg-black text-surface font-headline-sm text-label-sm py-2 rounded-xl transition-colors flex items-center justify-center gap-1 font-bold">
-              <span class="material-symbols-outlined text-[15px]">shopping_bag</span>
-              <span>Add to Cart</span>
-            </button>
           </div>
         @empty
           <div class="col-span-4 p-8 text-center text-text-muted bg-surface-card rounded-2xl border border-surface-border">
@@ -712,6 +710,38 @@
         @endforelse
       </div>
     </section>
+
+    <!-- ========================================== -->
+    <!-- SECTION: MIDDLE FULL-WIDTH PROMO BANNER -->
+    <!-- ========================================== -->
+    @if(isset($middleBanners) && $middleBanners->count() > 0)
+      <section class="max-w-7xl mx-auto px-4 lg:px-6 pt-6 lg:pt-8 w-full content-visibility-auto">
+        @if($middleBanners->count() === 1)
+          @php $mb = $middleBanners->first(); @endphp
+          <a href="{{ $mb->link ?: '#' }}" class="block rounded-3xl overflow-hidden shadow-xs border border-surface-border group transition-all duration-300 hover:shadow-lg">
+            <picture>
+              @if($mb->mobile_image)
+                <source media="(max-width: 640px)" srcset="{{ asset('uploads/banners/' . $mb->mobile_image) }}">
+              @endif
+              <img src="{{ $mb->image_url }}" alt="{{ $mb->title ?? (($siteName ?? 'CAMERA BD') . ' Promo') }}" class="w-full h-auto max-h-[380px] object-cover group-hover:scale-[1.01] transition-transform duration-500" loading="lazy" decoding="async">
+            </picture>
+          </a>
+        @else
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+            @foreach($middleBanners as $mb)
+              <a href="{{ $mb->link ?: '#' }}" class="block rounded-3xl overflow-hidden shadow-xs border border-surface-border group transition-all duration-300 hover:shadow-lg aspect-[16/7] md:aspect-[16/6.5]">
+                <picture>
+                  @if($mb->mobile_image)
+                    <source media="(max-width: 640px)" srcset="{{ asset('uploads/banners/' . $mb->mobile_image) }}">
+                  @endif
+                  <img src="{{ $mb->image_url }}" alt="{{ $mb->title ?? (($siteName ?? 'CAMERA BD') . ' Promo') }}" class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" loading="lazy" decoding="async">
+                </picture>
+              </a>
+            @endforeach
+          </div>
+        @endif
+      </section>
+    @endif
 
     <!-- ========================================== -->
     <!-- SECTION 6: BRAND SPOTLIGHT: HOLLYLAND AUDIO SHOWCASE -->
@@ -968,10 +998,6 @@
                 @endif
               </div>
             </div>
-            <button onclick="addToCart('{{ addslashes($essential->name) }}', {{ $ePrice }}, '{{ $essential->has_real_image ? $essential->thumbnail_url : '' }}')" class="w-full bg-surface-container hover:bg-primary hover:text-on-primary text-on-surface font-headline-sm text-label-sm py-2 rounded-xl transition-colors flex items-center justify-center gap-1 font-bold">
-              <span class="material-symbols-outlined text-[15px]">add_shopping_cart</span>
-              <span>Quick Add</span>
-            </button>
           </div>
         @empty
           <div class="col-span-4 p-8 text-center text-text-muted bg-surface-card rounded-2xl border border-surface-border">
@@ -1050,10 +1076,6 @@
                       @endif
                     </div>
                   </div>
-                  <button onclick="addToCart('{{ addslashes($secProd->name) }}', {{ $sPrice }}, '{{ $secProd->has_real_image ? $secProd->thumbnail_url : '' }}')" class="w-full bg-surface-container hover:bg-primary hover:text-on-primary text-on-surface font-headline-sm text-label-sm py-2 rounded-xl transition-colors flex items-center justify-center gap-1 font-bold">
-                    <span class="material-symbols-outlined text-[15px]">add_shopping_cart</span>
-                    <span>Quick Add</span>
-                  </button>
                 </div>
               @endforeach
             </div>

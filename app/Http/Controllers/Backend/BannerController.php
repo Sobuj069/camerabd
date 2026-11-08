@@ -85,6 +85,8 @@ class BannerController extends Controller
 
         $banner->save();
 
+        \Illuminate\Support\Facades\Cache::forget('frontend_homepage_sections_v2');
+
         session()->flash('success', __('Banner created successfully!'));
         return redirect()->route('banner.index');
     }
@@ -148,6 +150,8 @@ class BannerController extends Controller
 
         $banner->save();
 
+        \Illuminate\Support\Facades\Cache::forget('frontend_homepage_sections_v2');
+
         session()->flash('success', __('Banner updated successfully!'));
         return redirect()->route('banner.index');
     }
@@ -169,6 +173,8 @@ class BannerController extends Controller
 
         $banner->delete();
 
+        \Illuminate\Support\Facades\Cache::forget('frontend_homepage_sections_v2');
+
         session()->flash('success', __('Banner deleted successfully!'));
         return redirect()->route('banner.index');
     }
@@ -181,6 +187,8 @@ class BannerController extends Controller
         $banner = Banner::findOrFail($id);
         $banner->status = !$banner->status;
         $banner->save();
+
+        \Illuminate\Support\Facades\Cache::forget('frontend_homepage_sections_v2');
 
         if (request()->ajax()) {
             return response()->json([
