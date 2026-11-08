@@ -2401,10 +2401,13 @@ class InvoiceController extends Controller
         $userBranchId = auth()->user()->branch_id;
         $filterBranchId = session('branch_filter_id', null);
         
-        $branchId = ($userBranchId == 1 && $filterBranchId) ? $filterBranchId : $userBranchId;
+        $branchId = ($userBranchId == 1 && $filterBranchId && $filterBranchId != 1) ? $filterBranchId : $userBranchId;
 
         // Fetch Products for current active branch with stock and units
         $productIds = BranchProduct::where('branch_id', $branchId)->pluck('product_id');
+        if ($productIds->isEmpty() && ($userBranchId == 1 || $branchId == 1)) {
+            $productIds = BranchProduct::where('branch_id', 2)->pluck('product_id');
+        }
         $productsQuery = Product::where('status', 1)->where('is_service', 0)->whereIn('id', $productIds)->with(['unit', 'variations', 'warranty']);
         $products = $productsQuery->get()->map(function($product) {
             $wVal = $product->warranty ? $product->warranty->duration : ($product->warranty_value ?: '');

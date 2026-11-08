@@ -6089,6 +6089,79 @@
 
         var variation_code = '';
         var scanned_term = '';
+
+        function executeAddProductBySearch(item, $input, termUsed) {
+            if (!item || !item.id) return;
+            $input = ($input && $input.length) ? $input : $(".product_search:visible");
+            $input.val('');
+
+            let varCode = item.matched_variation_id || variation_code || null;
+            let term = termUsed || scanned_term || '';
+
+            let quickStock = item.stock_qty !== undefined ? (parseFloat(item.stock_qty) || 0) : null;
+            if (!isPreOrderMode() && quickStock !== null && quickStock <= 0) {
+                iziToast.error({
+                    title: "{{ __('Out of Stock!') }}",
+                    message: "{{ __('This product is out of stock. Please purchase more stock.') }}",
+                    position: "topRight",
+                });
+                $input.val('').focus();
+                return false;
+            }
+
+            if (!navigator.onLine && item.offline_data) {
+                addProductToCard(item.offline_data, null, varCode);
+                $input.val('').focus();
+                return false;
+            }
+
+            let url = "{{ route('sc-search-product-id', 'my_id') }}".replace('my_id', item.id);
+            let activeBranch = $('#branch_id').val() || '';
+            $.get(url, { branch_id: activeBranch }, function(data) {
+                let stockText = data.stock_qty;
+
+                // check if product has sub unit
+                let has_sub_unit = (data.product.unit && data.product.unit.related_unit != null);
+                let related_by = (data.product.unit && data.product.unit.related_value) ? data.product.unit.related_value : 1;
+                let stockQty = parseStockQty(stockText, has_sub_unit, related_by);
+
+                if (!isPreOrderMode() && data.product.is_service == 0 && stockQty <= 0) {
+                    iziToast.error({
+                        title: "{{ __('Out of Stock!') }}",
+                        message: "{{ __('This product is out of stock. Please purchase more stock.') }}",
+                        position: "topRight",
+                    });
+                    $input.val('').focus();
+                    return false;
+                }
+
+                let matchedImei = null;
+                if (data.product.imei == 1 && data.imeis && term) {
+                    let cleanTerm = term.trim().toLowerCase();
+                    let matched = data.imeis.find(function(i) {
+                        let s = ((typeof i === 'object') ? i.serial : i).toString().trim().toLowerCase();
+                        return s === cleanTerm;
+                    }) || data.imeis.find(function(i) {
+                        let s = ((typeof i === 'object') ? i.serial : i).toString().trim().toLowerCase();
+                        return s.includes(cleanTerm);
+                    });
+                    if (matched) {
+                        matchedImei = (typeof matched === 'object') ? matched.serial : matched;
+                    }
+                }
+
+                addProductToCard(data, null, varCode, matchedImei);
+                $input.val('').focus();
+            }).fail(function() {
+                iziToast.error({
+                    title: "{{ __('Server Error') }}",
+                    message: "{{ __('Failed to fetch product details') }}",
+                    position: "topRight"
+                });
+                $input.val('').focus();
+            });
+        }
+
         $(".product_search").autocomplete({
             source: function(req, res) {
                 let rawTerm = req.term || '';
@@ -6164,91 +6237,24 @@
                                 matched_variation_id: item.matched_variation_id || null
                             };
                         }));
+                    } else {
+                        res([]);
                     }
+                }).fail(function() {
+                    res([]);
                 });
             },
             select: function(event, ui) {
                 let $input = $(this);
-                $input.val(ui.item.value);
-                $("#search_product_id").val(ui.item.id);
-
-                // Use matched_variation_id from the autocomplete item if available
-                if (ui.item.matched_variation_id) {
-                    variation_code = ui.item.matched_variation_id;
-                }
-
-                let quickStock = ui.item.stock_qty !== undefined ? (parseFloat(ui.item.stock_qty) || 0) : null;
-                if (!isPreOrderMode() && quickStock !== null && quickStock <= 0) {
-                    iziToast.error({
-                        title: "{{ __('Out of Stock!') }}",
-                        message: "{{ __('This product is out of stock. Please purchase more stock.') }}",
-                        position: "topRight",
-                    });
-                    $input.val('').focus();
-                    return false;
-                }
-
-                if (!navigator.onLine && ui.item.offline_data) {
-                    addProductToCard(ui.item.offline_data);
-                    $input.val('').focus();
-                    return false;
-                }
-
-                let url = "{{ route('sc-search-product-id', 'my_id') }}".replace('my_id', ui.item.id);
-                let activeBranch = $('#branch_id').val() || '';
-                $.get(url, { branch_id: activeBranch }, function(data) {
-                    let stockText = data.stock_qty;
-
-                    // check if product has sub unit
-                    let has_sub_unit = (data.product.unit && data.product.unit.related_unit != null);
-
-                    // conversion value (kg=1000gm / box=12pcs etc)
-                    let related_by = (data.product.unit && data.product.unit.related_value) ? data.product.unit.related_value : 1;
-
-                    // parse stock quantity
-                    let stockQty = parseStockQty(stockText, has_sub_unit, related_by);
-
-                    // stock check
-                    if (!isPreOrderMode() && data.product.is_service == 0 && stockQty <= 0) {
-                        iziToast.error({
-                            title: "{{ __('Out of Stock!') }}",
-                            message: "{{ __('This product is out of stock. Please purchase more stock.') }}",
-                            position: "topRight",
-                        });
-                        $input.val('').focus();
-                        return false;
-                    }
-
-                    // Check if the scanned term matches any of the available IMEIs of this product
-                    let matchedImei = null;
-                    if (data.product.imei == 1 && data.imeis && scanned_term) {
-                        let cleanTerm = scanned_term.trim().toLowerCase();
-                        let matched = data.imeis.find(function(i) {
-                            let s = ((typeof i === 'object') ? i.serial : i).toString().trim().toLowerCase();
-                            return s === cleanTerm;
-                        }) || data.imeis.find(function(i) {
-                            let s = ((typeof i === 'object') ? i.serial : i).toString().trim().toLowerCase();
-                            return s.includes(cleanTerm);
-                        });
-                        if (matched) {
-                            matchedImei = (typeof matched === 'object') ? matched.serial : matched;
-                        }
-                    }
-
-                    // Pass the variation_code (which may be matched_variation_id from backend) and matchedImei
-                    addProductToCard(data, null, variation_code, matchedImei);
-                    $input.val('').focus();
-                });
-
-                $input.val('');
+                executeAddProductBySearch(ui.item, $input, scanned_term);
                 return false;
             },
             response: function(event, ui) {
                 if (ui.content && ui.content.length === 1) {
-                    ui.item = ui.content[0];
-                    $(this).data('ui-autocomplete')._trigger('select', 'autocompleteselect', ui);
+                    let $input = $(this);
+                    let item = ui.content[0];
                     $(this).autocomplete('close');
-                    $(this).val('');
+                    executeAddProductBySearch(item, $input, scanned_term);
                 }
             },
             autoFocus: true,
@@ -6287,14 +6293,14 @@
                         let match = data.find(p => (p.barcode && p.barcode.toString().trim() === term)) || data[0];
                         let itemData = {
                             id: match.id,
-                            value: match.name + " " + (match.barcode || ''),
-                            price: match.selling_price,
+                            name: match.name,
+                            barcode: match.barcode,
+                            selling_price: match.selling_price,
                             stock_qty: match.stock_qty,
                             matched_variation_id: match.matched_variation_id || null
                         };
-                        $input.data('ui-autocomplete')._trigger('select', 'autocompleteselect', { item: itemData });
                         $input.autocomplete('close');
-                        $input.val('');
+                        executeAddProductBySearch(itemData, $input, term);
                     } else {
                         iziToast.warning({
                             title: "{{ __('Not Found') }}",
@@ -7546,9 +7552,7 @@
             }
         });
 
-        // AJAX Pagination for Products
-        
-        });
+
 
         // IMEI Modal Logic
         let currentImeiBtn = null;
@@ -7742,7 +7746,6 @@
             fetchPosDrawerProducts(url);
         });
 
-        });
         // Sidebar Toggle Logic
         $(document).on('change', '#sidebar_toggle', function() {
             if ($('#pos-row-container').length) {
