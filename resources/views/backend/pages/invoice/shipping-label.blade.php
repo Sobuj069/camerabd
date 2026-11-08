@@ -4,8 +4,10 @@
     | BARCODE
     |--------------------------------------------------------------------------
     */
-    $barcodeVal = !empty($data->consignment_id)
-        ? (string) $data->consignment_id
+    $rawCid = !empty($data->consignment_id) ? trim($data->consignment_id) : '';
+    $cleanCid = ltrim($rawCid, '#');
+    $barcodeVal = !empty($cleanCid)
+        ? $cleanCid
         : (!empty($data->invoice_no) ? (string) $data->invoice_no : (string) $data->id);
 
     $barcodeBase64 = '';
@@ -27,7 +29,7 @@
     $comName = !empty(get_setting('com_name')) ? get_setting('com_name') : 'CAMERA BD';
     $comPhone = !empty(get_setting('com_phone')) ? get_setting('com_phone') : '01352146344';
     $labelDate = !empty($data->date) ? date('Y-m-d', strtotime($data->date)) : date('Y-m-d');
-    $consignmentId = !empty($data->consignment_id) ? $data->consignment_id : $data->invoice_no;
+    $consignmentId = !empty($cleanCid) ? $cleanCid : (!empty($data->invoice_no) ? $data->invoice_no : $data->id);
 @endphp
 
 <div

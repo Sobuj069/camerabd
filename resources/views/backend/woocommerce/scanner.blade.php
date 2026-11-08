@@ -498,14 +498,14 @@ body:not(.dark-theme) .sc-mode-btn.active {
                     <div class="sc-big-input-label">
                         <i class="fa fa-expand"></i> Click Input to activate scanner or type manually
                     </div>
-                    <input type="text" id="barcodeInput" class="sc-big-input" placeholder="⛶ Scan or type invoice number and press Enter..." autofocus autocomplete="off">
+                    <input type="text" id="barcodeInput" class="sc-big-input" placeholder="⛶ Scan barcode, consignment ID (#), invoice number, or phone..." autofocus autocomplete="off">
                 </div>
 
                 <!-- Manual Override Bar -->
                 <form id="manualScanForm" onsubmit="handleManualSubmit(event)">
                     <div class="sc-manual-bar">
                         <span class="sc-manual-label">MANUAL OVERRIDE:</span>
-                        <input type="text" id="manualOverrideInput" class="sc-manual-input" placeholder="Enter invoice # manually...">
+                        <input type="text" id="manualOverrideInput" class="sc-manual-input" placeholder="Enter invoice #, consignment ID, or phone manually...">
                         <button type="submit" class="sc-manual-btn">
                             <i class="fa fa-paper-plane"></i> Submit
                         </button>
@@ -758,7 +758,7 @@ function stopCameraScanner() {
 }
 
 function executeScan(barcode) {
-    barcode = (barcode || '').trim();
+    barcode = (barcode || '').replace(/[\r\n\t]/g, '').trim();
     if (!barcode) return;
 
     $('#barcodeInput').val('');
@@ -830,8 +830,10 @@ function appendHistoryRow(data, badgeText, badgeClass) {
     var prevSt = data.prev_status || 'Processing';
     var nextSt = data.new_status || currentMode.toUpperCase();
 
+    var cidHtml = (data.consignment_id && data.consignment_id !== '-') ? ('<br><span class="badge bg-secondary text-white" style="font-size: 10px; font-family: monospace;">CID: #' + data.consignment_id + '</span>') : '';
+
     var rowHtml = '<tr>' +
-        '<td class="font-weight-bold text-purple">#' + data.invoice_no + '</td>' +
+        '<td class="font-weight-bold text-purple">#' + data.invoice_no + cidHtml + '</td>' +
         '<td>' + (data.customer || '-') + (data.phone && data.phone !== '-' ? ('<br><small class="text-muted">' + data.phone + '</small>') : '') + '</td>' +
         '<td>' +
             '<div class="sc-transition">' +
@@ -893,13 +895,31 @@ $(document).ready(function() {
     // Keep focus on barcode input
     $('#barcodeInput').focus();
 
-    $('#barcodeInput').on('keypress', function(e) {
-        if (e.which === 13) {
+    var isProcessingScan = false;
+    function handleScanTrigger(inputElem) {
+        var val = $(inputElem).val();
+        if (val && !isProcessingScan) {
+            isProcessingScan = true;
+            executeScan(val);
+            setTimeout(function() {
+                isProcessingScan = false;
+            }, 300);
+        }
+    }
+
+    // Modern browsers and hardware scanners fire keydown for Enter
+    $('#barcodeInput').on('keydown', function(e) {
+        if (e.key === 'Enter' || e.keyCode === 13 || e.which === 13) {
             e.preventDefault();
-            var val = $(this).val();
-            if (val) {
-                executeScan(val);
-            }
+            handleScanTrigger(this);
+        }
+    });
+
+    // Fallback for older browsers / legacy scanner events
+    $('#barcodeInput').on('keypress', function(e) {
+        if (e.which === 13 || e.keyCode === 13) {
+            e.preventDefault();
+            handleScanTrigger(this);
         }
     });
 

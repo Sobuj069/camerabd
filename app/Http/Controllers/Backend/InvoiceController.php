@@ -2859,11 +2859,7 @@ class InvoiceController extends Controller
             return response()->json(['found' => false, 'message' => 'Enter invoice number or barcode']);
         }
 
-        $invoice = Invoice::where('invoice_no', $q)
-            ->orWhere('barcode', $q)
-            ->orWhere('consignment_id', $q)
-            ->with(['customer:id,name,phone', 'invoiceItems.product:id,name'])
-            ->first();
+        $invoice = findInvoiceForScan($q);
 
         if (!$invoice) {
             return response()->json(['found' => false, 'message' => 'Invoice not found for: ' . $q]);

@@ -1005,23 +1005,7 @@ class WooCommerceController extends Controller
         $barcode = trim($request->barcode);
         $mode = strtolower($request->mode);
 
-        $cleanBarcode = trim(preg_replace('/^#/', '', $barcode));
-
-        $invoice = Invoice::with(['customer', 'invoiceItems.product'])
-            ->where(function($q) use ($cleanBarcode) {
-                $q->where('invoice_no', $cleanBarcode)
-                  ->orWhere('invoice_no', 'WC-' . $cleanBarcode)
-                  ->orWhere('woocommerce_order_id', $cleanBarcode)
-                  ->orWhere('unique_id', $cleanBarcode)
-                  ->orWhere('consignment_id', $cleanBarcode);
-
-                if (strlen($cleanBarcode) >= 10) {
-                    $q->orWhereHas('customer', function($cq) use ($cleanBarcode) {
-                        $cq->where('phone', 'like', "%{$cleanBarcode}%");
-                    });
-                }
-            })
-            ->first();
+        $invoice = findInvoiceForScan($barcode);
 
         if (!$invoice) {
             return response()->json([
@@ -1047,6 +1031,7 @@ class WooCommerceController extends Controller
                 'status'      => 'duplicate',
                 'barcode'     => $barcode,
                 'invoice_no'  => $invoice->woocommerce_order_id ?: ($invoice->invoice_no ?: $invoice->id),
+                'consignment_id' => $invoice->consignment_id ?: '-',
                 'order_id'    => $invoice->id,
                 'customer'    => $invoice->customer->name ?? 'Customer',
                 'phone'       => $invoice->customer->phone ?? '-',
@@ -1105,6 +1090,7 @@ class WooCommerceController extends Controller
             'status'      => 'updated',
             'barcode'     => $barcode,
             'invoice_no'  => $invoice->woocommerce_order_id ?: ($invoice->invoice_no ?: $invoice->id),
+            'consignment_id' => $invoice->consignment_id ?: '-',
             'order_id'    => $invoice->id,
             'customer'    => $invoice->customer->name ?? 'Customer',
             'phone'       => $invoice->customer->phone ?? '-',

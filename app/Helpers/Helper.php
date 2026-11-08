@@ -3001,5 +3001,129 @@ if (!function_exists('mapCourierStatus')) {
     }
 }
 
+if (!function_exists('findInvoiceForScan')) {
+    /**
+     * Find an invoice by any identifier:
+     * - Consignment ID (with or without #, with or without barcode prefix)
+     * - Invoice No (with or without WC- or INV- prefix)
+     * - WooCommerce Order ID
+     * - Website Order No / ID
+     * - Customer Phone Number (full or 10-11 digits)
+     * - Unique ID or Ref No
+     * - Database ID (primary key)
+     */
+    function findInvoiceForScan($rawBarcode)
+    {
+        if (empty($rawBarcode)) {
+            return null;
+        }
+
+        // 1. Sanitize input: strip control characters, zero-width chars, and trim
+        $barcode = preg_replace('/[\x00-\x1F\x7F]/u', '', (string)$rawBarcode);
+        $barcode = trim($barcode);
+
+        if (empty($barcode)) {
+            return null;
+        }
+
+        // 2. Remove standard hardware barcode AIM identifiers (e.g. ]C1, ]e0, ]A0, ]I0, ]Q1)
+        $barcode = preg_replace('/^\][a-zA-Z0-9]{2}/', '', $barcode);
+        $barcode = trim($barcode);
+
+        // 3. Extract identifier variations
+        $noHash = trim(ltrim($barcode, '#'));
+        $withHash = '#' . $noHash;
+        $digitsOnly = preg_replace('/\D/', '', $barcode);
+
+        $wcPrefixed = str_starts_with(strtoupper($noHash), 'WC-') ? $noHash : 'WC-' . $noHash;
+        $invPrefixed = str_starts_with(strtoupper($noHash), 'INV-') ? $noHash : 'INV-' . $noHash;
+
+        $candidates = array_values(array_unique(array_filter([
+            $barcode,
+            $noHash,
+            $withHash,
+            $wcPrefixed,
+            $invPrefixed,
+            $digitsOnly,
+        ])));
+
+        // 4. Primary search query on invoices
+        $invoice = \App\Models\Invoice::with(['customer', 'invoiceItems.product'])
+            ->where(function ($q) use ($candidates, $noHash, $digitsOnly, $barcode) {
+                // Exact invoice number match
+                $q->whereIn('invoice_no', $candidates);
+
+                // Exact consignment ID match (with # or without #)
+                $q->orWhereIn('consignment_id', $candidates);
+
+                // Partial consignment ID match
+                if (!empty($noHash) && strlen($noHash) >= 4) {
+                    $q->orWhere('consignment_id', 'LIKE', "%{$noHash}%");
+                }
+                if (!empty($digitsOnly) && strlen($digitsOnly) >= 5 && $digitsOnly !== $noHash) {
+                    $q->orWhere('consignment_id', 'LIKE', "%{$digitsOnly}%");
+                }
+
+                // WooCommerce Order ID
+                if (!empty($digitsOnly)) {
+                    $q->orWhere('woocommerce_order_id', (int)$digitsOnly);
+                }
+                $q->orWhereIn('woocommerce_order_id', $candidates);
+
+                // Unique ID & Ref No
+                $q->orWhereIn('unique_id', $candidates);
+                $q->orWhereIn('ref_no', $candidates);
+                if (!empty($noHash) && strlen($noHash) >= 4) {
+                    $q->orWhere('ref_no', 'LIKE', "%{$noHash}%");
+                }
+
+                // Database ID (primary key) match if barcode is a simple number
+                if (is_numeric($noHash) && (int)$noHash > 0) {
+                    $q->orWhere('id', (int)$noHash);
+                }
+
+                // Customer Phone number match (full or partial >= 10 digits)
+                if (!empty($digitsOnly) && strlen($digitsOnly) >= 10) {
+                    $q->orWhereHas('customer', function ($cq) use ($digitsOnly) {
+                        $cq->where('phone', 'LIKE', "%{$digitsOnly}%");
+                    });
+                }
+
+                // Website Order match (order_no, phone, or customer_phone)
+                $q->orWhereHas('websiteOrder', function ($wq) use ($candidates, $noHash, $digitsOnly) {
+                    $wq->whereIn('order_no', $candidates);
+                    if (!empty($noHash) && strlen($noHash) >= 4) {
+                        $wq->orWhere('order_no', 'LIKE', "%{$noHash}%");
+                    }
+                    if (!empty($digitsOnly) && strlen($digitsOnly) >= 10) {
+                        $wq->where('phone', 'LIKE', "%{$digitsOnly}%")
+                           ->orWhere('customer_phone', 'LIKE', "%{$digitsOnly}%");
+                    }
+                });
+            })
+            ->first();
+
+        // 5. Fallback via WebsiteOrder directly if not linked via invoice relationship yet
+        if (!$invoice && class_exists('\App\Models\WebsiteOrder')) {
+            $websiteOrder = \App\Models\WebsiteOrder::where(function ($wq) use ($candidates, $noHash, $digitsOnly) {
+                $wq->whereIn('order_no', $candidates);
+                if (!empty($noHash) && strlen($noHash) >= 4) {
+                    $wq->orWhere('order_no', 'LIKE', "%{$noHash}%");
+                }
+                if (!empty($digitsOnly) && strlen($digitsOnly) >= 10) {
+                    $wq->where('phone', 'LIKE', "%{$digitsOnly}%")
+                       ->orWhere('customer_phone', 'LIKE', "%{$digitsOnly}%");
+                }
+            })->latest()->first();
+
+            if ($websiteOrder && !empty($websiteOrder->invoice_id)) {
+                $invoice = \App\Models\Invoice::with(['customer', 'invoiceItems.product'])->find($websiteOrder->invoice_id);
+            }
+        }
+
+        return $invoice;
+    }
+}
+
 
 
