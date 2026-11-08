@@ -1154,19 +1154,23 @@ if (!function_exists('product_fake_stock_val')) {
 if (!function_exists('product_stock_check')) {
     function product_stock_check($product)
     {
+        if (!$product) {
+            return '0 pcs';
+        }
+
         // যদি service product হয়, তাহলে সরাসরি 0 বা 'Service Product' রিটার্ন
         if ($product->is_service == 1) {
             return 'Service Product';
         }
 
         $userBranchId   = auth()->check() && auth()->user() ? auth()->user()->branch_id : 2;
-        $filterBranchId = session('branch_filter_id', $userBranchId);
+        $filterBranchId = session('branch_filter_id', null);
 
         // --- স্টক কুয়েরি ---
         $query = App\Models\PurchaseItem::where('product_id', $product->id);
 
         if ($userBranchId == 1) {
-            if ($filterBranchId) {
+            if ($filterBranchId && $filterBranchId != 1) {
                 $query->where('branch_id', $filterBranchId);
             }
         } else {
@@ -1202,12 +1206,12 @@ if (!function_exists('product_stock_check_sub')) {
         if ($product->is_service == 0) {
 
             $userBranchId   = auth()->check() && auth()->user() ? auth()->user()->branch_id : 2;
-            $filterBranchId = session('branch_filter_id', $userBranchId);
+            $filterBranchId = session('branch_filter_id', null);
 
             // যদি sub unit না থাকে → normal হিসাব
             if ($product->unit->related_unit  == null) {
                 if ($userBranchId == 1) {
-                    if ($filterBranchId) {
+                    if ($filterBranchId && $filterBranchId != 1) {
                         $pur_stock = App\Models\PurchaseItem::with('purchase')
                             ->where('branch_id', $filterBranchId)
                             ->where('product_id', $product->id)
@@ -1249,7 +1253,7 @@ if (!function_exists('product_stock_check_sub')) {
             // যদি sub unit থাকে → সব কিছু sub unit এ কনভার্ট হবে
             else {
                 if ($userBranchId == 1) {
-                    if ($filterBranchId) {
+                    if ($filterBranchId && $filterBranchId != 1) {
                         $inv_stock_main = InvoiceItem::where('branch_id', $filterBranchId)
                             ->where('product_id', $product->id)->sum('main_qty');
                         $inv_total_sub = InvoiceItem::where('branch_id', $filterBranchId)

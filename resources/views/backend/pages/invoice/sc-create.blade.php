@@ -3492,7 +3492,7 @@
                                     <div class="cart-search-header">
                                         @if (auth()->user()->branch_id == 1)
                                             <input type="hidden" name="branch_id" id="branch_id"
-                                                value="{{ $filterBranchId }}">
+                                                value="{{ ($filterBranchId && $filterBranchId != 1) ? $filterBranchId : 2 }}">
                                         @else
                                             <input type="hidden" name="branch_id" id="branch_id"
                                                 value="{{ auth()->user()->branch_id }}">
@@ -4160,7 +4160,7 @@
                                 <div class="cart-search-header">
                                     @if (auth()->user()->branch_id == 1)
                                         <input type="hidden" name="branch_id" id="branch_id"
-                                            value="{{ $filterBranchId }}">
+                                            value="{{ ($filterBranchId && $filterBranchId != 1) ? $filterBranchId : 2 }}">
                                     @else
                                         <input type="hidden" name="branch_id" id="branch_id"
                                             value="{{ auth()->user()->branch_id }}">
@@ -6145,7 +6145,8 @@
                 if (!navigator.onLine) return;
 
                 let url = "{{ route('sc-product-search') }}";
-                $.get(url, { req: term }, function(data) {
+                let activeBranch = $('#branch_id').val() || '';
+                $.get(url, { req: term, branch_id: activeBranch }, function(data) {
                     if (data.length === 1 && data[0].matched_variation_id) {
                         variation_code = data[0].matched_variation_id;
                     }
@@ -6194,7 +6195,8 @@
                 }
 
                 let url = "{{ route('sc-search-product-id', 'my_id') }}".replace('my_id', ui.item.id);
-                $.get(url, function(data) {
+                let activeBranch = $('#branch_id').val() || '';
+                $.get(url, { branch_id: activeBranch }, function(data) {
                     let stockText = data.stock_qty;
 
                     // check if product has sub unit
@@ -6279,7 +6281,8 @@
 
                 // 2. Direct server query for exact barcode or term
                 let url = "{{ route('sc-product-search') }}";
-                $.get(url, { req: term }, function(data) {
+                let activeBranch = $('#branch_id').val() || '';
+                $.get(url, { req: term, branch_id: activeBranch }, function(data) {
                     if (data && data.length > 0) {
                         let match = data.find(p => (p.barcode && p.barcode.toString().trim() === term)) || data[0];
                         let itemData = {
@@ -6338,7 +6341,8 @@
         $(document).on('click', '.product', function() {
             let productId = $(this).attr('data-value');
             let url = "{{ route('sc-pos-product-id', 'my_id') }}".replace('my_id', productId);
-            $.get(url, data => {
+            let activeBranch = $('#branch_id').val() || '';
+            $.get(url, { branch_id: activeBranch }, data => {
                 try {
                     let stockText = data.stock_qty;
 
@@ -7566,7 +7570,8 @@
             console.log("Opening IMEI modal for product:", productId);
             
             let url = "{{ route('sc-pos-product-id', 'my_id') }}".replace('my_id', productId);
-            $.get(url, data => {
+            let activeBranch = $('#branch_id').val() || '';
+            $.get(url, { branch_id: activeBranch }, data => {
                 let imeis = data.imeis || [];
                 let html = '';
                 

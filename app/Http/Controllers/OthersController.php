@@ -178,8 +178,12 @@ class OthersController extends Controller
     public function scProductSearch(Request $request)
     {
         $userBranchId   = auth()->user()->branch_id;
-        $filterBranchId = $request->branch_id ?? session('branch_filter_id', auth()->user()->branch_id);
-        $query          = trim(request('req'));
+        $filterBranchId = $request->branch_id ?? session('branch_filter_id', null);
+        $query          = trim($request->get('req', request('req', '')));
+
+        if ($query === '') {
+            return response()->json([]);
+        }
 
         // --- Variation barcode resolution ---
         $resolved = resolveProductAndVariationFromBarcode($query);
@@ -198,7 +202,7 @@ class OthersController extends Controller
         }
 
         $matchingProductIds = [];
-        if (!empty($query) && strlen($query) >= 2) {
+        if (strlen($query) >= 2) {
             $cleanQuery = trim($query);
             $serialProductIds = SerialNumber::where('serial', 'LIKE', "%{$cleanQuery}%")
                 ->pluck('product_id')->toArray();
@@ -218,13 +222,21 @@ class OthersController extends Controller
             $matchingProductIds = array_unique(array_merge($serialProductIds, $purchaseProductIds, $invoiceProductIds, $productImeiIds));
         }
 
-        $activeBranchId = ($userBranchId == 1 && $filterBranchId) ? $filterBranchId : $userBranchId;
+        $activeBranchId = ($userBranchId == 1 && $filterBranchId && $filterBranchId != 1) ? $filterBranchId : $userBranchId;
         $branchProductIds = BranchProduct::where('branch_id', $activeBranchId)->pluck('product_id');
 
+        // Fallback for Super Admin (branch_id = 1) or branches without mapped products
+        if ($branchProductIds->isEmpty() && ($userBranchId == 1 || $activeBranchId == 1)) {
+            $branchProductIds = BranchProduct::where('branch_id', 2)->pluck('product_id');
+        }
+
         $productQuery = Product::where('is_service', 0)
-            ->whereIn('id', $branchProductIds)
             ->with('unit.related_unit')
             ->where('status', 1);
+
+        if ($branchProductIds->isNotEmpty()) {
+            $productQuery->whereIn('id', $branchProductIds);
+        }
 
         if (strtolower($query) == 'out of stock') {
             $products = $productQuery->get()
@@ -238,12 +250,26 @@ class OthersController extends Controller
                     return $product;
                 });
         } else {
-            $products = $productQuery
-                ->where(function ($q) use ($query, $matchingProductIds) {
+            $rawWords = preg_split('/[\s,\-_]+/', $query);
+            $words = array_values(array_filter($rawWords, function($w) {
+                return strlen(trim($w)) >= 2;
+            }));
+
+            // Step 1: Direct search (exact name/barcode/matching IMEIs or all words match)
+            $directQuery = clone $productQuery;
+            $products = $directQuery
+                ->where(function ($q) use ($query, $words, $matchingProductIds) {
                     $q->where('name', 'LIKE', "%$query%")
                         ->orWhere('barcode', 'LIKE', "$query%");
                     if (!empty($matchingProductIds)) {
                         $q->orWhereIn('id', $matchingProductIds);
+                    }
+                    if (count($words) > 1) {
+                        $q->orWhere(function($sub) use ($words) {
+                            foreach ($words as $w) {
+                                $sub->where('name', 'LIKE', "%{$w}%");
+                            }
+                        });
                     }
                 })
                 ->when(env('APP_IMEI') != 'yes', function ($query) {
@@ -252,12 +278,43 @@ class OthersController extends Controller
                     });
                 })
                 ->limit(10)
-                ->get()
-                ->map(function ($product) {
-                    $product->stock_qty_text = product_stock($product);
-                    $product->stock_qty = (float) product_fake_stock_val($product);
-                    return $product;
+                ->get();
+
+            // Step 2: Fallback smart search for multi-word queries (e.g. typos or extra words like 'MATAL BODY')
+            if ($products->isEmpty() && count($words) > 1) {
+                $sigWords = array_values(array_filter($words, function($w) {
+                    return strlen($w) >= 3;
+                }));
+                if (empty($sigWords)) {
+                    $sigWords = $words;
+                }
+
+                $fallbackQuery = clone $productQuery;
+                $fallbackQuery->where(function($q) use ($sigWords) {
+                    foreach ($sigWords as $w) {
+                        $q->orWhere('name', 'LIKE', "%{$w}%");
+                    }
                 });
+
+                if (env('APP_IMEI') != 'yes') {
+                    $fallbackQuery->where(function ($q) {
+                        $q->where('imei', '!=', 1)->orWhereNull('imei');
+                    });
+                }
+
+                $cases = [];
+                foreach ($sigWords as $w) {
+                    $cases[] = "CASE WHEN `name` LIKE '%" . addslashes($w) . "%' THEN 1 ELSE 0 END";
+                }
+                $scoreRaw = implode(' + ', $cases);
+                $products = $fallbackQuery->orderByRaw("($scoreRaw) DESC")->limit(10)->get();
+            }
+
+            $products = $products->map(function ($product) {
+                $product->stock_qty_text = product_stock($product);
+                $product->stock_qty = (float) product_fake_stock_val($product);
+                return $product;
+            });
         }
         return response()->json($products);
     }
@@ -468,7 +525,7 @@ class OthersController extends Controller
     {
         $request = request();
         $originalFilter = session('branch_filter_id');
-        if ($request->branch_id) {
+        if ($request->branch_id && $request->branch_id != 1) {
             session(['branch_filter_id' => $request->branch_id]);
         }
 
@@ -476,7 +533,7 @@ class OthersController extends Controller
             ->with(['unit.related_unit', 'warranty'])
             ->first();
 
-        $data['stock_qty'] = product_stock_check($data['product']);
+        $data['stock_qty'] = product_stock($data['product']);
         $data['pure_stock'] = product_fake_stock_val($data['product']);
 
         // Variation গুলো size name অনুযায়ী sort হবে
@@ -569,16 +626,22 @@ class OthersController extends Controller
     public function posProducts(Request $request)
     {
         $userBranchId   = auth()->user()->branch_id;
-        $filterBranchId = session('branch_filter_id', auth()->user()->branch_id);
-        $activeBranchId = ($userBranchId == 1 && $filterBranchId) ? $filterBranchId : $userBranchId;
+        $filterBranchId = $request->branch_id ?? session('branch_filter_id', null);
+        $activeBranchId = ($userBranchId == 1 && $filterBranchId && $filterBranchId != 1) ? $filterBranchId : $userBranchId;
         $showImei       = trim(strtolower(env('APP_IMEI'))) === 'yes';
 
         $productIds = \App\Models\BranchProduct::where('branch_id', $activeBranchId)->pluck('product_id');
+        if ($productIds->isEmpty() && ($userBranchId == 1 || $activeBranchId == 1)) {
+            $productIds = \App\Models\BranchProduct::where('branch_id', 2)->pluck('product_id');
+        }
 
         $query = Product::where('status', 1)
             ->where('is_service', 0)
-            ->whereIn('id', $productIds)
             ->with('unit:id,name,related_unit_id,related_value', 'unit.related_unit:id,name');
+
+        if ($productIds->isNotEmpty()) {
+            $query->whereIn('id', $productIds);
+        }
 
         if ($request->filled('cat_id')) {
             $query->where('category_id', $request->cat_id);
@@ -586,9 +649,21 @@ class OthersController extends Controller
 
         if ($request->filled('search')) {
             $keyword = trim($request->search);
-            $query->where(function ($q) use ($keyword) {
+            $rawWords = preg_split('/[\s,\-_]+/', $keyword);
+            $words = array_values(array_filter($rawWords, function($w) {
+                return strlen(trim($w)) >= 2;
+            }));
+
+            $query->where(function ($q) use ($keyword, $words) {
                 $q->where('name', 'LIKE', "%{$keyword}%")
                   ->orWhere('barcode', 'LIKE', "%{$keyword}%");
+                if (count($words) > 1) {
+                    $q->orWhere(function($sub) use ($words) {
+                        foreach ($words as $w) {
+                            $sub->where('name', 'LIKE', "%{$w}%");
+                        }
+                    });
+                }
             });
         }
 

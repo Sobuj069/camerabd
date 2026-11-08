@@ -669,9 +669,15 @@ class InvoiceController extends Controller
 
         $query = Customer::orderBy('id', 'asc');
 
-        $activeBranchId = ($userBranchId == 1 && $filterBranchId) ? $filterBranchId : $userBranchId;
+        $activeBranchId = ($userBranchId == 1 && $filterBranchId && $filterBranchId != 1) ? $filterBranchId : $userBranchId;
         $productId = BranchProduct::where('branch_id', $activeBranchId)->pluck('product_id');
+        if ($productId->isEmpty() && ($userBranchId == 1 || $activeBranchId == 1)) {
+            $productId = BranchProduct::where('branch_id', 2)->pluck('product_id');
+        }
         $categoryId = BranchCategory::where('branch_id', $activeBranchId)->pluck('category_id');
+        if ($categoryId->isEmpty() && ($userBranchId == 1 || $activeBranchId == 1)) {
+            $categoryId = BranchCategory::where('branch_id', 2)->pluck('category_id');
+        }
 
         $data['products'] = Product::whereIn('id', $productId)
             ->where('status', 1)
