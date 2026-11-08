@@ -212,6 +212,14 @@
   let currentShippingCost = 100;
   let currentZone = 'inside_dhaka';
 
+  function checkIsCartFreeDelivery() {
+    const items = window.CameraCart ? CameraCart.get() : [];
+    if (!items || items.length === 0) return false;
+    return items.every(function(item) {
+      return item.is_free_delivery === 1 || item.is_free_delivery === true || item.is_free_delivery === '1';
+    });
+  }
+
   function setDeliveryZone(zone, triggerFromUser = true) {
     currentZone = zone;
     const cardInside = document.getElementById('zone-card-inside');
@@ -222,9 +230,10 @@
     const deliveryMethodInput = document.getElementById('delivery-method-input');
     const cityInput = document.getElementById('city-input');
     const divisionInput = document.getElementById('division-input');
+    const isFree = checkIsCartFreeDelivery();
 
     if (zone === 'outside_dhaka') {
-      currentShippingCost = 150;
+      currentShippingCost = isFree ? 0 : 150;
       if (radioOutside) radioOutside.checked = true;
       if (radioInside) radioInside.checked = false;
       if (cardOutside) {
@@ -237,12 +246,14 @@
         const badge = cardInside.querySelector('span:last-child');
         if (badge) badge.className = 'font-extrabold text-on-surface text-sm whitespace-nowrap bg-white px-2.5 py-1 rounded-lg border border-surface-border shadow-xs';
       }
-      if (shipEl) shipEl.textContent = '৳ 150 TK';
-      if (deliveryMethodInput) deliveryMethodInput.value = 'Courier Delivery (Outside Dhaka)';
+      if (shipEl) {
+        shipEl.innerHTML = isFree ? '<span class="text-emerald-600 font-extrabold">৳ 0 TK (Free Delivery)</span>' : '৳ 150 TK';
+      }
+      if (deliveryMethodInput) deliveryMethodInput.value = isFree ? 'Free Delivery (ফ্রি ডেলিভারি)' : 'Courier Delivery (Outside Dhaka)';
       if (cityInput) cityInput.value = 'Outside Dhaka';
       if (divisionInput) divisionInput.value = 'Outside Dhaka';
     } else {
-      currentShippingCost = 100;
+      currentShippingCost = isFree ? 0 : 100;
       if (radioInside) radioInside.checked = true;
       if (radioOutside) radioOutside.checked = false;
       if (cardInside) {
@@ -255,8 +266,10 @@
         const badge = cardOutside.querySelector('span:last-child');
         if (badge) badge.className = 'font-extrabold text-on-surface text-sm whitespace-nowrap bg-white px-2.5 py-1 rounded-lg border border-surface-border shadow-xs';
       }
-      if (shipEl) shipEl.textContent = '৳ 100 TK';
-      if (deliveryMethodInput) deliveryMethodInput.value = 'Express Home Delivery (Inside Dhaka)';
+      if (shipEl) {
+        shipEl.innerHTML = isFree ? '<span class="text-emerald-600 font-extrabold">৳ 0 TK (Free Delivery)</span>' : '৳ 100 TK';
+      }
+      if (deliveryMethodInput) deliveryMethodInput.value = isFree ? 'Free Delivery (ফ্রি ডেলিভারি)' : 'Express Home Delivery (Inside Dhaka)';
       if (cityInput) cityInput.value = 'Dhaka';
       if (divisionInput) divisionInput.value = 'Dhaka Division';
     }
@@ -311,6 +324,24 @@
     const cartInput = document.getElementById('cart-items-input');
     const shippingInput = document.getElementById('shipping-cost-input');
     const submitBtn = document.getElementById('submit-order-btn');
+    const shipEl = document.getElementById('checkout-shipping');
+    const deliveryMethodInput = document.getElementById('delivery-method-input');
+
+    const isFree = checkIsCartFreeDelivery();
+    if (isFree) {
+      currentShippingCost = 0;
+      if (shipEl) shipEl.innerHTML = '<span class="text-emerald-600 font-extrabold flex items-center justify-end gap-1"><span class="material-symbols-outlined text-[16px]">local_shipping</span> ৳ 0 TK (Free Delivery)</span>';
+      if (deliveryMethodInput) deliveryMethodInput.value = 'Free Delivery (ফ্রি ডেলিভারি)';
+    } else {
+      const hasAnyFree = items.some(i => i.is_free_delivery === 1 || i.is_free_delivery === true || i.is_free_delivery === '1');
+      if (shipEl) {
+        if (hasAnyFree && items.length > 1) {
+          shipEl.innerHTML = `<span>৳ ${currentShippingCost} TK</span><span class="block text-[10px] text-amber-600 font-semibold mt-0.5">(চার্জযুক্ত পণ্য থাকায় স্ট্যান্ডার্ড চার্জ প্রযোজ্য)</span>`;
+        } else {
+          shipEl.textContent = `৳ ${currentShippingCost} TK`;
+        }
+      }
+    }
 
     if (countEl) countEl.textContent = `${count} Item${count > 1 ? 's' : ''}`;
     if (subtotalEl) subtotalEl.textContent = `৳ ${Math.round(subtotal).toLocaleString('en-US')} TK`;
@@ -360,7 +391,10 @@
             ${imgHtml}
             <div class="flex-1 min-w-0">
               <h4 class="font-bold text-on-surface truncate">${item.name}</h4>
-              <span class="text-text-muted text-[11px]">Qty: ${qty} × ৳ ${Math.round(unitPrice).toLocaleString('en-US')}</span>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-text-muted text-[11px]">Qty: ${qty} × ৳ ${Math.round(unitPrice).toLocaleString('en-US')}</span>
+                ${(item.is_free_delivery === 1 || item.is_free_delivery === true || item.is_free_delivery === '1') ? '<span class="text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 text-[10px] font-bold">🚚 Free Delivery</span>' : ''}
+              </div>
             </div>
             <span class="font-bold text-primary whitespace-nowrap">৳ ${Math.round(lineTotal).toLocaleString('en-US')}</span>
           </div>

@@ -234,6 +234,11 @@
                                         <td>{{ $data->date }}</td>
                                         <td>
                                             <strong>{{ $data->invoice_no }}</strong>
+                                            <div class="mt-1 note-container-{{ $data->id }}" style="{{ empty($data->note) ? 'display:none;' : '' }}">
+                                                <span class="badge badge-warning text-dark note-badge-{{ $data->id }}" style="font-size: 10px; cursor: pointer; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block;" onclick="openOutletInvoiceNote({{ $data->id }}, '{{ addslashes($data->note ?? '') }}', '{{ $data->invoice_no }}')" title="{{ $data->note }}">
+                                                    <i class="feather icon-file-text mr-1"></i><span class="note-text-{{ $data->id }}">{{ \Illuminate\Support\Str::limit($data->note, 20) }}</span>
+                                                </span>
+                                            </div>
                                             @if(!empty($data->consignment_id))
                                                 <div><span class="badge bg-primary text-white mt-1" style="font-size: 11px; font-family: monospace;">CID: {{ $data->consignment_id }}</span></div>
                                             @endif
@@ -617,5 +622,94 @@
             </div>
         </div>
     </div>
+
+
+
+<!-- Outlet Invoice Note Edit Modal -->
+<div class="modal fade" id="outletInvoiceNoteModal" tabindex="-1" role="dialog" aria-labelledby="outletInvoiceNoteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content shadow-lg border-0" style="border-radius: 12px; overflow: hidden;">
+            <div class="modal-header py-3" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                <h5 class="modal-title font-weight-bold text-white" id="outletInvoiceNoteModalLabel">
+                    <i class="feather icon-file-text mr-1"></i> {{ __("Invoice Note") }} <span id="outletNoteModalInvoiceNo"></span>
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="opacity: 0.9;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-4">
+                <input type="hidden" id="outletNoteModalInvoiceId" value="">
+                <div class="form-group mb-2">
+                    <label class="font-weight-bold text-dark mb-1">{{ __("Outlet Sale Note (Printed on Invoice)") }}</label>
+                    <textarea id="outletNoteModalTextarea" class="form-control" rows="4" placeholder="{{ __("Write invoice note, special instructions, or warranty notes here...") }}" style="border-radius: 8px; font-size: 13px;"></textarea>
+                    <small class="text-muted d-block mt-1">
+                        <i class="feather icon-info mr-1"></i> {{ __("This note is displayed on printed customer invoices.") }}
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer bg-light py-2 px-4 justify-content-between">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">{{ __("Close") }}</button>
+                <button type="button" class="btn btn-warning text-white btn-sm font-weight-bold" id="btnSaveOutletInvoiceNote">
+                    <i class="feather icon-check mr-1"></i> {{ __("Save Note") }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openOutletInvoiceNote(invoiceId, currentNote, invoiceNo) {
+        $("#outletNoteModalInvoiceId").val(invoiceId);
+        $("#outletNoteModalInvoiceNo").text(invoiceNo ? " - #" + invoiceNo : "");
+        $("#outletNoteModalTextarea").val(currentNote || "");
+        $("#outletInvoiceNoteModal").modal("show");
+    }
+
+    $(document).on("click", "#btnSaveOutletInvoiceNote", function() {
+        var invoiceId = $("#outletNoteModalInvoiceId").val();
+        var note = $("#outletNoteModalTextarea").val();
+        var btn = $(this);
+
+        btn.prop("disabled", true).html('<i class="fa fa-spinner fa-spin mr-1"></i> {{ __("Saving...") }}');
+
+        $.ajax({
+            url: "{{ url('/invoice') }}/" + invoiceId + "/update-note",
+            type: "POST",
+            data: {
+                _token: "{{ csrf_token() }}",
+                note: note
+            },
+            success: function(res) {
+                btn.prop("disabled", false).html('<i class="feather icon-check mr-1"></i> {{ __("Save Note") }}');
+                if (res.success) {
+                    $("#outletInvoiceNoteModal").modal("hide");
+                    var shortText = (note && note.length > 20) ? note.substring(0, 20) + "..." : note;
+                    if (note && note.trim().length > 0) {
+                        $(".note-container-" + invoiceId).show();
+                        $(".note-text-" + invoiceId).text(shortText);
+                        $(".note-badge-" + invoiceId).attr("title", note);
+                    } else {
+                        $(".note-container-" + invoiceId).hide();
+                    }
+                    var escaped = (note || "").replace(/'/g, "\'").replace(/"/g, "&quot;");
+                    $(`[onclick*="openOutletInvoiceNote(${invoiceId}"]`).attr("onclick", `openOutletInvoiceNote(${invoiceId}, '${escaped}')`);
+                    if (typeof iziToast !== "undefined") {
+                        iziToast.success({
+                            title: "{{ __('Success') }}",
+                            message: res.message,
+                            position: "topRight"
+                        });
+                    } else {
+                        alert(res.message);
+                    }
+                }
+            },
+            error: function() {
+                btn.prop("disabled", false).html('<i class="feather icon-check mr-1"></i> {{ __("Save Note") }}');
+                alert("{{ __('Error saving invoice note.') }}");
+            }
+        });
+    });
+</script>
 
 @endsection

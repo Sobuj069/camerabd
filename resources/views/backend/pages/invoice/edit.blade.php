@@ -234,6 +234,18 @@
                                                 <th width="15%">Total</th>
                                                 <th class="header_style_right" width="5%">Action</th>
                                             </tr>
+                                            {{-- Invoice Note --}}
+                                            <tr class="bg-light-primary border-top">
+                                                <td colspan="7" class="p-3 text-left">
+                                                    <div class="form-group mb-0">
+                                                        <label class="font-weight-bold text-dark mb-1">
+                                                            <i class="feather icon-file-text mr-1 text-primary"></i> {{ __('Invoice Note (Printed on Invoice)') }}
+                                                        </label>
+                                                        <textarea name="note" id="invoice_note" class="form-control" rows="2" placeholder="{{ __('Write invoice note, warranty terms, or special instructions here (shows on customer invoice)...') }}" style="border-radius: 6px; font-size: 13px;">{{ $invoice->note }}</textarea>
+                                                        <small class="text-muted d-block mt-1">{{ __('This note will appear on printed customer invoices.') }}</small>
+                                                    </div>
+                                                </td>
+                                            </tr>
                                         </thead>
                                         <tbody id="tbody">
                                             @foreach ($invoiceItem as $key => $item)

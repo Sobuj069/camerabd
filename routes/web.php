@@ -189,6 +189,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
         Route::post('/invoice/scan-to-update/process', 'processScanToUpdate')->name('invoice.scan.process');
         Route::get('/invoice/scan-to-update/search', 'searchInvoiceForScan')->name('invoice.scan.search');
         Route::get('/invoice/offline-data', 'getOfflineData')->name('invoice.offline-data');
+        Route::post('/invoice/{id}/update-note', 'updateNote')->name('invoice.update-note');
         // Route::get('/invoice/due/print/{id}', 'dueInvoicePrint')->name('due.invoice.print');
 
     });
@@ -395,6 +396,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
         Route::post('/product/save-hollyland-settings', 'saveHollylandSettings')->name('product.save-hollyland-settings');
         Route::post('/product/toggle-website-visibility/{id}', 'toggleWebsiteVisibility')->name('product.toggle-website-visibility');
         Route::post('/product/bulk-toggle-website-visibility', 'bulkToggleWebsiteVisibility')->name('product.bulk-toggle-website-visibility');
+        Route::post('/product/toggle-free-delivery/{id}', 'toggleFreeDelivery')->name('product.toggle-free-delivery');
+        Route::post('/product/bulk-toggle-free-delivery', 'bulkToggleFreeDelivery')->name('product.bulk-toggle-free-delivery');
     });
 
     // --------------------> Homepage Sections Management <--------------------

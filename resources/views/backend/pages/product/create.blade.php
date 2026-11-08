@@ -225,6 +225,14 @@
                                     <label class="custom-control-label font-weight-bold" for="show_on_website">{{ __('Display this product on Website Frontend (Default: Checked)') }}</label>
                                 </div>
                             </div>
+                            <div class="col-md-6 mt-2">
+                                <label class="form-label fw-bold d-block">🚚 {{ __('Free Delivery') }} (ডেলিভারি চার্জ ফ্রি)</label>
+                                <div class="custom-control custom-switch mt-2">
+                                    <input type="checkbox" class="custom-control-input" id="is_free_delivery" name="is_free_delivery" value="1" {{ old('is_free_delivery', '0') == '1' ? 'checked' : '' }}>
+                                    <label class="custom-control-label font-weight-bold" for="is_free_delivery">{{ __('Free Delivery across Bangladesh') }}</label>
+                                </div>
+                            </div>
+
                             @if (env('APP_IMEI') == 'yes')
                             <div class="mt-2 col-md-6  ">
                                 <label for="imei" class="form-label fw-bold">{{ __('Has IMEI') }}</label>

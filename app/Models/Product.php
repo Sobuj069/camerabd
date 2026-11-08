@@ -11,6 +11,10 @@ class Product extends Model
 
     protected $guarded = [];
 
+    protected $casts = [
+        'is_free_delivery' => 'boolean',
+    ];
+
     protected static function booted()
     {
         static::saved(function () {

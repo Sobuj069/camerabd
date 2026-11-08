@@ -3999,6 +3999,17 @@
                                                 <option value="{{ $category->id }}">{{ $category->name }}</option>
                                             @endforeach
                                         </select>
+                                        <div class="mt-2 position-relative">
+                                            <div class="input-group input-group-sm">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text bg-white border-right-0 text-muted" style="border-radius: 6px 0 0 6px;"><i class="feather icon-search"></i></span>
+                                                </div>
+                                                <input type="text" class="form-control pos-drawer-product-search border-left-0" placeholder="{{ __('Search product by name or barcode...') }}" autocomplete="off" style="font-size: 13px; height: 36px; border-radius: 0 6px 6px 0;">
+                                                <div class="input-group-append pos-drawer-search-clear-wrap" style="display: none;">
+                                                    <button class="btn btn-outline-secondary pos-drawer-search-clear-btn" type="button" title="{{ __('Clear') }}" style="border-left: 0; font-size: 16px; line-height: 1; padding: 0 10px;">&times;</button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                     <!-- End col -->
                                 </div>
@@ -4650,6 +4661,17 @@
                                             <option value="{{ $category->id }}">{{ $category->name }}</option>
                                         @endforeach
                                     </select>
+                                        <div class="mt-2 position-relative">
+                                            <div class="input-group input-group-sm">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text bg-white border-right-0 text-muted" style="border-radius: 6px 0 0 6px;"><i class="feather icon-search"></i></span>
+                                                </div>
+                                                <input type="text" class="form-control pos-drawer-product-search border-left-0" placeholder="{{ __('Search product by name or barcode...') }}" autocomplete="off" style="font-size: 13px; height: 36px; border-radius: 0 6px 6px 0;">
+                                                <div class="input-group-append pos-drawer-search-clear-wrap" style="display: none;">
+                                                    <button class="btn btn-outline-secondary pos-drawer-search-clear-btn" type="button" title="{{ __('Clear') }}" style="border-left: 0; font-size: 16px; line-height: 1; padding: 0 10px;">&times;</button>
+                                                </div>
+                                            </div>
+                                        </div>
                                 </div>
                                 <!-- End col -->
                             </div>
@@ -7521,29 +7543,7 @@
         });
 
         // AJAX Pagination for Products
-        $(document).on('click', '#products .pagination a', function(e) {
-            e.preventDefault();
-            var url = $(this).attr('href');
-            var cat_id = $('#getProductsByCat').val();
-            
-            // If we have a category filter, append it to pagination URL
-            if (cat_id) {
-                url += (url.includes('?') ? '&' : '?') + 'cat_id=' + cat_id;
-            }
-
-            $.ajax({
-                url: url,
-                type: "GET",
-                success: function(data) {
-                    // Check if the response contains the full page or just the partial
-                    // If it's a full page, we extract the #products content
-                    var html = $(data).find('#products').length > 0 ? $(data).find('#products').html() : data;
-                    $("#products").html(html);
-                },
-                error: function() {
-                    console.log('Pagination error');
-                }
-            });
+        
         });
 
         // IMEI Modal Logic
@@ -7666,21 +7666,77 @@
         });
 
         // Product Search
-        $(document).on("change", "#getProductsByCat", function() {
-            var cat_id = $(this).val();
+        
+        // Unified POS Drawer Products Fetcher (Category + Product Name Search + Pagination)
+        let posSearchDebounceTimer = null;
+
+        function fetchPosDrawerProducts(pageUrl = null) {
+            const cat_id = $("#getProductsByCat").val() || "";
+            const search = $(".pos-drawer-product-search:visible").val() || $(".pos-drawer-product-search").val() || "";
+
+            let url = pageUrl || "{{ route('posProducts') }}";
+            let data = {};
+            if (!pageUrl) {
+                data.cat_id = cat_id;
+                data.search = search;
+            } else {
+                if (cat_id && !url.includes("cat_id=")) {
+                    url += (url.includes("?") ? "&" : "?") + "cat_id=" + encodeURIComponent(cat_id);
+                }
+                if (search && !url.includes("search=")) {
+                    url += (url.includes("?") ? "&" : "?") + "search=" + encodeURIComponent(search);
+                }
+            }
+
+            $("#products").css("opacity", "0.5");
+
             $.ajax({
-                url: "{{ route('posProducts') }}",
+                url: url,
                 type: "GET",
-                data: {
-                    cat_id: cat_id
-                },
+                data: data,
                 success: function(data) {
-                    $("#products").html(data);
+                    $("#products").css("opacity", "1");
+                    var html = $(data).find("#products").length > 0 ? $(data).find("#products").html() : data;
+                    $("#products").html(html);
                 },
                 error: function() {
-                    alert('Error !');
+                    $("#products").css("opacity", "1");
+                    console.error("POS product search error");
                 }
             });
+        }
+
+        $(document).on("change", "#getProductsByCat", function() {
+            fetchPosDrawerProducts();
+        });
+
+        $(document).on("input keyup", ".pos-drawer-product-search", function() {
+            const val = $(this).val();
+            $(".pos-drawer-product-search").val(val);
+            if (val.trim().length > 0) {
+                $(".pos-drawer-search-clear-wrap").show();
+            } else {
+                $(".pos-drawer-search-clear-wrap").hide();
+            }
+            clearTimeout(posSearchDebounceTimer);
+            posSearchDebounceTimer = setTimeout(function() {
+                fetchPosDrawerProducts();
+            }, 300);
+        });
+
+        $(document).on("click", ".pos-drawer-search-clear-btn", function() {
+            $(".pos-drawer-product-search").val("");
+            $(".pos-drawer-search-clear-wrap").hide();
+            fetchPosDrawerProducts();
+        });
+
+        // AJAX Pagination for Products
+        $(document).on("click", "#products .pagination a", function(e) {
+            e.preventDefault();
+            var url = $(this).attr("href");
+            fetchPosDrawerProducts(url);
+        });
+
         });
         // Sidebar Toggle Logic
         $(document).on('change', '#sidebar_toggle', function() {

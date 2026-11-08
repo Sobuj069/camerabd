@@ -137,6 +137,11 @@
                 Save ৳ {{ number_format($product['old_price'] - $product['price']) }}
               </span>
             @endif
+            @if(!empty($product['is_free_delivery']))
+              <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
+                <span class="material-symbols-outlined text-[14px]">local_shipping</span> Free Delivery
+              </span>
+            @endif
           </div>
 
           <!-- EMI Breakdown -->
@@ -211,8 +216,8 @@
           <div class="flex items-center gap-2.5 p-3 rounded-xl bg-surface-container-low border border-surface-border">
             <span class="material-symbols-outlined text-primary text-[24px]">local_shipping</span>
             <div>
-              <h5 class="text-xs font-bold text-on-surface">Express Delivery</h5>
-              <p class="text-[11px] text-text-muted">1-3 Days Nationwide</p>
+              <h5 class="text-xs font-bold text-on-surface">{{ !empty($product['is_free_delivery']) ? 'Free Delivery' : 'Express Delivery' }}</h5>
+              <p class="text-[11px] text-text-muted">{{ !empty($product['is_free_delivery']) ? '100% Free Nationwide' : '1-3 Days Nationwide' }}</p>
             </div>
           </div>
           <div class="flex items-center gap-2.5 p-3 rounded-xl bg-surface-container-low border border-surface-border">
@@ -432,6 +437,7 @@
         image: '{{ $product['images'][0] ?? '' }}',
         barcode: '{{ $product['sku'] ?? '' }}',
         url: window.location.href,
+        is_free_delivery: {{ !empty($product['is_free_delivery']) ? 1 : 0 }},
         qty: qty
       }, true);
     }
@@ -447,6 +453,7 @@
         image: '{{ $product['images'][0] ?? '' }}',
         barcode: '{{ $product['sku'] ?? '' }}',
         url: window.location.href,
+        is_free_delivery: {{ !empty($product['is_free_delivery']) ? 1 : 0 }},
         qty: qty
       }, false);
     }

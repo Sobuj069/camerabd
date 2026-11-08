@@ -1332,6 +1332,40 @@
         @endforeach
     </div>
 
+
+
+<!-- Invoice Note Edit Modal -->
+<div class="modal fade" id="invoiceNoteModal" tabindex="-1" role="dialog" aria-labelledby="invoiceNoteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content shadow-lg border-0" style="border-radius: 12px; overflow: hidden;">
+            <div class="modal-header py-3" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                <h5 class="modal-title font-weight-bold text-white" id="invoiceNoteModalLabel">
+                    <i class="feather icon-file-text mr-1"></i> {{ __("Invoice Note") }} <span id="noteModalInvoiceNo"></span>
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close" style="opacity: 0.9;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body p-4">
+                <input type="hidden" id="noteModalInvoiceId" value="">
+                <div class="form-group mb-2">
+                    <label class="font-weight-bold text-dark mb-1">{{ __("Order / Invoice Note (Printed on Invoice)") }}</label>
+                    <textarea id="noteModalTextarea" class="form-control" rows="4" placeholder="{{ __("Write order note, courier instructions, or special requests here...") }}" style="border-radius: 8px; font-size: 13px;"></textarea>
+                    <small class="text-muted d-block mt-1">
+                        <i class="feather icon-info mr-1"></i> {{ __("This note is displayed on printed invoices and shipping labels.") }}
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer bg-light py-2 px-4 justify-content-between">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">{{ __("Close") }}</button>
+                <button type="button" class="btn btn-warning text-white btn-sm font-weight-bold" id="btnSaveInvoiceNote">
+                    <i class="feather icon-check mr-1"></i> {{ __("Save Note") }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 @push('js')
     <script>
@@ -1749,16 +1783,55 @@
             .catch(err => alert('Network error: ' + err));
         }
 
-        // Order Note View/Edit
-        function viewOrderNote(invoiceId, currentNote) {
-            var note = prompt("Order Note:", currentNote || "");
-            if (note !== null) {
-                // If saving note is desired
-                alert("Note: " + (note || "(None)"));
-            }
+        
+        // Order Note View/Edit via Modal and AJAX
+        function viewOrderNote(invoiceId, currentNote, invoiceNo) {
+            $("#noteModalInvoiceId").val(invoiceId);
+            $("#noteModalInvoiceNo").text(invoiceNo ? " - #" + invoiceNo : "");
+            $("#noteModalTextarea").val(currentNote || "");
+            $("#invoiceNoteModal").modal("show");
         }
 
-        // Customer Fraud Check Modal
+        $(document).on("click", "#btnSaveInvoiceNote", function() {
+            var invoiceId = $("#noteModalInvoiceId").val();
+            var note = $("#noteModalTextarea").val();
+            var btn = $(this);
+
+            btn.prop("disabled", true).html('<i class="fa fa-spinner fa-spin mr-1"></i> {{ __("Saving...") }}');
+
+            $.ajax({
+                url: "{{ url('/invoice') }}/" + invoiceId + "/update-note",
+                type: "POST",
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    note: note
+                },
+                success: function(res) {
+                    btn.prop("disabled", false).html('<i class="feather icon-check mr-1"></i> {{ __("Save Note") }}');
+                    if (res.success) {
+                        $("#invoiceNoteModal").modal("hide");
+                        // Update attribute on note buttons in row
+                        var escaped = (note || "").replace(/'/g, "\'").replace(/"/g, "&quot;");
+                        $(`button[onclick*="viewOrderNote(${invoiceId}"]`).attr("onclick", `viewOrderNote(${invoiceId}, '${escaped}')`);
+                        if (typeof iziToast !== "undefined") {
+                            iziToast.success({
+                                title: "{{ __('Success') }}",
+                                message: res.message,
+                                position: "topRight"
+                            });
+                        } else {
+                            alert(res.message);
+                        }
+                    }
+                },
+                error: function() {
+                    btn.prop("disabled", false).html('<i class="feather icon-check mr-1"></i> {{ __("Save Note") }}');
+                    alert("{{ __('Error saving invoice note.') }}");
+                }
+            });
+        });
+
+// Customer Fraud Check Modal
         function checkCustomerFraud(phone, name) {
             if (typeof openCustomerFraudModal === 'function') {
                 openCustomerFraudModal(phone, name);

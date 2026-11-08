@@ -578,8 +578,19 @@ class OthersController extends Controller
         $query = Product::where('status', 1)
             ->where('is_service', 0)
             ->whereIn('id', $productIds)
-            ->where('category_id', $request->cat_id)
             ->with('unit:id,name,related_unit_id,related_value', 'unit.related_unit:id,name');
+
+        if ($request->filled('cat_id')) {
+            $query->where('category_id', $request->cat_id);
+        }
+
+        if ($request->filled('search')) {
+            $keyword = trim($request->search);
+            $query->where(function ($q) use ($keyword) {
+                $q->where('name', 'LIKE', "%{$keyword}%")
+                  ->orWhere('barcode', 'LIKE', "%{$keyword}%");
+            });
+        }
 
         if (!$showImei) {
             $query->where(function ($q) {
@@ -587,7 +598,7 @@ class OthersController extends Controller
             });
         }
 
-        $data['products'] = $query->orderBy('name', 'ASC')->paginate(12);
+        $data['products'] = $query->orderBy('name', 'ASC')->paginate(12)->appends($request->only('cat_id', 'search'));
 
         return view('backend.pages.invoice.scat-products', $data);
     }

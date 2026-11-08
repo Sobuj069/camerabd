@@ -277,6 +277,14 @@
                                         @endforeach
                                     </select>
                                 </div>
+                            <div class="col-md-2 mt-1">
+                                <select name="free_delivery" class="select2">
+                                    <option value="">{{ __('Delivery: All') }}</option>
+                                    <option value="yes" {{ request('free_delivery') == 'yes' ? 'selected' : '' }}>🚚 {{ __('Free Delivery') }} ({{ $freeDeliveryCount ?? 0 }})</option>
+                                    <option value="no" {{ request('free_delivery') == 'no' ? 'selected' : '' }}>{{ __('Standard Delivery') }}</option>
+                                </select>
+                            </div>
+
                             @endif
                             <div class="col-md-{{ env('APP_SUB_CATEGORY') == 'yes' ? '2' : '3' }} mt-1 d-flex align-items-center" style="gap: 5px;">
                                 <button type="submit" class="btn add_list_btn px-3">{{ __('Filter') }}</button>
@@ -347,6 +355,14 @@
                                         <i class="feather icon-eye-off mr-1"></i> {{ __('Hide from Website') }}
                                     </button>
                                 </div>
+                                <div class="btn-group ml-1">
+                                    <button type="button" class="btn btn-sm btn-outline-info font-weight-bold text-white bulk-free-delivery-action-btn" data-status="1" title="{{ __('Enable Free Delivery for selected products') }}" style="border-color: #06b6d4; background-color: rgba(6, 182, 212, 0.15);">
+                                        <i class="feather icon-truck mr-1 text-info"></i> {{ __('Set Free Delivery') }}
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary font-weight-bold text-white bulk-free-delivery-action-btn" data-status="0" title="{{ __('Disable Free Delivery for selected products') }}">
+                                        <i class="feather icon-slash mr-1"></i> {{ __('Remove Free Delivery') }}
+                                    </button>
+                                </div>
                             </div>
 
                             <div class="d-flex align-items-center" style="gap: 8px;">
@@ -382,6 +398,7 @@
                                     <th>{{ __('Cost') }}</th>
                                     <th>{{ __('Price') }}</th>
                                     <th class="text-center">{{ __('Website') }}</th>
+                                    <th class="text-center">{{ __('Free Delivery') }}</th>
                                     <th>{{ __('Homepage Sections') }}</th>
                                     <th></th>
                                     <th class="header_style_right">{{ __('Action') }}</th>
@@ -486,6 +503,17 @@
                                             <div>
                                                 <span class="badge {{ $data->show_on_website ? 'badge-success' : 'badge-secondary' }} website-badge-{{ $data->id }}" style="font-size: 10px; padding: 2px 6px;">
                                                     {{ $data->show_on_website ? __('Active') : __('Hidden') }}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td class="text-center" style="vertical-align: middle;">
+                                            <div class="custom-control custom-switch d-inline-block" title="{{ $data->is_free_delivery ? __('Free Delivery Active (Click to disable)') : __('Standard Delivery (Click to enable free delivery)') }}">
+                                                <input type="checkbox" class="custom-control-input toggle-free-delivery-switch" id="fd_switch_{{ $data->id }}" data-id="{{ $data->id }}" {{ $data->is_free_delivery ? 'checked' : '' }} style="cursor: pointer;">
+                                                <label class="custom-control-label" for="fd_switch_{{ $data->id }}" style="cursor: pointer;"></label>
+                                            </div>
+                                            <div>
+                                                <span class="badge {{ $data->is_free_delivery ? 'badge-info' : 'badge-light text-muted border' }} free-delivery-badge-{{ $data->id }}" style="font-size: 10px; padding: 2px 6px;">
+                                                    {{ $data->is_free_delivery ? '🚚 Free' : 'Standard' }}
                                                 </span>
                                             </div>
                                         </td>
@@ -1364,7 +1392,132 @@
             });
 
             // Single Website visibility toggle
-            $(document).on('change', '.toggle-website-switch', function() {
+            
+            // Single product free delivery toggle
+            $(document).on('change', '.toggle-free-delivery-switch', function() {
+                const switchEl = $(this);
+                const productId = switchEl.data('id');
+                const isChecked = switchEl.is(':checked') ? 1 : 0;
+                const badge = $(`.free-delivery-badge-${productId}`);
+
+                switchEl.prop('disabled', true);
+
+                $.ajax({
+                    url: "{{ url('/product/toggle-free-delivery') }}/" + productId,
+                    type: 'POST',
+                    data: {
+                        _token: "{{ csrf_token() }}",
+                        is_free_delivery: isChecked
+                    },
+                    success: function(res) {
+                        switchEl.prop('disabled', false);
+                        if (res.success) {
+                            if (res.is_free_delivery) {
+                                switchEl.prop('checked', true);
+                                badge.removeClass('badge-light text-muted border').addClass('badge-info').text('🚚 Free');
+                            } else {
+                                switchEl.prop('checked', false);
+                                badge.removeClass('badge-info').addClass('badge-light text-muted border').text('Standard');
+                            }
+                            if (typeof iziToast !== 'undefined') {
+                                iziToast.success({
+                                    title: "{{ __('Success') }}",
+                                    message: res.message,
+                                    position: 'topRight'
+                                });
+                            }
+                        }
+                    },
+                    error: function() {
+                        switchEl.prop('disabled', false);
+                        switchEl.prop('checked', !isChecked);
+                        alert("{{ __('Error updating free delivery status.') }}");
+                    }
+                });
+            });
+
+            // Bulk free delivery action
+            $(document).on('click', '.bulk-free-delivery-action-btn', function() {
+                const status = $(this).data('status');
+                const isAllStore = isAllStoreSelected;
+                const selectedIds = getSelectedProductIds();
+
+                if (!isAllStore && selectedIds.length === 0) {
+                    alert("{{ __('Please select at least one product.') }}");
+                    return;
+                }
+
+                const actionText = status == 1 ? "{{ __('ENABLE Free Delivery for selected products') }}" : "{{ __('REMOVE Free Delivery from selected products') }}";
+                if (!confirm(`{{ __('Are you sure you want to') }} ${actionText}?`)) {
+                    return;
+                }
+
+                const btn = $(this);
+                btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin mr-1"></i> {{ __("Updating...") }}');
+
+                const payload = {
+                    _token: "{{ csrf_token() }}",
+                    is_free_delivery: status,
+                    product_ids: selectedIds,
+                    select_all: isAllStore ? 1 : 0,
+                    category_id: $("select[name='category_id']").val(),
+                    sub_category_id: $("select[name='sub_category_id']").val(),
+                    barcode: $("input[name='barcode']").val(),
+                    free_delivery: $("select[name='free_delivery']").val()
+                };
+
+                $.ajax({
+                    url: "{{ route('product.bulk-toggle-free-delivery') }}",
+                    type: 'POST',
+                    data: payload,
+                    success: function(res) {
+                        btn.prop('disabled', false).html(status == 1 
+                            ? '<i class="feather icon-truck mr-1 text-info"></i> {{ __("Set Free Delivery") }}' 
+                            : '<i class="feather icon-slash mr-1"></i> {{ __("Remove Free Delivery") }}');
+
+                        if (res.success) {
+                            if (isAllStore) {
+                                $('.toggle-free-delivery-switch').prop('checked', status == 1);
+                                if (status == 1) {
+                                    $('[class*="free-delivery-badge-"]').removeClass('badge-light text-muted border').addClass('badge-info').text('🚚 Free');
+                                } else {
+                                    $('[class*="free-delivery-badge-"]').removeClass('badge-info').addClass('badge-light text-muted border').text('Standard');
+                                }
+                            } else {
+                                selectedIds.forEach(id => {
+                                    const sw = $(`#fd_switch_${id}`);
+                                    const bd = $(`.free-delivery-badge-${id}`);
+                                    if (status == 1) {
+                                        sw.prop('checked', true);
+                                        bd.removeClass('badge-light text-muted border').addClass('badge-info').text('🚚 Free');
+                                    } else {
+                                        sw.prop('checked', false);
+                                        bd.removeClass('badge-info').addClass('badge-light text-muted border').text('Standard');
+                                    }
+                                });
+                            }
+
+                            if (typeof iziToast !== 'undefined') {
+                                iziToast.success({
+                                    title: "{{ __('Success') }}",
+                                    message: res.message,
+                                    position: 'topRight'
+                                });
+                            } else {
+                                alert(res.message);
+                            }
+                        }
+                    },
+                    error: function() {
+                        btn.prop('disabled', false).html(status == 1 
+                            ? '<i class="feather icon-truck mr-1 text-info"></i> {{ __("Set Free Delivery") }}' 
+                            : '<i class="feather icon-slash mr-1"></i> {{ __("Remove Free Delivery") }}');
+                        alert("{{ __('Error updating selected products.') }}");
+                    }
+                });
+            });
+
+$(document).on('change', '.toggle-website-switch', function() {
                 const switchEl = $(this);
                 const productId = switchEl.data('id');
                 const isChecked = switchEl.is(':checked') ? 1 : 0;

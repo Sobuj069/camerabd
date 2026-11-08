@@ -2914,5 +2914,23 @@ class InvoiceController extends Controller
             'invoice_no'   => $invoice->invoice_no,
         ]);
     }
+
+    /**
+     * Quick Update Note for Invoice (Outlet & Online Sales).
+     */
+    public function updateNote(Request $request, $id)
+    {
+        $invoice = Invoice::findOrFail($id);
+        $invoice->note = $request->input('note');
+        $invoice->save();
+
+        logActivity('Invoice Note Updated', "Note updated for invoice #{$invoice->invoice_no}", $invoice);
+
+        return response()->json([
+            'success' => true,
+            'message' => __('Invoice note updated successfully.'),
+            'note'    => $invoice->note ?? '',
+        ]);
+    }
 }
 

@@ -164,6 +164,15 @@
     const grandTotal = Math.max(0, subtotal - appliedDiscount);
     const grandTotalEl = document.getElementById('cart-grand-total');
     if (grandTotalEl) grandTotalEl.textContent = `৳ ${Math.round(grandTotal).toLocaleString('en-US')} TK`;
+    const deliveryEl = document.getElementById('cart-summary-delivery');
+    if (deliveryEl) {
+      const isAllFree = items.length > 0 && items.every(i => i.is_free_delivery === 1 || i.is_free_delivery === true || i.is_free_delivery === '1');
+      if (isAllFree) {
+        deliveryEl.innerHTML = '<span class="text-emerald-600 font-extrabold">৳ 0 TK (Free Delivery)</span>';
+      } else {
+        deliveryEl.textContent = 'Calculated at Checkout';
+      }
+    }
 
     const checkoutBtn = document.getElementById('checkout-btn');
 

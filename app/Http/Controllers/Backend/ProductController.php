@@ -84,6 +84,7 @@ class ProductController extends Controller
         $data['popularCount'] = $sectionCounts['popular'] ?? 0;
         $data['hollylandCount'] = $sectionCounts['hollyland'] ?? 0;
         $data['essentialCount'] = $sectionCounts['essential'] ?? 0;
+        $data['freeDeliveryCount'] = Product::where('is_service', 0)->where('is_free_delivery', 1)->count();
 
         // All active products for quick section assignment modal
         $data['allProductsList'] = Product::with('homepageSections')->where('is_service', 0)->orderBy('name', 'asc')->get(['id', 'name', 'selling_price', 'barcode', 'is_flash_deal', 'is_popular', 'is_hollyland', 'is_essential']);
@@ -133,6 +134,13 @@ class ProductController extends Controller
         }
         if ($request->category_id != null && $request->product_id != null) {
             $query->where('category_id', $request->category_id)->where('id', $request->product_id);
+        }
+        if ($request->filled('free_delivery')) {
+            if ($request->free_delivery === 'yes') {
+                $query->where('is_free_delivery', 1);
+            } elseif ($request->free_delivery === 'no') {
+                $query->where('is_free_delivery', 0);
+            }
         }
         $data['products'] = $query
             ->orderBy('created_at', 'DESC')
@@ -290,6 +298,7 @@ class ProductController extends Controller
         $product->is_popular = $request->has('is_popular') ? 1 : 0;
         $product->is_hollyland = $request->has('is_hollyland') ? 1 : 0;
         $product->is_essential = $request->has('is_essential') ? 1 : 0;
+        $product->is_free_delivery = $request->has('is_free_delivery') ? ($request->is_free_delivery ? 1 : 0) : 0;
         $product->show_on_website = $request->has('show_on_website') ? ($request->show_on_website ? 1 : 0) : 1;
 
         $product->created_by = Auth::user()->id;
@@ -629,6 +638,7 @@ class ProductController extends Controller
         $product->is_popular = $request->has('is_popular') ? 1 : 0;
         $product->is_hollyland = $request->has('is_hollyland') ? 1 : 0;
         $product->is_essential = $request->has('is_essential') ? 1 : 0;
+        $product->is_free_delivery = $request->has('is_free_delivery') ? 1 : 0;
         $product->show_on_website = $request->has('show_on_website') ? 1 : 0;
 
         if ($product->save()) {
@@ -1336,6 +1346,85 @@ class ProductController extends Controller
         }
 
         session()->flash('success', __('Selected products website visibility updated.'));
+        return back();
+    }
+
+    /**
+     * Toggle single product is_free_delivery.
+     */
+    public function toggleFreeDelivery(Request $request, $id)
+    {
+        $product = Product::findOrFail($id);
+        $product->is_free_delivery = $request->has('is_free_delivery') 
+            ? ($request->is_free_delivery ? 1 : 0) 
+            : ($product->is_free_delivery ? 0 : 1);
+        $product->save();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'is_free_delivery' => (int) $product->is_free_delivery,
+                'message' => $product->is_free_delivery 
+                    ? __('Free Delivery has been enabled for this product.') 
+                    : __('Free Delivery has been disabled for this product.'),
+            ]);
+        }
+
+        session()->flash('success', __('Product free delivery status updated.'));
+        return back();
+    }
+
+    /**
+     * Bulk toggle products is_free_delivery.
+     */
+    public function bulkToggleFreeDelivery(Request $request)
+    {
+        $request->validate([
+            'is_free_delivery' => 'required|in:0,1',
+        ]);
+
+        $status = (int) $request->is_free_delivery;
+        $productIds = $request->product_ids ?? [];
+
+        // If user selected all products in store / matching filter
+        if ($request->filled('select_all') && $request->select_all == 1) {
+            $q = Product::where('is_service', 0);
+            if ($request->category_id) $q->where('category_id', $request->category_id);
+            if ($request->sub_category_id) $q->where('sub_category_id', $request->sub_category_id);
+            if ($request->barcode) {
+                $b = $request->barcode;
+                $q->where(function($sub) use ($b) {
+                    $sub->where('barcode', $b)->orWhere('barcode', 'LIKE', $b . '%');
+                });
+            }
+            if ($request->filled('free_delivery')) {
+                if ($request->free_delivery === 'yes') $q->where('is_free_delivery', 1);
+                if ($request->free_delivery === 'no') $q->where('is_free_delivery', 0);
+            }
+            $productIds = $q->pluck('id')->toArray();
+        }
+
+        if (empty($productIds)) {
+            return response()->json(['success' => false, 'message' => __('No products found to update.')], 400);
+        }
+
+        Product::whereIn('id', $productIds)->update(['is_free_delivery' => $status]);
+
+        // Invalidate caches
+        \Illuminate\Support\Facades\Cache::forget('frontend_homepage_sections_v2');
+        \Illuminate\Support\Facades\Cache::forget('facebook_product_feed_xml');
+        \Illuminate\Support\Facades\Cache::forget('facebook_product_feed_csv');
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $status == 1
+                    ? __('Free Delivery enabled for selected products.')
+                    : __('Free Delivery disabled for selected products.'),
+            ]);
+        }
+
+        session()->flash('success', __('Selected products free delivery status updated.'));
         return back();
     }
 }

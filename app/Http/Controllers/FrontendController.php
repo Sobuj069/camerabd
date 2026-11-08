@@ -462,6 +462,7 @@ class FrontendController extends Controller
             'price' => $price,
             'old_price' => $oldPrice > $price ? $oldPrice : null,
             'discount' => $discount,
+            'is_free_delivery' => (int)($dbProduct->is_free_delivery ?? 0),
             'rating' => 4.9,
             'reviews_count' => 15 + ($dbProduct->id % 25),
             'in_stock' => true,
@@ -702,17 +703,51 @@ class FrontendController extends Controller
             $subtotal += ($unitPrice * $qty);
         }
 
-        $deliveryZone = $request->input('delivery_zone', 'inside_dhaka');
-        $shippingCost = floatval($request->input('shipping_cost', 0));
-        if ($shippingCost <= 0) {
-            $shippingCost = ($deliveryZone === 'outside_dhaka') ? 150.00 : 100.00;
+        // Check Free Delivery status from Database for each item in the cart
+        $productIds = [];
+        foreach ($cartItems as $cItem) {
+            if (!empty($cItem['id']) && is_numeric($cItem['id'])) {
+                $productIds[] = (int) $cItem['id'];
+            }
+        }
+        $freeDeliveryMap = [];
+        if (!empty($productIds)) {
+            $freeDeliveryMap = Product::whereIn('id', $productIds)->pluck('is_free_delivery', 'id')->toArray();
         }
 
-        $deliveryMethod = $request->input('delivery_method');
-        if (empty($deliveryMethod)) {
-            $deliveryMethod = ($deliveryZone === 'outside_dhaka' || $shippingCost == 150)
-                ? 'Courier Delivery (Outside Dhaka)'
-                : 'Express Home Delivery (Inside Dhaka)';
+        // Rule: If ALL items in the order have Free Delivery, shipping is 0.
+        // If ANY item in the order does NOT have Free Delivery, normal delivery charge applies.
+        $isEntireOrderFreeDelivery = count($cartItems) > 0;
+        foreach ($cartItems as $cItem) {
+            $pId = (int) ($cItem['id'] ?? 0);
+            $hasFree = false;
+            if ($pId && isset($freeDeliveryMap[$pId])) {
+                $hasFree = (bool) $freeDeliveryMap[$pId];
+            } elseif (!empty($cItem['is_free_delivery'])) {
+                $hasFree = true;
+            }
+            if (!$hasFree) {
+                $isEntireOrderFreeDelivery = false;
+                break;
+            }
+        }
+
+        $deliveryZone = $request->input('delivery_zone', 'inside_dhaka');
+        if ($isEntireOrderFreeDelivery) {
+            $shippingCost = 0.00;
+            $deliveryMethod = 'Free Delivery (ফ্রি ডেলিভারি)';
+        } else {
+            $shippingCost = floatval($request->input('shipping_cost', 0));
+            if ($shippingCost <= 0) {
+                $shippingCost = ($deliveryZone === 'outside_dhaka') ? 150.00 : 100.00;
+            }
+
+            $deliveryMethod = $request->input('delivery_method');
+            if (empty($deliveryMethod)) {
+                $deliveryMethod = ($deliveryZone === 'outside_dhaka' || $shippingCost == 150)
+                    ? 'Courier Delivery (Outside Dhaka)'
+                    : 'Express Home Delivery (Inside Dhaka)';
+            }
         }
 
         $city = $request->input('city');
