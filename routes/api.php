@@ -26,7 +26,11 @@ Route::get('/brands', [ApiController::class, 'brands']);
 Route::get('/customers', [ApiController::class, 'customers']);
 Route::get('/suppliers', [ApiController::class, 'suppliers']);
 
-// WooCommerce Real-time Webhook endpoint for Instant Order Sync (Supports POST payload & GET/HEAD pings, plus aliases)
+// Steadfast Courier Real-time Status Webhook
+Route::match(['get', 'post', 'head'], '/steadfast/webhook', [\App\Http\Controllers\Api\SteadfastWebhookController::class, 'handleWebhook'])->name('steadfast.webhook');
+Route::match(['get', 'post', 'head'], '/steadfast/hook', [\App\Http\Controllers\Api\SteadfastWebhookController::class, 'handleWebhook']);
+Route::match(['get', 'post', 'head'], '/steadfast-webhook', [\App\Http\Controllers\Api\SteadfastWebhookController::class, 'handleWebhook']);
+
 Route::match(['get', 'post', 'head'], '/woocommerce/webhook', [\App\Http\Controllers\Backend\WooCommerceController::class, 'handleWebhook'])->name('woocommerce.webhook');
 Route::match(['get', 'post', 'head'], '/woocommerce/webl', [\App\Http\Controllers\Backend\WooCommerceController::class, 'handleWebhook']);
 Route::match(['get', 'post', 'head'], '/woocommerce/webhooks', [\App\Http\Controllers\Backend\WooCommerceController::class, 'handleWebhook']);

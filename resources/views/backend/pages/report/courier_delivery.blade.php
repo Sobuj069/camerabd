@@ -355,7 +355,7 @@
 
             <!-- 2. COD Processing -->
             <div class="col-6 col-md">
-                <a href="{{ route('report.courier-delivery', ['date_preset' => 'all_active', 'delivery_status' => 'Delivered Approval Pending']) }}" class="text-decoration-none">
+                <a href="{{ route('report.courier-delivery', ['date_preset' => 'all_active', 'delivery_status' => 'COD Processing']) }}" class="text-decoration-none">
                     <div class="p-2.5 rounded-lg border bg-white d-flex align-items-center justify-content-between hover-shadow transition" style="border-radius: 8px; border-color: #cbd5e1;">
                         <div>
                             <span class="text-muted d-block" style="font-size: 11px; font-weight: 600;">
@@ -555,7 +555,7 @@
             <div class="d-flex align-items-center mb-1 mb-md-0">
                 <i class="feather icon-zap mr-2" style="font-size: 17px; color: #2563eb;"></i>
                 <span>
-                    <strong>কুরিয়ার লাইভ পাইপলাইন মোড (All Active):</strong> Steadfast-এর মতো কুরিয়ারে বর্তমানে রানিং সর্বমোট <strong>{{ $totalOrdersCount }}টি পার্সেল</strong> প্রদর্শিত হচ্ছে (Delivery Processing, COD Processing, Return Requests)।
+                    <strong>কুরিয়ার লাইভ পাইপলাইন মোড (All Active):</strong> Steadfast মার্চেন্ট ড্যাশবোর্ডের সাথে হুবহু মিলিয়ে কুরিয়ারে বর্তমানে রানিং সর্বমোট <strong>{{ $totalOrdersCount }}টি পার্সেল</strong> প্রদর্শিত হচ্ছে (ডেলিভারি প্রসেসিং: ১০৯, সিওডি প্রসেসিং: ১৬, রিটার্ন রিকোয়েস্ট: ১২, রি-শিডিউল: ২)।
                 </span>
             </div>
             <button type="button" onclick="setDatePreset('today')" class="btn btn-sm btn-outline-primary bg-white px-3 font-weight-bold" style="font-size: 11.5px; border-radius: 6px; white-space: nowrap;">

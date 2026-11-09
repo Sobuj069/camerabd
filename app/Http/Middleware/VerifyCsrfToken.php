@@ -12,6 +12,13 @@ class VerifyCsrfToken extends Middleware
      * @var array<int, string>
      */
     protected $except = [
-        //
+        'api/*',
+        'steadfast/webhook',
+        'steadfast/hook',
+        'steadfast-webhook',
+        'woocommerce/webhook',
+        'woocommerce/webl',
+        'woocommerce/webhooks',
+        'woocommerce/hook',
     ];
 }

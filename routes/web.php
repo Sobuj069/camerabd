@@ -699,4 +699,13 @@ Route::match(['get', 'post', 'head'], '/woocommerce/webl', [\App\Http\Controller
 Route::match(['get', 'post', 'head'], '/woocommerce/webhooks', [\App\Http\Controllers\Backend\WooCommerceController::class, 'handleWebhook'])
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
+// Steadfast Courier Real-time Status Webhook (Web route fallback)
+Route::match(['get', 'post', 'head'], '/steadfast/webhook', [\App\Http\Controllers\Api\SteadfastWebhookController::class, 'handleWebhook'])
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+Route::match(['get', 'post', 'head'], '/steadfast/hook', [\App\Http\Controllers\Api\SteadfastWebhookController::class, 'handleWebhook'])
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+Route::match(['get', 'post', 'head'], '/steadfast-webhook', [\App\Http\Controllers\Api\SteadfastWebhookController::class, 'handleWebhook'])
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
+
 
