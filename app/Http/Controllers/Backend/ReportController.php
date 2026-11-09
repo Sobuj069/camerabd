@@ -1883,11 +1883,19 @@ class ReportController extends Controller
                   ->orWhereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
             });
         } elseif ($isPipelineView) {
-            // Live active shipments only
+            // Live active courier pipeline shipments (Delivery processing, COD processing, Return requests, Rescheduled, In review)
             $invQuery->where(function($q) {
                 $q->whereNotNull('consignment_id')->where('consignment_id', '!=', '')
                   ->orWhereIn('courier_type', ['Steadfast', 'Stead Fast', 'steadfast', 'Pathao', 'RedX']);
-            })->whereNotIn('order_status', ['Delivered', 'delivered', 'Cancelled', 'cancelled']);
+            })->where(function($q) {
+                $q->whereIn('order_status', [
+                    'In Courier', 'in_courier', 'In Transit', 'in_transit', 'Shipping', 'shipping', 'Picked Up', 'picked_up',
+                    'Delivered Approval Pending', 'delivered_approval_pending', 'COD Processing', 'cod_processing',
+                    'Pending Return', 'pending_return', 'Return Requested', 'return_requested', 'Returned', 'returned',
+                    'On Hold', 'on_hold', 'Rescheduled', 'rescheduled',
+                    'In Review', 'in_review', 'Pending', 'pending'
+                ])->orWhere('updated_at', '>=', Carbon::now()->subDays(10));
+            });
         }
 
         if ($orderSource === 'website') {
@@ -2083,6 +2091,7 @@ class ReportController extends Controller
             'startDate',
             'endDate',
             'datePreset',
+            'isPipelineView',
             'orderSource',
             'courier',
             'deliveryStatus',

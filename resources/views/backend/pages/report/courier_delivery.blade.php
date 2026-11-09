@@ -249,7 +249,15 @@
             <!-- Date Indicator Button -->
             <button type="button" class="btn bg-white border d-flex align-items-center gap-2 text-dark font-weight-semibold shadow-xs" style="height: 38px; border-radius: 8px; font-size: 12.5px; border-color: #cbd5e1 !important; margin-right: 6px;">
                 <i class="feather icon-calendar text-muted"></i>
-                <span>{{ Carbon\Carbon::parse($startDate)->format('M d, Y') }} - {{ Carbon\Carbon::parse($endDate)->format('M d, Y') }}</span>
+                <span>
+                    @if(!empty($isPipelineView))
+                        {{ __('All Active (লাইভ পাইপলাইন)') }}
+                    @elseif(!empty($startDate) && !empty($endDate))
+                        {{ Carbon\Carbon::parse($startDate)->format('M d, Y') }} - {{ Carbon\Carbon::parse($endDate)->format('M d, Y') }}
+                    @else
+                        {{ __('All Time') }}
+                    @endif
+                </span>
                 <i class="feather icon-chevron-down text-muted ml-1" style="font-size: 11px;"></i>
             </button>
 
@@ -530,6 +538,32 @@
     <!-- ========================================== -->
     <!-- 4. EIGHT (8) METRIC / KPI CARDS -->
     <!-- ========================================== -->
+    @if($datePreset === 'today')
+        <div class="alert alert-info py-2 px-3 mb-3 d-flex flex-wrap align-items-center justify-content-between shadow-xs" style="font-size: 12.5px; border-radius: 8px; background: #f0fdf4; border: 1px solid #86efac; color: #166534;">
+            <div class="d-flex align-items-center mb-1 mb-md-0">
+                <i class="feather icon-info mr-2" style="font-size: 17px; color: #16a34a;"></i>
+                <span>
+                    <strong>আজকের নতুন অর্ডার ভিউ:</strong> আজকে ({{ date('d M Y') }}) মোট <strong>{{ $totalOrdersCount }}টি নতুন অর্ডার</strong> তৈরি হয়েছে ({{ $pendingOrdersCount }}টি কুরিয়ারে প্রসেসিং, {{ $cancelledOrdersCount }}টি বাতিল)। নতুন পার্সেল ডেলিভারি হতে ১–৩ দিন লাগে, তাই আজকের Delivered: 0। কুরিয়ারে বর্তমানে রানিং সকল পার্সেল দেখতে <strong>"লাইভ পাইপলাইন"</strong>-এ ক্লিক করুন।
+                </span>
+            </div>
+            <button type="button" onclick="setDatePreset('all_active')" class="btn btn-sm btn-success px-3 font-weight-bold" style="font-size: 11.5px; border-radius: 6px; white-space: nowrap;">
+                <i class="feather icon-zap mr-1"></i> লাইভ পাইপলাইন দেখুন ({{ $steadfastLivePipeline['total_active'] ?? 'All' }})
+            </button>
+        </div>
+    @elseif(!empty($isPipelineView))
+        <div class="alert alert-primary py-2 px-3 mb-3 d-flex flex-wrap align-items-center justify-content-between shadow-xs" style="font-size: 12.5px; border-radius: 8px; background: #eff6ff; border: 1px solid #93c5fd; color: #1e40af;">
+            <div class="d-flex align-items-center mb-1 mb-md-0">
+                <i class="feather icon-zap mr-2" style="font-size: 17px; color: #2563eb;"></i>
+                <span>
+                    <strong>কুরিয়ার লাইভ পাইপলাইন মোড (All Active):</strong> Steadfast-এর মতো কুরিয়ারে বর্তমানে রানিং সর্বমোট <strong>{{ $totalOrdersCount }}টি পার্সেল</strong> প্রদর্শিত হচ্ছে (Delivery Processing, COD Processing, Return Requests)।
+                </span>
+            </div>
+            <button type="button" onclick="setDatePreset('today')" class="btn btn-sm btn-outline-primary bg-white px-3 font-weight-bold" style="font-size: 11.5px; border-radius: 6px; white-space: nowrap;">
+                <i class="feather icon-calendar mr-1"></i> আজকের নতুন অর্ডার ({{ date('d M Y') }})
+            </button>
+        </div>
+    @endif
+
     <div class="row row-cols-2 row-cols-sm-4 row-cols-xl-8 g-2 mb-3 px-1">
         <!-- 1. Total Orders -->
         <div class="col px-1 mb-2">
