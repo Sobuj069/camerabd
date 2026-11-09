@@ -1783,9 +1783,10 @@ class ReportController extends Controller
      */
     public function courierDeliveryReport(Request $request)
     {
-        $startDate = $request->input('start_date') ?: Carbon::now()->startOfMonth()->format('Y-m-d');
-        $endDate = $request->input('end_date') ?: Carbon::now()->format('Y-m-d');
+        $today = Carbon::now();
         $datePreset = $request->input('date_preset', 'custom');
+        $rawStart = $request->input('start_date');
+        $rawEnd = $request->input('end_date');
         $orderSource = $request->input('order_source', 'all');
         $courier = $request->input('courier', 'all');
         $deliveryStatus = $request->input('delivery_status', 'all');
@@ -1794,20 +1795,36 @@ class ReportController extends Controller
         $statusTab = strtolower(trim($request->input('status_tab', 'all')));
         $activeTab = $request->input('tab', 'delivery_report');
 
-        // Quick Date Preset Handler
-        if ($request->filled('date_preset')) {
-            $today = Carbon::now();
-            if ($datePreset === 'today') {
-                $startDate = $today->format('Y-m-d');
-                $endDate = $today->format('Y-m-d');
-            } elseif ($datePreset === 'yesterday') {
-                $startDate = $today->copy()->subDay()->format('Y-m-d');
-                $endDate = $today->copy()->subDay()->format('Y-m-d');
-            } elseif ($datePreset === '7days') {
-                $startDate = $today->copy()->subDays(6)->format('Y-m-d');
-                $endDate = $today->format('Y-m-d');
-            } elseif ($datePreset === '30days') {
-                $startDate = $today->copy()->subDays(29)->format('Y-m-d');
+        // Parse Date Presets
+        $isPipelineView = ($datePreset === 'all_active' || $datePreset === 'pipeline');
+
+        if ($datePreset === 'today') {
+            $startDate = $today->format('Y-m-d');
+            $endDate = $today->format('Y-m-d');
+        } elseif ($datePreset === 'yesterday') {
+            $startDate = $today->copy()->subDay()->format('Y-m-d');
+            $endDate = $today->copy()->subDay()->format('Y-m-d');
+        } elseif ($datePreset === '7days') {
+            $startDate = $today->copy()->subDays(6)->format('Y-m-d');
+            $endDate = $today->format('Y-m-d');
+        } elseif ($datePreset === '30days') {
+            $startDate = $today->copy()->subDays(29)->format('Y-m-d');
+            $endDate = $today->format('Y-m-d');
+        } elseif ($datePreset === 'this_month') {
+            $startDate = $today->copy()->startOfMonth()->format('Y-m-d');
+            $endDate = $today->copy()->endOfMonth()->format('Y-m-d');
+        } elseif ($isPipelineView) {
+            $startDate = null;
+            $endDate = null;
+        } else {
+            try {
+                $startDate = $rawStart ? Carbon::parse($rawStart)->format('Y-m-d') : $today->copy()->startOfMonth()->format('Y-m-d');
+            } catch (\Throwable $e) {
+                $startDate = $today->copy()->startOfMonth()->format('Y-m-d');
+            }
+            try {
+                $endDate = $rawEnd ? Carbon::parse($rawEnd)->format('Y-m-d') : $today->format('Y-m-d');
+            } catch (\Throwable $e) {
                 $endDate = $today->format('Y-m-d');
             }
         }
@@ -1815,303 +1832,252 @@ class ReportController extends Controller
         // Available Products for dropdown
         $allProducts = Product::where('status', 1)->select('id', 'name', 'barcode')->take(100)->get();
 
-        // Query Database Invoices & Website Orders
-        $dbOrders = collect();
-        try {
-            $invQuery = Invoice::with(['invoiceItems.product', 'customer', 'websiteOrder.items.product'])
-                ->where(function($q) use ($startDate, $endDate) {
-                    $q->whereBetween('date', [$startDate, $endDate])
-                      ->orWhereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
-                });
+        // 1. Calculate Real Steadfast Live Pipeline (Current Active Shipments across DB)
+        $allCourierInvoices = Invoice::where(function($q) {
+            $q->whereIn('courier_type', ['Steadfast', 'Stead Fast', 'steadfast', 'stead_fast'])
+              ->orWhere(function($sq) {
+                  $sq->whereNotNull('consignment_id')->where('consignment_id', '!=', '');
+              });
+        })->get();
 
-            if ($orderSource === 'website') {
-                $invQuery->where(function($q) {
-                    $q->whereNotNull('woocommerce_order_id')
-                      ->orWhereHas('websiteOrder')
-                      ->orWhere('sale_type', 'like', '%Online%');
-                });
-            } elseif ($orderSource === 'manual') {
-                $invQuery->where(function($q) {
-                    $q->whereNull('woocommerce_order_id')
-                      ->whereDoesntHave('websiteOrder')
-                      ->where('sale_type', '!=', 'Online');
-                });
-            }
+        $sfInReview = $allCourierInvoices->filter(function($i) {
+            $st = strtolower(trim($i->order_status ?? ''));
+            return in_array($st, ['in review', 'in_review', 'pending']);
+        })->count();
 
-            if ($courier !== 'all' && !empty($courier)) {
-                $invQuery->where('courier_type', 'like', "%{$courier}%");
-            }
+        $sfDeliveryProcessing = $allCourierInvoices->filter(function($i) {
+            $st = strtolower(trim($i->order_status ?? ''));
+            return in_array($st, ['in courier', 'in_courier', 'in transit', 'in_transit', 'shipping', 'picked up', 'picked_up']);
+        })->count();
 
-            if ($deliveryStatus !== 'all' && !empty($deliveryStatus)) {
-                $invQuery->where('order_status', 'like', "%{$deliveryStatus}%");
-            }
+        $sfCodProcessing = $allCourierInvoices->filter(function($i) {
+            $st = strtolower(trim($i->order_status ?? ''));
+            return in_array($st, ['delivered approval pending', 'delivered_approval_pending', 'cod processing', 'cod_processing']);
+        })->count();
 
-            if (!empty($search)) {
-                $invQuery->where(function($q) use ($search) {
-                    $q->where('invoice_no', 'like', "%{$search}%")
-                      ->orWhere('consignment_id', 'like', "%{$search}%")
-                      ->orWhereHas('customer', fn($cq) => $cq->where('phone', 'like', "%{$search}%")->orWhere('name', 'like', "%{$search}%"));
-                });
-            }
+        $sfReturnRequests = $allCourierInvoices->filter(function($i) {
+            $st = strtolower(trim($i->order_status ?? ''));
+            return in_array($st, ['pending return', 'pending_return', 'return requested', 'return_requested', 'returned']);
+        })->count();
 
-            $dbOrders = $invQuery->orderBy('id', 'desc')->take(200)->get();
-        } catch (\Throwable $e) {
-            $dbOrders = collect();
-        }
+        $sfRescheduled = $allCourierInvoices->filter(function($i) {
+            $st = strtolower(trim($i->order_status ?? ''));
+            return in_array($st, ['on hold', 'on_hold', 'hold', 'rescheduled']);
+        })->count();
 
-        // Standardized Reference sample orders matching user's exact visual mockup
-        $sampleOrders = [
-            (object)[
-                'order_id' => 'ORD-001234',
-                'source' => 'Website',
-                'date' => '05 Oct 2026',
-                'product_image' => asset('uploads/banners/banner_z30.webp'),
-                'product_name' => 'Sony ZV-E10',
-                'qty' => 1,
-                'purchase_price' => 45000,
-                'selling_price' => 52000,
-                'order_amount' => 52000,
-                'courier' => 'Steadfast',
-                'tracking_id' => 'SF123456789BD',
-                'status' => 'Delivered',
-                'product_cost' => 45000,
-                'courier_charge' => 120,
-                'net_profit' => 6880,
-            ],
-            (object)[
-                'order_id' => 'ORD-001235',
-                'source' => 'Website',
-                'date' => '05 Oct 2026',
-                'product_image' => asset('uploads/banners/banner_pocket4p.webp'),
-                'product_name' => 'Canon 50mm Lens',
-                'qty' => 2,
-                'purchase_price' => 18000,
-                'selling_price' => 22500,
-                'order_amount' => 45000,
-                'courier' => 'Pathao',
-                'tracking_id' => 'PH987654321BD',
-                'status' => 'In Transit',
-                'product_cost' => 36000,
-                'courier_charge' => 180,
-                'net_profit' => 8320,
-            ],
-            (object)[
-                'order_id' => 'ORD-001236',
-                'source' => 'Manual',
-                'date' => '04 Oct 2026',
-                'product_image' => asset('uploads/banners/banner_neo2.webp'),
-                'product_name' => 'AUSEK M90TR',
-                'qty' => 1,
-                'purchase_price' => 12000,
-                'selling_price' => 16500,
-                'order_amount' => 16500,
-                'courier' => 'RedX',
-                'tracking_id' => 'RX456789123BD',
-                'status' => 'Delivered',
-                'product_cost' => 12000,
-                'courier_charge' => 100,
-                'net_profit' => 4240,
-            ],
-            (object)[
-                'order_id' => 'ORD-001237',
-                'source' => 'Website',
-                'date' => '03 Oct 2026',
-                'product_image' => asset('uploads/banners/banner_neo2.webp'),
-                'product_name' => 'DJI Mini 3',
-                'qty' => 1,
-                'purchase_price' => 75000,
-                'selling_price' => 86000,
-                'order_amount' => 86000,
-                'courier' => 'Steadfast',
-                'tracking_id' => 'SF987654321BD',
-                'status' => 'Cancelled',
-                'product_cost' => 75000,
-                'courier_charge' => 150,
-                'net_profit' => -12300,
-            ],
-            (object)[
-                'order_id' => 'ORD-001238',
-                'source' => 'Website',
-                'date' => '02 Oct 2026',
-                'product_image' => asset('backend/images/no_images.png'),
-                'product_name' => 'Camera Bag',
-                'qty' => 1,
-                'purchase_price' => 3500,
-                'selling_price' => 5000,
-                'order_amount' => 5000,
-                'courier' => 'Pathao',
-                'tracking_id' => 'PH123987456BD',
-                'status' => 'Delivered',
-                'product_cost' => 3500,
-                'courier_charge' => 80,
-                'net_profit' => 1120,
-            ],
-            (object)[
-                'order_id' => 'ORD-001239',
-                'source' => 'Manual',
-                'date' => '02 Oct 2026',
-                'product_image' => asset('backend/images/no_images.png'),
-                'product_name' => 'Tripod Stand',
-                'qty' => 1,
-                'purchase_price' => 1800,
-                'selling_price' => 2500,
-                'order_amount' => 2500,
-                'courier' => 'RedX',
-                'tracking_id' => 'RX963852741BD',
-                'status' => 'Returned',
-                'product_cost' => 1800,
-                'courier_charge' => 70,
-                'net_profit' => -950,
-            ],
-            (object)[
-                'order_id' => 'ORD-001240',
-                'source' => 'Website',
-                'date' => '01 Oct 2026',
-                'product_image' => asset('uploads/banners/banner_pocket4p.webp'),
-                'product_name' => 'GoPro Hero 12',
-                'qty' => 1,
-                'purchase_price' => 48000,
-                'selling_price' => 58000,
-                'order_amount' => 58000,
-                'courier' => 'Steadfast',
-                'tracking_id' => 'SF741852963BD',
-                'status' => 'Pending',
-                'product_cost' => 48000,
-                'courier_charge' => 120,
-                'net_profit' => 0,
-            ],
-            (object)[
-                'order_id' => 'ORD-001241',
-                'source' => 'Manual',
-                'date' => '01 Oct 2026',
-                'product_image' => asset('backend/images/no_images.png'),
-                'product_name' => 'SanDisk 128GB',
-                'qty' => 3,
-                'purchase_price' => 1000,
-                'selling_price' => 1350,
-                'order_amount' => 4050,
-                'courier' => 'Pathao',
-                'tracking_id' => 'PH654789123BD',
-                'status' => 'Delivered',
-                'product_cost' => 3000,
-                'courier_charge' => 90,
-                'net_profit' => 1230,
-            ],
+        $steadfastLivePipeline = [
+            'in_review'           => $sfInReview,
+            'delivery_processing' => $sfDeliveryProcessing,
+            'cod_processing'      => $sfCodProcessing,
+            'return_requests'     => $sfReturnRequests,
+            'rescheduled'         => $sfRescheduled,
+            'total_active'        => $sfDeliveryProcessing + $sfCodProcessing + $sfReturnRequests + $sfInReview + $sfRescheduled,
         ];
 
-        // Format DB orders into unified structure
+        // 2. Query Database Invoices based on filter
+        $invQuery = Invoice::with(['invoiceItems.product', 'customer', 'websiteOrder.items.product']);
+
+        if (!$isPipelineView && !empty($startDate) && !empty($endDate)) {
+            $invQuery->where(function($q) use ($startDate, $endDate) {
+                $q->whereBetween('date', [$startDate, $endDate])
+                  ->orWhereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+            });
+        } elseif ($isPipelineView) {
+            // Live active shipments only
+            $invQuery->where(function($q) {
+                $q->whereNotNull('consignment_id')->where('consignment_id', '!=', '')
+                  ->orWhereIn('courier_type', ['Steadfast', 'Stead Fast', 'steadfast', 'Pathao', 'RedX']);
+            })->whereNotIn('order_status', ['Delivered', 'delivered', 'Cancelled', 'cancelled']);
+        }
+
+        if ($orderSource === 'website') {
+            $invQuery->where(function($q) {
+                $q->whereNotNull('woocommerce_order_id')
+                  ->orWhereHas('websiteOrder')
+                  ->orWhere('sale_type', 'like', '%Online%');
+            });
+        } elseif ($orderSource === 'manual') {
+            $invQuery->where(function($q) {
+                $q->whereNull('woocommerce_order_id')
+                  ->whereDoesntHave('websiteOrder')
+                  ->where('sale_type', 'not like', '%Online%');
+            });
+        }
+
+        if ($courier !== 'all' && !empty($courier)) {
+            if (strcasecmp($courier, 'Steadfast') === 0 || strcasecmp($courier, 'Stead Fast') === 0) {
+                $invQuery->where(function($q) {
+                    $q->where('courier_type', 'like', '%stead%')
+                      ->orWhere(function($sq) {
+                          $sq->whereNotNull('consignment_id')->where('consignment_id', '!=', '');
+                      });
+                });
+            } else {
+                $invQuery->where('courier_type', 'like', "%{$courier}%");
+            }
+        }
+
+        if ($deliveryStatus !== 'all' && !empty($deliveryStatus)) {
+            $invQuery->where('order_status', 'like', "%{$deliveryStatus}%");
+        }
+
+        if ($productId !== 'all' && !empty($productId)) {
+            $invQuery->whereHas('invoiceItems', fn($iq) => $iq->where('product_id', $productId));
+        }
+
+        if (!empty($search)) {
+            $invQuery->where(function($q) use ($search) {
+                $q->where('invoice_no', 'like', "%{$search}%")
+                  ->orWhere('consignment_id', 'like', "%{$search}%")
+                  ->orWhereHas('customer', fn($cq) => $cq->where('phone', 'like', "%{$search}%")->orWhere('name', 'like', "%{$search}%"));
+            });
+        }
+
+        $dbOrders = $invQuery->orderBy('id', 'desc')->get();
+
+        // 3. Format DB orders into unified structure
         $ordersList = collect();
         foreach ($dbOrders as $inv) {
             $isWeb = ($inv->websiteOrder || str_contains(strtolower($inv->sale_type ?? ''), 'online') || !empty($inv->woocommerce_order_id));
             $firstItem = $inv->invoiceItems->first();
             $itemProduct = $firstItem?->product;
-            $itemsCount = $inv->invoiceItems->sum('main_qty') ?: 1;
-            
+            $itemsCount = (int)$inv->invoiceItems->sum('main_qty') ?: 1;
+
             $sellingPrice = (float)($inv->total_amount ?? 0);
-            $costPrice = (float)($inv->invoiceItems->sum('pur_subtotal') ?: ($sellingPrice * 0.72));
-            $delCharge = (float)($inv->delivery_charge ?: 120);
-            
-            $normStatus = 'Delivered';
+            $costPrice = (float)($inv->invoiceItems->sum('pur_subtotal') ?: 0);
+            if ($costPrice <= 0 && $sellingPrice > 0) {
+                $costPrice = $sellingPrice * 0.70;
+            }
+            $delCharge = (float)($inv->delivery_charge ?? 0);
+
             $rawStatus = strtolower(trim($inv->order_status ?? ''));
+            $normStatus = 'Pending';
             if (str_contains($rawStatus, 'cancel')) $normStatus = 'Cancelled';
             elseif (str_contains($rawStatus, 'return')) $normStatus = 'Returned';
-            elseif (str_contains($rawStatus, 'transit') || str_contains($rawStatus, 'courier') || str_contains($rawStatus, 'ship')) $normStatus = 'In Transit';
-            elseif (str_contains($rawStatus, 'pending') || str_contains($rawStatus, 'process')) $normStatus = 'Pending';
-            elseif (str_contains($rawStatus, 'review') || str_contains($rawStatus, 'hold')) $normStatus = 'In Review';
+            elseif (str_contains($rawStatus, 'delivered') || str_contains($rawStatus, 'completed')) {
+                if (str_contains($rawStatus, 'approval') || str_contains($rawStatus, 'pending')) {
+                    $normStatus = 'COD Processing';
+                } else {
+                    $normStatus = 'Delivered';
+                }
+            }
+            elseif (str_contains($rawStatus, 'transit') || str_contains($rawStatus, 'courier') || str_contains($rawStatus, 'ship') || str_contains($rawStatus, 'picked')) $normStatus = 'In Transit';
+            elseif (str_contains($rawStatus, 'review')) $normStatus = 'In Review';
+            elseif (str_contains($rawStatus, 'hold') || str_contains($rawStatus, 'reschedule')) $normStatus = 'On Hold';
             elseif (str_contains($rawStatus, 'partial')) $normStatus = 'Partial';
+            elseif (str_contains($rawStatus, 'rts') || str_contains($rawStatus, 'approved')) $normStatus = 'RTS';
 
-            $netProfit = ($normStatus === 'Delivered') ? ($sellingPrice - $costPrice - $delCharge) : (($normStatus === 'Cancelled' || $normStatus === 'Returned') ? -($delCharge + ($sellingPrice * 0.05)) : 0);
+            $netProfit = 0;
+            if ($normStatus === 'Delivered' || $normStatus === 'COD Processing') {
+                $netProfit = $sellingPrice - $costPrice - $delCharge;
+            } elseif ($normStatus === 'Cancelled' || $normStatus === 'Returned') {
+                $netProfit = -$delCharge;
+            }
+
+            $courierName = $inv->courier_type ?: 'Steadfast';
+            if (str_contains(strtolower($courierName), 'stead')) {
+                $courierName = 'Steadfast';
+            }
 
             $ordersList->push((object)[
-                'order_id' => $inv->invoice_no ?: ('ORD-' . str_pad($inv->id, 6, '0', STR_PAD_LEFT)),
-                'source' => $isWeb ? 'Website' : 'Manual',
-                'date' => Carbon::parse($inv->date ?: $inv->created_at)->format('d M Y'),
-                'product_image' => $itemProduct?->thumbnail_url ?: asset('backend/images/no_images.png'),
-                'product_name' => $itemProduct?->name ?: ($firstItem?->new_details ?: 'Camera Gear Bundle'),
-                'qty' => (int)$itemsCount,
-                'purchase_price' => $firstItem ? (float)$firstItem->rate * 0.75 : ($costPrice / max(1, $itemsCount)),
-                'selling_price' => $firstItem ? (float)$firstItem->rate : ($sellingPrice / max(1, $itemsCount)),
-                'order_amount' => $sellingPrice,
-                'courier' => $inv->courier_type ?: ($inv->websiteOrder?->courier_service ?: 'Steadfast'),
-                'tracking_id' => $inv->consignment_id ?: ($inv->websiteOrder?->tracking_code ?: ('SF' . ($inv->id + 100000) . 'BD')),
-                'status' => $normStatus,
-                'product_cost' => $costPrice,
+                'id'             => $inv->id,
+                'order_id'       => $inv->invoice_no ?: ('ORD-' . str_pad($inv->id, 6, '0', STR_PAD_LEFT)),
+                'source'         => $isWeb ? 'Website' : 'Manual',
+                'date'           => Carbon::parse($inv->date ?: $inv->created_at)->format('d M Y'),
+                'product_image'  => $itemProduct?->thumbnail_url ?: asset('backend/images/no_images.png'),
+                'product_name'   => $itemProduct?->name ?: ($firstItem?->new_details ?: 'General Gear'),
+                'qty'            => $itemsCount,
+                'purchase_price' => $firstItem ? (float)($firstItem->rate * 0.75) : ($costPrice / max(1, $itemsCount)),
+                'selling_price'  => $firstItem ? (float)$firstItem->rate : ($sellingPrice / max(1, $itemsCount)),
+                'order_amount'   => $sellingPrice,
+                'courier'        => $courierName,
+                'tracking_id'    => $inv->consignment_id ?: ($inv->websiteOrder?->tracking_code ?: ('#' . $inv->id)),
+                'status'         => $normStatus,
+                'raw_status'     => $inv->order_status,
+                'product_cost'   => $costPrice,
                 'courier_charge' => $delCharge,
-                'net_profit' => round($netProfit),
+                'net_profit'     => round($netProfit),
             ]);
         }
 
-        // If DB has fewer than 8 orders or is empty, blend with sample mockup orders
-        if ($ordersList->count() < 8) {
-            foreach ($sampleOrders as $so) {
-                if (!$ordersList->contains('order_id', $so->order_id)) {
-                    $ordersList->push($so);
-                }
-            }
-        }
-
-        // Apply Tab Filter (All, Delivered, In Review, Cancelled, Partial, Returned, Pending)
+        // 4. Apply Tab Filter
         $filteredOrders = $ordersList;
         if ($statusTab !== 'all') {
             $filteredOrders = $ordersList->filter(function($item) use ($statusTab) {
                 $itemSt = strtolower($item->status);
                 if ($statusTab === 'review' || $statusTab === 'in review') return str_contains($itemSt, 'review');
-                if ($statusTab === 'transit' || $statusTab === 'in transit') return str_contains($itemSt, 'transit');
+                if ($statusTab === 'transit' || $statusTab === 'in transit') return str_contains($itemSt, 'transit') || str_contains($itemSt, 'courier');
+                if ($statusTab === 'delivered') return str_contains($itemSt, 'delivered') || str_contains($itemSt, 'cod');
                 return str_contains($itemSt, $statusTab);
             });
         }
 
         // Handle CSV / Excel Export
         if ($request->input('export') === 'csv' || $request->input('export') === 'excel') {
-            return $this->exportCourierDeliveryReport($filteredOrders, $startDate, $endDate);
+            return $this->exportCourierDeliveryReport($filteredOrders, $startDate ?: 'all', $endDate ?: 'pipeline');
         }
 
-        // Calculate KPI Metrics (Matching exact mockup numbers & ratios)
-        $totalOrdersCount = max(248, $ordersList->count());
-        $websiteOrdersCount = max(186, $ordersList->where('source', 'Website')->count());
-        $manualOrdersCount = max(62, $ordersList->where('source', 'Manual')->count());
-        
-        $productsSentCount = max(312, (int)$ordersList->sum('qty'));
-        $sentWebsiteQty = max(235, (int)$ordersList->where('source', 'Website')->sum('qty'));
-        $sentManualQty = max(77, (int)$ordersList->where('source', 'Manual')->sum('qty'));
+        // 5. Calculate Real KPI Metrics from actual filtered database orders
+        $totalOrdersCount = $ordersList->count();
+        $websiteOrdersCount = $ordersList->where('source', 'Website')->count();
+        $manualOrdersCount = $ordersList->where('source', 'Manual')->count();
 
-        $deliveredOrdersCount = max(198, $ordersList->where('status', 'Delivered')->count());
-        $deliveredQty = max(245, (int)$ordersList->where('status', 'Delivered')->sum('qty'));
+        $productsSentCount = (int)$ordersList->sum('qty');
+        $sentWebsiteQty = (int)$ordersList->where('source', 'Website')->sum('qty');
+        $sentManualQty = (int)$ordersList->where('source', 'Manual')->sum('qty');
 
-        $cancelledOrdersCount = max(18, $ordersList->where('status', 'Cancelled')->count());
-        $cancelledQty = max(22, (int)$ordersList->where('status', 'Cancelled')->sum('qty'));
+        $deliveredOrders = $ordersList->filter(fn($o) => in_array($o->status, ['Delivered', 'COD Processing']));
+        $deliveredOrdersCount = $deliveredOrders->count();
+        $deliveredQty = (int)$deliveredOrders->sum('qty');
 
-        $returnedOrdersCount = max(12, $ordersList->where('status', 'Returned')->count());
-        $returnedQty = max(15, (int)$ordersList->where('status', 'Returned')->sum('qty'));
+        $cancelledOrders = $ordersList->where('status', 'Cancelled');
+        $cancelledOrdersCount = $cancelledOrders->count();
+        $cancelledQty = (int)$cancelledOrders->sum('qty');
 
-        $pendingOrdersCount = max(20, $ordersList->filter(fn($o) => in_array($o->status, ['Pending', 'In Transit', 'In Review']))->count());
-        $pendingQty = max(30, 30);
+        $returnedOrders = $ordersList->where('status', 'Returned');
+        $returnedOrdersCount = $returnedOrders->count();
+        $returnedQty = (int)$returnedOrders->sum('qty');
 
-        $totalDeliveryCharge = max(12450, $ordersList->sum('courier_charge'));
-        $totalCodCollection = max(78320, $ordersList->where('status', 'Delivered')->sum('order_amount'));
+        $pendingOrders = $ordersList->filter(fn($o) => in_array($o->status, ['Pending', 'In Transit', 'In Review', 'On Hold', 'RTS']));
+        $pendingOrdersCount = $pendingOrders->count();
+        $pendingQty = (int)$pendingOrders->sum('qty');
 
-        // Courier Wise Summary Table (Mockup exact values + dynamic additions)
-        $courierSummary = [
-            'Steadfast' => (object)['name' => 'Steadfast', 'total' => 142, 'delivered' => 110, 'pending' => 15, 'returned' => 8, 'charge' => 7320],
-            'Pathao'    => (object)['name' => 'Pathao',    'total' => 68,  'delivered' => 54,  'pending' => 5,  'returned' => 4, 'charge' => 3980],
-            'RedX'      => (object)['name' => 'RedX',      'total' => 28,  'delivered' => 21,  'pending' => 0,  'returned' => 4, 'charge' => 1870],
-            'Others'    => (object)['name' => 'Others',    'total' => 10,  'delivered' => 7,   'pending' => 0,  'returned' => 0, 'charge' => 280],
-        ];
+        $totalDeliveryCharge = (float)$ordersList->sum('courier_charge');
+        $totalCodCollection = (float)$deliveredOrders->sum('order_amount');
 
-        // Profit & Loss Summary breakdown
-        $totalSalesRevenue = 128750;
-        $totalProductCost = 82430;
-        $grossProfit = $totalSalesRevenue - $totalProductCost; // 46320
-        $grossMarginPct = round(($grossProfit / max(1, $totalSalesRevenue)) * 100, 1); // 36.0%
+        // 6. Dynamic Courier Wise Summary Table
+        $courierGroups = $ordersList->groupBy('courier');
+        $courierSummary = collect();
+        foreach ($courierGroups as $cName => $cOrders) {
+            $courierSummary->push((object)[
+                'name'      => $cName ?: 'Steadfast',
+                'total'     => $cOrders->count(),
+                'delivered' => $cOrders->filter(fn($o) => in_array($o->status, ['Delivered', 'COD Processing']))->count(),
+                'pending'   => $cOrders->filter(fn($o) => in_array($o->status, ['Pending', 'In Transit', 'In Review', 'On Hold', 'RTS']))->count(),
+                'returned'  => $cOrders->where('status', 'Returned')->count(),
+                'charge'    => (float)$cOrders->sum('courier_charge'),
+            ]);
+        }
+        if ($courierSummary->isEmpty()) {
+            $courierSummary->push((object)[
+                'name' => 'Steadfast', 'total' => 0, 'delivered' => 0, 'pending' => 0, 'returned' => 0, 'charge' => 0
+            ]);
+        }
 
-        $courierChargesExpense = 12450;
-        $deliveryChargeCollected = 7850;
-        $returnCancellationLoss = 4730;
-        $packagingCost = 2100;
-        $otherExpenses = 1250;
+        // 7. Dynamic Profit & Loss Summary breakdown
+        $totalSalesRevenue = (float)$deliveredOrders->sum('order_amount');
+        $totalProductCost = (float)$deliveredOrders->sum('product_cost');
+        $grossProfit = max(0, $totalSalesRevenue - $totalProductCost);
+        $grossMarginPct = $totalSalesRevenue > 0 ? round(($grossProfit / $totalSalesRevenue) * 100, 1) : 0;
 
-        $netProfit = $grossProfit - ($courierChargesExpense - $deliveryChargeCollected) - $returnCancellationLoss - $packagingCost - $otherExpenses; // 32560
-        $netMarginPct = round(($netProfit / max(1, $totalSalesRevenue)) * 100, 1); // 25.4%
+        $courierChargesExpense = $totalDeliveryCharge;
+        $deliveryChargeCollected = (float)$ordersList->sum('courier_charge');
+        $returnCancellationLoss = (float)$ordersList->filter(fn($o) => in_array($o->status, ['Cancelled', 'Returned']))->sum('courier_charge');
+        $packagingCost = $totalOrdersCount * 30;
+        $otherExpenses = $totalOrdersCount * 15;
+
+        $netProfit = $grossProfit - $returnCancellationLoss - $packagingCost - $otherExpenses;
+        $netMarginPct = $totalSalesRevenue > 0 ? round(($netProfit / $totalSalesRevenue) * 100, 1) : 0;
 
         return view('backend.pages.report.courier_delivery', compact(
             'startDate',
@@ -2153,13 +2119,11 @@ class ReportController extends Controller
             'packagingCost',
             'otherExpenses',
             'netProfit',
-            'netMarginPct'
+            'netMarginPct',
+            'steadfastLivePipeline'
         ));
     }
 
-    /**
-     * Export Courier & Delivery Report as CSV / Excel
-     */
     public function exportCourierDeliveryReport($orders, $startDate, $endDate)
     {
         $filename = "courier-delivery-report-{$startDate}-to-{$endDate}.csv";

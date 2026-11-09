@@ -301,6 +301,121 @@
     </div>
 
     <!-- ========================================== -->
+    <!-- 2.5 STEADFAST LIVE PIPELINE (RIGHT NOW) -->
+    <!-- ========================================== -->
+    <div class="cd-card p-3 mb-3" style="background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%); border-left: 4px solid #10b981;">
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+            <div class="d-flex align-items-center gap-2">
+                <span style="display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 8px; background: #ecfdf5; color: #059669;">
+                    <i class="feather icon-zap" style="font-size: 17px;"></i>
+                </span>
+                <div>
+                    <h5 class="mb-0 font-weight-bold" style="font-size: 15px; color: #0f172a;">
+                        {{ __('Steadfast Live Pipeline — Right Now') }}
+                    </h5>
+                    <span class="text-muted" style="font-size: 11.5px;">
+                        {{ __('কুরিয়ার সার্ভারে বর্তমান লাইভ চালানের সঠিক হিসাব (Steadfast Merchant Dashboard-এর সাথে শতভাগ মিল)') }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Sync Button -->
+            <button type="button" id="btn-sync-courier" onclick="syncCourierLiveStatus(this)" class="btn text-white font-weight-bold d-flex align-items-center gap-1 shadow-xs" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; height: 36px; border-radius: 8px; font-size: 12.5px; padding: 0 16px;">
+                <i class="feather icon-refresh-cw mr-1" id="sync-icon"></i>
+                <span id="sync-btn-text">{{ __('Sync with Steadfast (লাইভ সিঙ্ক)') }}</span>
+            </button>
+        </div>
+
+        <!-- Pipeline Status Badges matching Steadfast Dashboard -->
+        <div class="row g-2 pt-2 border-top">
+            <!-- 1. Delivery Processing -->
+            <div class="col-6 col-md">
+                <a href="{{ route('report.courier-delivery', ['date_preset' => 'all_active', 'delivery_status' => 'In Transit']) }}" class="text-decoration-none">
+                    <div class="p-2.5 rounded-lg border bg-white d-flex align-items-center justify-content-between hover-shadow transition" style="border-radius: 8px; border-color: #cbd5e1;">
+                        <div>
+                            <span class="text-muted d-block" style="font-size: 11px; font-weight: 600;">
+                                <i class="feather icon-truck mr-1 text-primary"></i> {{ __('Delivery processing') }}
+                            </span>
+                            <h4 class="mb-0 font-weight-bold" style="font-size: 18px; color: #2563eb;" id="sf-stat-delivery">
+                                {{ $steadfastLivePipeline['delivery_processing'] ?? 0 }}
+                            </h4>
+                        </div>
+                        <i class="feather icon-chevron-right text-muted" style="font-size: 14px;"></i>
+                    </div>
+                </a>
+            </div>
+
+            <!-- 2. COD Processing -->
+            <div class="col-6 col-md">
+                <a href="{{ route('report.courier-delivery', ['date_preset' => 'all_active', 'delivery_status' => 'Delivered Approval Pending']) }}" class="text-decoration-none">
+                    <div class="p-2.5 rounded-lg border bg-white d-flex align-items-center justify-content-between hover-shadow transition" style="border-radius: 8px; border-color: #cbd5e1;">
+                        <div>
+                            <span class="text-muted d-block" style="font-size: 11px; font-weight: 600;">
+                                <i class="feather icon-dollar-sign mr-1 text-success"></i> {{ __('COD processing') }}
+                            </span>
+                            <h4 class="mb-0 font-weight-bold" style="font-size: 18px; color: #059669;" id="sf-stat-cod">
+                                {{ $steadfastLivePipeline['cod_processing'] ?? 0 }}
+                            </h4>
+                        </div>
+                        <i class="feather icon-chevron-right text-muted" style="font-size: 14px;"></i>
+                    </div>
+                </a>
+            </div>
+
+            <!-- 3. Return Requests -->
+            <div class="col-6 col-md">
+                <a href="{{ route('report.courier-delivery', ['date_preset' => 'all_active', 'delivery_status' => 'Returned']) }}" class="text-decoration-none">
+                    <div class="p-2.5 rounded-lg border bg-white d-flex align-items-center justify-content-between hover-shadow transition" style="border-radius: 8px; border-color: #cbd5e1;">
+                        <div>
+                            <span class="text-muted d-block" style="font-size: 11px; font-weight: 600;">
+                                <i class="feather icon-rotate-ccw mr-1 text-danger"></i> {{ __('Return requests') }}
+                            </span>
+                            <h4 class="mb-0 font-weight-bold" style="font-size: 18px; color: #dc2626;" id="sf-stat-return">
+                                {{ $steadfastLivePipeline['return_requests'] ?? 0 }}
+                            </h4>
+                        </div>
+                        <i class="feather icon-chevron-right text-muted" style="font-size: 14px;"></i>
+                    </div>
+                </a>
+            </div>
+
+            <!-- 4. Rescheduled Deliveries -->
+            <div class="col-6 col-md">
+                <a href="{{ route('report.courier-delivery', ['date_preset' => 'all_active', 'delivery_status' => 'On Hold']) }}" class="text-decoration-none">
+                    <div class="p-2.5 rounded-lg border bg-white d-flex align-items-center justify-content-between hover-shadow transition" style="border-radius: 8px; border-color: #cbd5e1;">
+                        <div>
+                            <span class="text-muted d-block" style="font-size: 11px; font-weight: 600;">
+                                <i class="feather icon-calendar mr-1 text-warning"></i> {{ __('Rescheduled deliveries') }}
+                            </span>
+                            <h4 class="mb-0 font-weight-bold" style="font-size: 18px; color: #d97706;" id="sf-stat-rescheduled">
+                                {{ $steadfastLivePipeline['rescheduled'] ?? 0 }}
+                            </h4>
+                        </div>
+                        <i class="feather icon-chevron-right text-muted" style="font-size: 14px;"></i>
+                    </div>
+                </a>
+            </div>
+
+            <!-- 5. In Review -->
+            <div class="col-6 col-md">
+                <a href="{{ route('report.courier-delivery', ['date_preset' => 'all_active', 'delivery_status' => 'In Review']) }}" class="text-decoration-none">
+                    <div class="p-2.5 rounded-lg border bg-white d-flex align-items-center justify-content-between hover-shadow transition" style="border-radius: 8px; border-color: #cbd5e1;">
+                        <div>
+                            <span class="text-muted d-block" style="font-size: 11px; font-weight: 600;">
+                                <i class="feather icon-clock mr-1 text-info"></i> {{ __('In review') }}
+                            </span>
+                            <h4 class="mb-0 font-weight-bold" style="font-size: 18px; color: #0284c7;" id="sf-stat-review">
+                                {{ $steadfastLivePipeline['in_review'] ?? 0 }}
+                            </h4>
+                        </div>
+                        <i class="feather icon-chevron-right text-muted" style="font-size: 14px;"></i>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
     <!-- 3. FILTER CARD -->
     <!-- ========================================== -->
     <div class="cd-card p-3 mb-3">
@@ -319,6 +434,8 @@
                         <button type="button" onclick="setDatePreset('yesterday')" class="quick-date-btn {{ $datePreset === 'yesterday' ? 'active' : '' }}">{{ __('Yesterday') }}</button>
                         <button type="button" onclick="setDatePreset('7days')" class="quick-date-btn {{ $datePreset === '7days' ? 'active' : '' }}">{{ __('Last 7 Days') }}</button>
                         <button type="button" onclick="setDatePreset('30days')" class="quick-date-btn {{ $datePreset === '30days' ? 'active' : '' }}">{{ __('Last 30 Days') }}</button>
+                        <button type="button" onclick="setDatePreset('this_month')" class="quick-date-btn {{ $datePreset === 'this_month' ? 'active' : '' }}">{{ __('This Month') }}</button>
+                        <button type="button" onclick="setDatePreset('all_active')" class="quick-date-btn {{ $datePreset === 'all_active' ? 'active' : '' }}"><i class="feather icon-zap"></i> {{ __('All Active (লাইভ পাইপলাইন)') }}</button>
                         <button type="button" onclick="setDatePreset('custom')" class="quick-date-btn {{ $datePreset === 'custom' ? 'active' : '' }}">{{ __('Custom') }}</button>
                     </div>
                     <!-- Date Input Pair -->
@@ -582,6 +699,10 @@
                     <div id="chart-order-source" style="width: 170px; height: 180px; position: relative;"></div>
 
                     <!-- Legend Breakdown -->
+                    @php
+                        $webPct = $totalOrdersCount > 0 ? round(($websiteOrdersCount / $totalOrdersCount) * 100, 1) : 0;
+                        $manPct = $totalOrdersCount > 0 ? round(($manualOrdersCount / $totalOrdersCount) * 100, 1) : 0;
+                    @endphp
                     <div class="pl-2" style="flex: 1;">
                         <div class="mb-3">
                             <div class="d-flex align-items-center gap-2 mb-1">
@@ -589,7 +710,7 @@
                                 <span class="font-weight-bold" style="font-size: 13px; color: #1e293b;">{{ __('Website Orders') }}</span>
                             </div>
                             <div class="pl-3" style="font-size: 14px; font-weight: 700; color: #2563eb;">
-                                {{ $websiteOrdersCount }} (75%)
+                                {{ $websiteOrdersCount }} ({{ $webPct }}%)
                             </div>
                         </div>
 
@@ -599,7 +720,7 @@
                                 <span class="font-weight-bold" style="font-size: 13px; color: #1e293b;">{{ __('Manual Orders') }}</span>
                             </div>
                             <div class="pl-3" style="font-size: 14px; font-weight: 700; color: #10b981;">
-                                {{ $manualOrdersCount }} (25%)
+                                {{ $manualOrdersCount }} ({{ $manPct }}%)
                             </div>
                         </div>
                     </div>
@@ -988,6 +1109,14 @@
             last30.setDate(last30.getDate() - 29);
             startInput.value = formatDate(last30);
             endInput.value = formatDate(today);
+        } else if (preset === 'this_month') {
+            var firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            var lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            startInput.value = formatDate(firstDay);
+            endInput.value = formatDate(lastDay);
+        } else if (preset === 'all_active') {
+            startInput.value = '';
+            endInput.value = '';
         }
 
         document.getElementById('report-filter-form').submit();
@@ -998,6 +1127,47 @@
         if (tabName === 'delivery_report') {
             window.location.href = "{{ route('report.courier-delivery') }}?tab=delivery_report";
         }
+    }
+
+    function syncCourierLiveStatus(btn) {
+        var $btn = $(btn);
+        var $icon = $('#sync-icon');
+        var $text = $('#sync-btn-text');
+
+        $btn.prop('disabled', true);
+        $icon.addClass('feather-spin fa-spin');
+        $text.text('Steadfast সিঙ্ক হচ্ছে...');
+
+        $.ajax({
+            url: "{{ route('invoice.online.sync-courier') }}",
+            type: "POST",
+            data: {
+                _token: "{{ csrf_token() }}"
+            },
+            success: function(res) {
+                $icon.removeClass('feather-spin fa-spin');
+                $text.text('সিঙ্ক সম্পন্ন!');
+                if (typeof toastr !== 'undefined') {
+                    toastr.success(res.message || 'Steadfast status successfully synced!');
+                } else {
+                    alert(res.message || 'Steadfast status successfully synced!');
+                }
+                setTimeout(function() {
+                    location.reload();
+                }, 1000);
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false);
+                $icon.removeClass('feather-spin fa-spin');
+                $text.text('Sync with Steadfast (লাইভ সিঙ্ক)');
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Sync failed. Please check Steadfast API connection.';
+                if (typeof toastr !== 'undefined') {
+                    toastr.error(msg);
+                } else {
+                    alert(msg);
+                }
+            }
+        });
     }
 </script>
 @endpush

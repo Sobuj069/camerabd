@@ -2759,7 +2759,8 @@ class InvoiceController extends Controller
                 'In Transit', 'in_transit',
                 'Shipping', 'shipping',
                 'Picked Up', 'picked_up',
-                'On Hold', 'on_hold'
+                'On Hold', 'on_hold',
+                'Delivered Approval Pending', 'delivered_approval_pending'
             ])->orderBy('id', 'desc');
         }
 

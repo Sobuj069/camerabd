@@ -2952,33 +2952,28 @@ if (!function_exists('mapCourierStatus')) {
             return 'Pending';
         }
 
-        // In Transit
-        if (in_array($clean, ['in transit', 'transit', 'picked', 'picked up', 'picking up', 'shipped', 'out for delivery', 'dispatch', 'dispatched'])) {
+        // In Transit / Delivery processing
+        if (str_contains($clean, 'transit') || in_array($clean, ['in transit', 'transit', 'picked', 'picked up', 'picking up', 'shipped', 'out for delivery', 'dispatch', 'dispatched', 'delivery processing', 'delivery_processing', 'delivering'])) {
             return 'In Transit';
         }
 
+        // COD Processing / Delivered Approval Pending
+        if (in_array($clean, ['delivered approval pending', 'delivered_approval_pending', 'cod processing', 'cod_processing', 'delivered approval'])) {
+            return 'Delivered Approval Pending';
+        }
+
         // Delivered
-        if (in_array($clean, ['delivered', 'delivered approval', 'completed'])) {
+        if (in_array($clean, ['delivered', 'completed'])) {
             return 'Delivered';
         }
 
-        // Returned
-        if (in_array($clean, ['returned', 'returned approval', 'returned by merchant', 'return'])) {
+        // Return Requests / Returned
+        if (str_contains($clean, 'return') || in_array($clean, ['returned', 'returned approval', 'returned by merchant', 'return', 'return requested', 'return_requested', 'pending return', 'return pending', 'return requests'])) {
             return 'Returned';
         }
 
-        // Pending Return
-        if (in_array($clean, ['pending return', 'return pending'])) {
-            return 'Pending Return';
-        }
-
-        // Cancelled
-        if (in_array($clean, ['cancelled', 'cancelled approval', 'pickup cancel', 'pickup cancelled', 'failed', 'canceled'])) {
-            return 'Cancelled';
-        }
-
-        // On Hold
-        if (in_array($clean, ['hold', 'on hold', 'hold approval'])) {
+        // On Hold / Rescheduled
+        if (str_contains($clean, 'hold') || in_array($clean, ['hold', 'on hold', 'hold approval', 'rescheduled', 'reschedule'])) {
             return 'On Hold';
         }
 
