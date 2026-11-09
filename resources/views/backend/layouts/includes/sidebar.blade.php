@@ -431,9 +431,13 @@
         {{-- Website Orders (Frontend Orders) --}}
         @php
             $pendingWebOrders = \App\Models\WebsiteOrder::where(function($q) {
+                $q->whereNull('invoice_id')->orWhere('invoice_id', 0)->orWhere('invoice_id', '');
+            })->where(function($q) {
                 $q->whereIn('status', ['processing', 'pending'])
-                  ->orWhereIn(\Illuminate\Support\Facades\DB::raw('LOWER(order_status)'), ['processing', 'pending']);
-            })->count();
+                  ->orWhereNull('status');
+            })->whereNotIn('status', ['approved', 'delivered', 'cancelled', 'good_no_response', 'no_response', 'advance_payment', 'on_hold'])
+              ->whereNotIn(\Illuminate\Support\Facades\DB::raw('LOWER(order_status)'), ['approved', 'delivered', 'cancelled', 'good but no response', 'no response', 'advance payment', 'on hold'])
+              ->count();
         @endphp
         <a href="{{ route('website-orders.index') }}"
             class="flex items-center justify-between px-3 py-2.5 rounded-xl text-[14.5px] font-medium transition-all duration-200 mb-0.5 {{ str_starts_with($currentRoute, 'website-orders.') ? 'active' : 'text-slate-300 hover:bg-slate-700/60 hover:text-white' }}">

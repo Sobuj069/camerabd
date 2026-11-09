@@ -37,9 +37,13 @@ class WebsiteOrderController extends Controller
         // Status counts for top carousel pills
         $counts = [
             'processing' => WebsiteOrder::where(function($q) {
+                $q->whereNull('invoice_id')->orWhere('invoice_id', 0)->orWhere('invoice_id', '');
+            })->where(function($q) {
                 $q->whereIn('status', ['processing', 'pending'])
-                  ->orWhereIn(DB::raw('LOWER(order_status)'), ['processing', 'pending']);
-            })->count(),
+                  ->orWhereNull('status');
+            })->whereNotIn('status', ['approved', 'delivered', 'cancelled', 'good_no_response', 'no_response', 'advance_payment', 'on_hold'])
+              ->whereNotIn(DB::raw('LOWER(order_status)'), ['approved', 'delivered', 'cancelled', 'good but no response', 'no response', 'advance payment', 'on hold'])
+              ->count(),
             'good_no_response' => WebsiteOrder::where(function($q) {
                 $q->where('status', 'good_no_response')
                   ->orWhere(DB::raw('LOWER(order_status)'), 'good_no_response');
@@ -58,8 +62,13 @@ class WebsiteOrderController extends Controller
             })->count(),
             'approved' => WebsiteOrder::where(function($q) {
                 $q->where('status', 'approved')
-                  ->orWhere(DB::raw('LOWER(order_status)'), 'approved');
-            })->count(),
+                  ->orWhere(DB::raw('LOWER(order_status)'), 'approved')
+                  ->orWhere(function($subQ) {
+                      $subQ->whereNotNull('invoice_id')->where('invoice_id', '!=', 0)->where('invoice_id', '!=', '');
+                  });
+            })->whereNotIn('status', ['delivered', 'cancelled'])
+              ->whereNotIn(DB::raw('LOWER(order_status)'), ['delivered', 'cancelled'])
+              ->count(),
             'delivered' => WebsiteOrder::where(function($q) {
                 $q->where('status', 'delivered')
                   ->orWhere(DB::raw('LOWER(order_status)'), 'delivered');
@@ -78,9 +87,21 @@ class WebsiteOrderController extends Controller
         if (!empty($status) && $status !== 'all') {
             if ($status === 'processing') {
                 $query->where(function($q) {
+                    $q->whereNull('invoice_id')->orWhere('invoice_id', 0)->orWhere('invoice_id', '');
+                })->where(function($q) {
                     $q->whereIn('status', ['processing', 'pending'])
-                      ->orWhereIn(DB::raw('LOWER(order_status)'), ['processing', 'pending']);
-                });
+                      ->orWhereNull('status');
+                })->whereNotIn('status', ['approved', 'delivered', 'cancelled', 'good_no_response', 'no_response', 'advance_payment', 'on_hold'])
+                  ->whereNotIn(DB::raw('LOWER(order_status)'), ['approved', 'delivered', 'cancelled', 'good but no response', 'no response', 'advance payment', 'on hold']);
+            } elseif ($status === 'approved') {
+                $query->where(function($q) {
+                    $q->where('status', 'approved')
+                      ->orWhere(DB::raw('LOWER(order_status)'), 'approved')
+                      ->orWhere(function($subQ) {
+                          $subQ->whereNotNull('invoice_id')->where('invoice_id', '!=', 0)->where('invoice_id', '!=', '');
+                      });
+                })->whereNotIn('status', ['delivered', 'cancelled'])
+                  ->whereNotIn(DB::raw('LOWER(order_status)'), ['delivered', 'cancelled']);
             } else {
                 $query->where(function($q) use ($status) {
                     $q->where('status', $status)
@@ -449,6 +470,7 @@ class WebsiteOrderController extends Controller
                     // Mark order approved and link invoice
                     $updateFields = [
                         'status' => 'approved',
+                        'order_status' => 'Approved',
                         'invoice_id' => $invoice->id,
                     ];
                     if (\Illuminate\Support\Facades\Schema::hasColumn('website_orders', 'stock_mode')) {

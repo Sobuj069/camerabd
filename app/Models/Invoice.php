@@ -34,10 +34,10 @@ class Invoice extends Model
         $websiteOrder = WebsiteOrder::where('invoice_id', $invoice->id)->first();
         if ($websiteOrder) {
             $mappedStatus = self::mapInvoiceStatusToWebsiteStatus($invoice->order_status);
-            if ($websiteOrder->order_status !== $mappedStatus) {
-                $websiteOrder->order_status = $mappedStatus;
-                $websiteOrder->saveQuietly();
-            }
+            $normalizedStatus = strtolower(str_replace(' ', '_', $mappedStatus));
+            $websiteOrder->order_status = $mappedStatus;
+            $websiteOrder->status = $normalizedStatus;
+            $websiteOrder->saveQuietly();
         }
     }
 
@@ -45,8 +45,11 @@ class Invoice extends Model
     {
         $st = strtolower(trim(str_replace(['_', '-'], ' ', $invoiceStatus ?? '')));
 
-        if (empty($st) || in_array($st, ['processing', 'pending', 'new', 'unpaid'])) {
-            return 'Processing';
+        if (in_array($st, ['delivered', 'completed', 'delivered approval pending', 'cod processing'])) {
+            return 'Delivered';
+        }
+        if (in_array($st, ['cancelled', 'cancel', 'failed', 'returned', 'return', 'pending return', 'pickup cancel', 'pickup cancelled', 'canceled'])) {
+            return 'Cancelled';
         }
         if (in_array($st, ['good but no response', 'good no response'])) {
             return 'Good But No Response';
@@ -60,17 +63,8 @@ class Invoice extends Model
         if (in_array($st, ['on hold', 'hold', 'in review', 'review', 'in review approval'])) {
             return 'On Hold';
         }
-        if (in_array($st, ['delivered', 'completed'])) {
-            return 'Delivered';
-        }
-        if (in_array($st, ['cancelled', 'cancel', 'failed', 'returned', 'return', 'pending return', 'pickup cancel', 'pickup cancelled', 'canceled'])) {
-            return 'Cancelled';
-        }
-        if (in_array($st, ['approved', 'confirmed', 'rts', 'ready to ship', 'in courier', 'in transit', 'transit', 'picked up', 'shipped', 'out for delivery'])) {
-            return 'Approved';
-        }
-
-        return ucfirst($invoiceStatus);
+        // Having an invoice generated means the order was cleared from website intake and approved!
+        return 'Approved';
     }
 
     public function invoiceItems()
