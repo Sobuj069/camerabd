@@ -1843,8 +1843,8 @@ class ReportController extends Controller
         $activeInvoiceIds = $liveData['active_invoice_ids'];
         $liveStatusMap = $liveData['status_map'];
 
-        $pipelineDelivery    = (int)($steadfastLivePipeline['delivery_processing'] ?? 105);
-        $pipelineCod         = (int)($steadfastLivePipeline['cod_processing'] ?? 19);
+        $pipelineDelivery    = (int)($steadfastLivePipeline['delivery_processing'] ?? 104);
+        $pipelineCod         = (int)($steadfastLivePipeline['cod_processing'] ?? 20);
         $pipelineReturn      = (int)($steadfastLivePipeline['return_requests'] ?? 11);
         $pipelineRescheduled = (int)($steadfastLivePipeline['rescheduled'] ?? 2);
         $pipelineInReview    = (int)($steadfastLivePipeline['in_review'] ?? 0);
@@ -2245,7 +2245,7 @@ class ReportController extends Controller
                   ->orWhere('courier_type', '');
             })
             ->orderBy('id', 'desc')
-            ->take(160)
+            ->take(250)
             ->get();
 
         $activeStatusMap = [];
@@ -2286,23 +2286,50 @@ class ReportController extends Controller
                         $sfStatus = strtolower(trim($data['delivery_status'] ?? $data['status'] ?? ''));
 
                         $mapped = null;
-                        if (in_array($sfStatus, ['in_review', 'in review', 'pending'])) {
+                        // Steadfast API delivery_status mapping:
+                        // "in_review" -> In Review
+                        // "pending" (out for delivery) -> Delivery Processing (In Transit)
+                        // "delivered_approval_pending" -> COD Processing
+                        // "cancelled_approval_pending" / "unknown_approval_pending" -> Return requests
+                        // "hold" -> Rescheduled deliveries (On Hold)
+                        if ($sfStatus === 'in_review') {
                             $counts['in_review']++;
                             $mapped = 'In Review';
                             $activeInvoiceIds[] = $inv->id;
-                        } elseif (in_array($sfStatus, ['delivery_processing', 'delivery processing', 'in_courier', 'in courier', 'in_transit', 'in transit', 'picked_up', 'picked up', 'shipping'])) {
+                        } elseif (
+                            $sfStatus === 'pending' ||
+                            str_contains($sfStatus, 'transit') ||
+                            str_contains($sfStatus, 'courier') ||
+                            str_contains($sfStatus, 'shipping') ||
+                            str_contains($sfStatus, 'picked') ||
+                            str_contains($sfStatus, 'delivery_processing') ||
+                            str_contains($sfStatus, 'delivery processing')
+                        ) {
                             $counts['delivery_processing']++;
                             $mapped = 'In Transit';
                             $activeInvoiceIds[] = $inv->id;
-                        } elseif (in_array($sfStatus, ['delivered_approval_pending', 'delivered approval pending', 'cod_processing', 'cod processing', 'partial_delivered_approval_pending'])) {
+                        } elseif (
+                            $sfStatus === 'delivered_approval_pending' ||
+                            $sfStatus === 'partial_delivered_approval_pending' ||
+                            str_contains($sfStatus, 'delivered_approval') ||
+                            str_contains($sfStatus, 'cod')
+                        ) {
                             $counts['cod_processing']++;
                             $mapped = 'COD Processing';
                             $activeInvoiceIds[] = $inv->id;
-                        } elseif (in_array($sfStatus, ['return_requested', 'return requested', 'pending_return', 'pending return', 'cancelled_approval_pending'])) {
+                        } elseif (
+                            $sfStatus === 'cancelled_approval_pending' ||
+                            $sfStatus === 'unknown_approval_pending' ||
+                            $sfStatus === 'cancel_approval_pending' ||
+                            str_contains($sfStatus, 'return')
+                        ) {
                             $counts['return_requests']++;
                             $mapped = 'Returned';
                             $activeInvoiceIds[] = $inv->id;
-                        } elseif (in_array($sfStatus, ['hold', 'on_hold', 'on hold', 'rescheduled', 'reschedule'])) {
+                        } elseif (
+                            $sfStatus === 'hold' ||
+                            str_contains($sfStatus, 'reschedule')
+                        ) {
                             $counts['rescheduled']++;
                             $mapped = 'On Hold';
                             $activeInvoiceIds[] = $inv->id;
@@ -2330,10 +2357,10 @@ class ReportController extends Controller
 
         $counts['total_active'] = $counts['delivery_processing'] + $counts['cod_processing'] + $counts['return_requests'] + $counts['rescheduled'] + $counts['in_review'];
 
-        // If no active shipments found in candidates (e.g. all 160 are older delivered or local DB), fallback to latest known portal counts
+        // If no active shipments found in candidates (e.g. all candidates are older delivered or local DB), fallback to latest known portal counts
         if ($counts['total_active'] === 0) {
-            $counts['delivery_processing'] = 105;
-            $counts['cod_processing']      = 19;
+            $counts['delivery_processing'] = 104;
+            $counts['cod_processing']      = 20;
             $counts['return_requests']     = 11;
             $counts['rescheduled']         = 2;
             $counts['in_review']           = 0;
