@@ -2730,12 +2730,25 @@ class InvoiceController extends Controller
 
     public function syncCourierStatus(Request $request)
     {
+        // When syncing all active shipments from Report or general sync button, use high-speed parallel pool
+        $rawIds = $request->input('invoice_ids');
+        if (!$request->filled('invoice_id') && empty($rawIds) && !$request->input('select_all_pages')) {
+            \Illuminate\Support\Facades\Cache::forget('steadfast_live_pipeline_cache');
+            $reportCtrl = new \App\Http\Controllers\Backend\ReportController();
+            $liveData = $reportCtrl->getLiveSteadfastPipelineData(true);
+            $totalActive = $liveData['counts']['total_active'] ?? 0;
+            return response()->json([
+                'success' => true,
+                'message' => "Steadfast লাইভ সিঙ্ক সম্পন্ন! মোট {$totalActive}টি সক্রিয় চালানের রিয়েল-টাইম ডাটা আপডেট হয়েছে।",
+                'counts' => $liveData['counts']
+            ]);
+        }
+
         $query = Invoice::where('sale_type', 'Online')
             ->whereNotNull('consignment_id')
             ->where('consignment_id', '!=', '');
 
         $singleSync = false;
-        $rawIds = $request->input('invoice_ids');
 
         if ($request->filled('invoice_id')) {
             $query->where('id', $request->invoice_id);

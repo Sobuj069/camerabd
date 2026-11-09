@@ -555,7 +555,7 @@
             <div class="d-flex align-items-center mb-1 mb-md-0">
                 <i class="feather icon-zap mr-2" style="font-size: 17px; color: #2563eb;"></i>
                 <span>
-                    <strong>কুরিয়ার লাইভ পাইপলাইন মোড (All Active):</strong> Steadfast মার্চেন্ট ড্যাশবোর্ডের সাথে হুবহু মিলিয়ে কুরিয়ারে বর্তমানে রানিং সর্বমোট <strong>{{ $totalOrdersCount }}টি পার্সেল</strong> প্রদর্শিত হচ্ছে (ডেলিভারি প্রসেসিং: ১০৯, সিওডি প্রসেসিং: ১৬, রিটার্ন রিকোয়েস্ট: ১২, রি-শিডিউল: ২)।
+                    <strong>কুরিয়ার লাইভ পাইপলাইন মোড (All Active):</strong> Steadfast মার্চেন্ট ড্যাশবোর্ড থেকে রিয়েল-টাইম API ফেচ করা সর্বমোট <strong>{{ $totalOrdersCount }}টি পার্সেল</strong> প্রদর্শিত হচ্ছে (ডেলিভারি প্রসেসিং: {{ $steadfastLivePipeline['delivery_processing'] }}, সিওডি প্রসেসিং: {{ $steadfastLivePipeline['cod_processing'] }}, রিটার্ন রিকোয়েস্ট: {{ $steadfastLivePipeline['return_requests'] }}, রি-শিডিউল: {{ $steadfastLivePipeline['rescheduled'] }})।
                 </span>
             </div>
             <button type="button" onclick="setDatePreset('today')" class="btn btn-sm btn-outline-primary bg-white px-3 font-weight-bold" style="font-size: 11.5px; border-radius: 6px; white-space: nowrap;">
