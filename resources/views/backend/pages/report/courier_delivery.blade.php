@@ -543,7 +543,7 @@
             <div class="d-flex align-items-center mb-1 mb-md-0">
                 <i class="feather icon-info mr-2" style="font-size: 17px; color: #16a34a;"></i>
                 <span>
-                    <strong>আজকের ডেলিভারি ও অর্ডার ভিউ:</strong> আজকে ({{ date('d M Y') }}) মোট <strong>{{ $totalOrdersCount }}টি অর্ডার</strong> এসেছে (ওয়েবসাইট অর্ডার: {{ $websiteOrdersCount }}টি, অনলাইন পিওএস ম্যানুয়াল: {{ $manualOrdersCount }}টি)। আজকে কুরিয়ারে ডেলিভার্ড, রিটার্ন ও ক্যান্সেল হওয়া পার্সেলের লাইভ ডাটা Steadfast থেকে প্রদর্শিত হচ্ছে।
+                    <strong>আজকের ডেলিভারি ও অর্ডার ভিউ:</strong> আজকে ({{ date('d M Y') }}) মোট <strong>{{ $totalOrdersCount }}টি অর্ডার</strong> এসেছে (ওয়েবসাইট অর্ডার: {{ $websiteOrdersCount }}টি, অনলাইন পিওএস ম্যানুয়াল: {{ $manualOrdersCount }}টি)। কুরিয়ারে প্রেরণ করা হয়েছে: <strong>{{ $productsSentCount }}টি</strong> পার্সেল।
                 </span>
             </div>
             <button type="button" onclick="setDatePreset('all_active')" class="btn btn-sm btn-success px-3 font-weight-bold" style="font-size: 11.5px; border-radius: 6px; white-space: nowrap;">
