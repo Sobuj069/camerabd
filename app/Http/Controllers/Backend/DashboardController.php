@@ -439,8 +439,8 @@ class DashboardController extends Controller
         $stDelivered = $invoices->filter(fn($i) => in_array(strtolower($i->order_status ?? ''), ['delivered', 'completed', 'cod processing', 'cod_processing', 'delivered approval pending']))->count()
             + $unconvertedWebOrders->filter(fn($w) => in_array(strtolower($w->order_status ?? ''), ['delivered', 'completed']))->count();
 
-        $stCancelled = $invoices->filter(fn($i) => in_array(strtolower($i->order_status ?? ''), ['cancelled', 'failed', 'returned', 'canceled', 'return', 'pending return', 'pending_return']))->count()
-            + $unconvertedWebOrders->filter(fn($w) => in_array(strtolower($w->order_status ?? ''), ['cancelled', 'failed', 'returned', 'canceled', 'return', 'pending return', 'pending_return']))->count();
+        $stCancelled = $invoices->filter(fn($i) => in_array(strtolower($i->order_status ?? ''), ['cancelled', 'cancel', 'canceled']))->count()
+            + $unconvertedWebOrders->filter(fn($w) => in_array(strtolower($w->order_status ?? ''), ['cancelled', 'cancel', 'canceled']))->count();
 
         $platformBadges = [];
         foreach ($labels as $idx => $lbl) {
@@ -500,17 +500,23 @@ class DashboardController extends Controller
             $webOrders = $webOrdersQuery->with('invoice')->get();
 
             foreach ($webOrders as $wo) {
-                $status = $wo->order_status ?: $wo->status;
-                if ($wo->invoice && !empty($wo->invoice->order_status)) {
-                    $invSt = strtolower(trim($wo->invoice->order_status));
-                    if (in_array($invSt, ['cancelled', 'cancel', 'failed', 'returned', 'return', 'pending return', 'pending_return'])) {
-                        $status = 'cancelled';
-                    } elseif (in_array($invSt, ['on hold', 'on_hold', 'hold', 'rescheduled'])) {
-                        $status = 'on_hold';
-                    } else {
-                        // All other active invoice statuses (Approved, RTS, In Transit, In Courier, COD Processing, Delivered) belong to Approved
-                        $status = 'approved';
-                    }
+                $rawSt = strtolower(trim((string)($wo->status ?: $wo->order_status ?: 'processing')));
+                if (in_array($rawSt, ['cancelled', 'cancel', 'canceled'])) {
+                    $status = 'cancelled';
+                } elseif (in_array($rawSt, ['good_no_response', 'good but no response'])) {
+                    $status = 'good_no_response';
+                } elseif (in_array($rawSt, ['no_response', 'no response'])) {
+                    $status = 'no_response';
+                } elseif (in_array($rawSt, ['advance_payment', 'advance payment'])) {
+                    $status = 'advance_payment';
+                } elseif (in_array($rawSt, ['on_hold', 'on hold', 'hold', 'rescheduled'])) {
+                    $status = 'on_hold';
+                } elseif (in_array($rawSt, ['approved', 'delivered']) || !empty($wo->invoice_id) || $wo->invoice !== null) {
+                    $status = 'approved';
+                } elseif (in_array($rawSt, ['processing', 'pending', 'new', 'unpaid'])) {
+                    $status = 'processing';
+                } else {
+                    $status = $rawSt;
                 }
                 $mergedOrders->push([
                     'id' => 'wo_' . $wo->id,
@@ -543,9 +549,8 @@ class DashboardController extends Controller
             $wooInvoices = $wooQuery->get(['id', 'order_status', 'total_amount']);
 
             foreach ($wooInvoices as $inv) {
-                $status = $inv->order_status;
-                $invSt = strtolower(trim($inv->order_status ?? ''));
-                if (in_array($invSt, ['cancelled', 'cancel', 'failed', 'returned', 'return', 'pending return', 'pending_return'])) {
+                $invSt = strtolower(trim((string)($inv->order_status ?? '')));
+                if (in_array($invSt, ['cancelled', 'cancel', 'canceled'])) {
                     $status = 'cancelled';
                 } elseif (in_array($invSt, ['on hold', 'on_hold', 'hold', 'rescheduled'])) {
                     $status = 'on_hold';
@@ -575,19 +580,29 @@ class DashboardController extends Controller
             $webOrders = $webOrdersQuery->with('invoice')->get();
             $linkedIds = [];
             foreach ($webOrders as $wo) {
-                $status = $wo->order_status ?: $wo->status;
-                if ($wo->invoice && !empty($wo->invoice->order_status)) {
-                    $invSt = strtolower(trim($wo->invoice->order_status));
-                    if (in_array($invSt, ['cancelled', 'cancel', 'failed', 'returned', 'return', 'pending return', 'pending_return'])) {
-                        $status = 'cancelled';
-                    } elseif (in_array($invSt, ['on hold', 'on_hold', 'hold', 'rescheduled'])) {
-                        $status = 'on_hold';
-                    } else {
-                        // All other active invoice statuses (Approved, RTS, In Transit, In Courier, COD Processing, Delivered) belong to Approved
-                        $status = 'approved';
-                    }
+                $rawSt = strtolower(trim((string)($wo->status ?: $wo->order_status ?: 'processing')));
+                if (in_array($rawSt, ['cancelled', 'cancel', 'canceled'])) {
+                    $status = 'cancelled';
+                } elseif (in_array($rawSt, ['good_no_response', 'good but no response'])) {
+                    $status = 'good_no_response';
+                } elseif (in_array($rawSt, ['no_response', 'no response'])) {
+                    $status = 'no_response';
+                } elseif (in_array($rawSt, ['advance_payment', 'advance payment'])) {
+                    $status = 'advance_payment';
+                } elseif (in_array($rawSt, ['on_hold', 'on hold', 'hold', 'rescheduled'])) {
+                    $status = 'on_hold';
+                } elseif (in_array($rawSt, ['approved', 'delivered']) || !empty($wo->invoice_id) || $wo->invoice !== null) {
+                    $status = 'approved';
+                } elseif (in_array($rawSt, ['processing', 'pending', 'new', 'unpaid'])) {
+                    $status = 'processing';
+                } else {
+                    $status = $rawSt;
+                }
+
+                if ($wo->invoice) {
                     $linkedIds[] = $wo->invoice->id;
                 }
+
                 $mergedOrders->push([
                     'id' => 'wo_' . $wo->id,
                     'order_status' => $status,
@@ -613,9 +628,8 @@ class DashboardController extends Controller
             $wooInvoices = $wooQuery->get(['id', 'order_status', 'total_amount']);
             foreach ($wooInvoices as $inv) {
                 if (!in_array($inv->id, $linkedIds)) {
-                    $status = $inv->order_status;
-                    $invSt = strtolower(trim($inv->order_status ?? ''));
-                    if (in_array($invSt, ['cancelled', 'cancel', 'failed', 'returned', 'return', 'pending return', 'pending_return'])) {
+                    $invSt = strtolower(trim((string)($inv->order_status ?? '')));
+                    if (in_array($invSt, ['cancelled', 'cancel', 'canceled'])) {
                         $status = 'cancelled';
                     } elseif (in_array($invSt, ['on hold', 'on_hold', 'hold', 'rescheduled'])) {
                         $status = 'on_hold';
@@ -667,8 +681,7 @@ class DashboardController extends Controller
                 'in review', 'in_review', 'review'
             ]],
             'Cancel'                => ['color' => '#10b981', 'keys' => [
-                'cancelled', 'cancel', 'failed', 'returned', 'canceled', 'return',
-                'pending return', 'pending_return', 'pickup cancel', 'pickup cancelled', 'pickup_canceled', 'pickup_cancelled'
+                'cancelled', 'cancel', 'canceled'
             ]],
         ];
 
@@ -755,7 +768,7 @@ class DashboardController extends Controller
             } elseif ($stLower === 'delivered') {
                 $query->whereIn('order_status', ['Delivered', 'delivered']);
             } elseif ($stLower === 'cancelled') {
-                $query->whereIn('order_status', ['Cancelled', 'cancelled', 'failed', 'returned']);
+                $query->whereIn('order_status', ['Cancelled', 'cancelled', 'cancel', 'canceled']);
             } else {
                 $query->where('order_status', $status);
             }

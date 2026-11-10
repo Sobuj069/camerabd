@@ -754,7 +754,7 @@
         })->count();
 
         $statusCancelledCount = $online_platforms_chart['status_counts']['cancelled'] ?? (clone $onlineInvQuery)->where(function($q) {
-            $q->whereIn('order_status', ['Cancelled', 'cancelled', 'failed', 'returned', 'Returned']);
+            $q->whereIn('order_status', ['Cancelled', 'cancelled', 'Cancel', 'cancel', 'canceled']);
         })->count();
     @endphp
 
