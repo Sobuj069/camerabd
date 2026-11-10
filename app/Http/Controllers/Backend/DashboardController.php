@@ -431,16 +431,16 @@ class DashboardController extends Controller
         $stRts = $invoices->filter(fn($i) => in_array(strtolower($i->order_status ?? ''), ['rts', 'approved', 'confirmed']))->count()
             + $unconvertedWebOrders->filter(fn($w) => in_array(strtolower($w->order_status ?? ''), ['rts', 'approved', 'confirmed']))->count();
 
-        $stOnHold = $invoices->filter(fn($i) => in_array(strtolower($i->order_status ?? ''), ['on hold', 'on_hold', 'on-hold', 'hold', 'good but no response', 'no response', 'advance payment']))->count()
-            + $unconvertedWebOrders->filter(fn($w) => in_array(strtolower($w->order_status ?? ''), ['on hold', 'on_hold', 'on-hold', 'hold', 'good but no response', 'no response', 'advance payment']))->count();
+        $stOnHold = $invoices->filter(fn($i) => in_array(strtolower($i->order_status ?? ''), ['on hold', 'on_hold', 'on-hold', 'hold', 'good but no response', 'no response', 'advance payment', 'rescheduled']))->count()
+            + $unconvertedWebOrders->filter(fn($w) => in_array(strtolower($w->order_status ?? ''), ['on hold', 'on_hold', 'on-hold', 'hold', 'good but no response', 'no response', 'advance payment', 'rescheduled']))->count();
 
-        $stInCourier = $invoices->filter(fn($i) => !empty($i->consignment_id) || in_array(strtolower($i->order_status ?? ''), ['in courier', 'in_courier', 'shipped']))->count();
+        $stInCourier = $invoices->filter(fn($i) => !empty($i->consignment_id) || in_array(strtolower($i->order_status ?? ''), ['in courier', 'in_courier', 'shipped', 'in transit', 'in_transit', 'shipping']))->count();
 
-        $stDelivered = $invoices->filter(fn($i) => in_array(strtolower($i->order_status ?? ''), ['delivered', 'completed']))->count()
+        $stDelivered = $invoices->filter(fn($i) => in_array(strtolower($i->order_status ?? ''), ['delivered', 'completed', 'cod processing', 'cod_processing', 'delivered approval pending']))->count()
             + $unconvertedWebOrders->filter(fn($w) => in_array(strtolower($w->order_status ?? ''), ['delivered', 'completed']))->count();
 
-        $stCancelled = $invoices->filter(fn($i) => in_array(strtolower($i->order_status ?? ''), ['cancelled', 'failed', 'returned', 'canceled']))->count()
-            + $unconvertedWebOrders->filter(fn($w) => in_array(strtolower($w->order_status ?? ''), ['cancelled', 'failed', 'returned', 'canceled']))->count();
+        $stCancelled = $invoices->filter(fn($i) => in_array(strtolower($i->order_status ?? ''), ['cancelled', 'failed', 'returned', 'canceled', 'return', 'pending return', 'pending_return']))->count()
+            + $unconvertedWebOrders->filter(fn($w) => in_array(strtolower($w->order_status ?? ''), ['cancelled', 'failed', 'returned', 'canceled', 'return', 'pending return', 'pending_return']))->count();
 
         $platformBadges = [];
         foreach ($labels as $idx => $lbl) {
@@ -500,9 +500,17 @@ class DashboardController extends Controller
             $webOrders = $webOrdersQuery->with('invoice')->get();
 
             foreach ($webOrders as $wo) {
-                $status = $wo->order_status;
+                $status = $wo->order_status ?: $wo->status;
                 if ($wo->invoice && !empty($wo->invoice->order_status)) {
-                    $status = $wo->invoice->order_status;
+                    $invSt = strtolower(trim($wo->invoice->order_status));
+                    if (in_array($invSt, ['cancelled', 'cancel', 'failed', 'returned', 'return', 'pending return', 'pending_return'])) {
+                        $status = 'cancelled';
+                    } elseif (in_array($invSt, ['on hold', 'on_hold', 'hold', 'rescheduled'])) {
+                        $status = 'on_hold';
+                    } else {
+                        // All other active invoice statuses (Approved, RTS, In Transit, In Courier, COD Processing, Delivered) belong to Approved
+                        $status = 'approved';
+                    }
                 }
                 $mergedOrders->push([
                     'id' => 'wo_' . $wo->id,
@@ -535,9 +543,20 @@ class DashboardController extends Controller
             $wooInvoices = $wooQuery->get(['id', 'order_status', 'total_amount']);
 
             foreach ($wooInvoices as $inv) {
+                $status = $inv->order_status;
+                $invSt = strtolower(trim($inv->order_status ?? ''));
+                if (in_array($invSt, ['cancelled', 'cancel', 'failed', 'returned', 'return', 'pending return', 'pending_return'])) {
+                    $status = 'cancelled';
+                } elseif (in_array($invSt, ['on hold', 'on_hold', 'hold', 'rescheduled'])) {
+                    $status = 'on_hold';
+                } elseif (in_array($invSt, ['processing', 'pending', 'new', 'unpaid'])) {
+                    $status = 'processing';
+                } else {
+                    $status = 'approved';
+                }
                 $mergedOrders->push([
                     'id' => 'inv_' . $inv->id,
-                    'order_status' => $inv->order_status,
+                    'order_status' => $status,
                     'total_amount' => $inv->total_amount,
                 ]);
             }
@@ -556,9 +575,17 @@ class DashboardController extends Controller
             $webOrders = $webOrdersQuery->with('invoice')->get();
             $linkedIds = [];
             foreach ($webOrders as $wo) {
-                $status = $wo->order_status;
+                $status = $wo->order_status ?: $wo->status;
                 if ($wo->invoice && !empty($wo->invoice->order_status)) {
-                    $status = $wo->invoice->order_status;
+                    $invSt = strtolower(trim($wo->invoice->order_status));
+                    if (in_array($invSt, ['cancelled', 'cancel', 'failed', 'returned', 'return', 'pending return', 'pending_return'])) {
+                        $status = 'cancelled';
+                    } elseif (in_array($invSt, ['on hold', 'on_hold', 'hold', 'rescheduled'])) {
+                        $status = 'on_hold';
+                    } else {
+                        // All other active invoice statuses (Approved, RTS, In Transit, In Courier, COD Processing, Delivered) belong to Approved
+                        $status = 'approved';
+                    }
                     $linkedIds[] = $wo->invoice->id;
                 }
                 $mergedOrders->push([
@@ -586,9 +613,20 @@ class DashboardController extends Controller
             $wooInvoices = $wooQuery->get(['id', 'order_status', 'total_amount']);
             foreach ($wooInvoices as $inv) {
                 if (!in_array($inv->id, $linkedIds)) {
+                    $status = $inv->order_status;
+                    $invSt = strtolower(trim($inv->order_status ?? ''));
+                    if (in_array($invSt, ['cancelled', 'cancel', 'failed', 'returned', 'return', 'pending return', 'pending_return'])) {
+                        $status = 'cancelled';
+                    } elseif (in_array($invSt, ['on hold', 'on_hold', 'hold', 'rescheduled'])) {
+                        $status = 'on_hold';
+                    } elseif (in_array($invSt, ['processing', 'pending', 'new', 'unpaid'])) {
+                        $status = 'processing';
+                    } else {
+                        $status = 'approved';
+                    }
                     $mergedOrders->push([
                         'id' => 'inv_' . $inv->id,
-                        'order_status' => $inv->order_status,
+                        'order_status' => $status,
                         'total_amount' => $inv->total_amount,
                     ]);
                 }
@@ -616,12 +654,22 @@ class DashboardController extends Controller
 
         $categories = [
             'Processing'            => ['color' => '#ec4899', 'keys' => ['processing', 'pending', 'new', 'unpaid']],
-            'Good But No Response'  => ['color' => '#3b82f6', 'keys' => ['good but no response', 'good_no_response']],
-            'No Response'           => ['color' => '#f97316', 'keys' => ['no response', 'no_response']],
-            'Advance Payment'       => ['color' => '#6366f1', 'keys' => ['advance payment', 'advance_payment']],
-            'On Hold'               => ['color' => '#84cc16', 'keys' => ['on hold', 'on_hold', 'on-hold', 'hold']],
-            'Approved'              => ['color' => '#a855f7', 'keys' => ['approved', 'rts', 'completed', 'confirmed', 'delivered', 'in courier', 'in_courier', 'shipping', 'dispatched']],
-            'Cancel'                => ['color' => '#10b981', 'keys' => ['cancelled', 'cancel', 'failed', 'returned', 'canceled', 'return']],
+            'Good But No Response'  => ['color' => '#3b82f6', 'keys' => ['good but no response', 'good_no_response', 'good-no-response']],
+            'No Response'           => ['color' => '#f97316', 'keys' => ['no response', 'no_response', 'no-response']],
+            'Advance Payment'       => ['color' => '#6366f1', 'keys' => ['advance payment', 'advance_payment', 'advance-payment', 'advance']],
+            'On Hold'               => ['color' => '#84cc16', 'keys' => ['on hold', 'on_hold', 'on-hold', 'hold', 'rescheduled', 'reschedule']],
+            'Approved'              => ['color' => '#a855f7', 'keys' => [
+                'approved', 'rts', 'completed', 'confirmed', 'delivered', 
+                'in courier', 'in_courier', 'shipping', 'dispatched',
+                'in transit', 'in_transit', 'transit', 'picked', 'picked up', 'picked_up', 
+                'out for delivery', 'out_for_delivery', 'delivery processing', 'delivery_processing',
+                'cod processing', 'cod_processing', 'delivered approval pending', 'delivered_approval_pending',
+                'in review', 'in_review', 'review'
+            ]],
+            'Cancel'                => ['color' => '#10b981', 'keys' => [
+                'cancelled', 'cancel', 'failed', 'returned', 'canceled', 'return',
+                'pending return', 'pending_return', 'pickup cancel', 'pickup cancelled', 'pickup_canceled', 'pickup_cancelled'
+            ]],
         ];
 
         $labels = [];
@@ -634,7 +682,8 @@ class DashboardController extends Controller
             $matching = $mergedOrders->filter(function($ord) use ($meta, $countedIds) {
                 if (in_array($ord['id'], $countedIds)) return false;
                 $st = strtolower(trim($ord['order_status'] ?? ''));
-                return in_array($st, $meta['keys']);
+                $normSt = str_replace(['_', '-'], ' ', $st);
+                return in_array($st, $meta['keys']) || in_array($normSt, $meta['keys']);
             });
 
             $count = $matching->count();
@@ -652,11 +701,13 @@ class DashboardController extends Controller
             ];
         }
 
-        $unclassified = $mergedOrders->filter(fn($i) => !in_array($i['id'], $countedIds) && empty(trim($i['order_status'] ?? '')))->count();
+        $unclassified = $mergedOrders->filter(fn($i) => !in_array($i['id'], $countedIds))->count();
         if ($unclassified > 0) {
             $data[0] += $unclassified;
             $breakdown[0]['count'] += $unclassified;
         }
+
+        $totalOrders = array_sum($data);
 
         return [
             'type' => 'web_orders',
