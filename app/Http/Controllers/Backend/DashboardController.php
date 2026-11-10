@@ -501,7 +501,16 @@ class DashboardController extends Controller
 
             foreach ($webOrders as $wo) {
                 $rawSt = strtolower(trim((string)($wo->status ?: $wo->order_status ?: 'processing')));
-                if (in_array($rawSt, ['cancelled', 'cancel', 'canceled'])) {
+                $hasInvoice = (!empty($wo->invoice_id) || $wo->invoice !== null);
+
+                if ($hasInvoice) {
+                    $invSt = strtolower(trim((string)($wo->invoice?->order_status ?? '')));
+                    if (in_array($invSt, ['cancelled', 'cancel', 'canceled']) && empty($wo->invoice?->consignment_id)) {
+                        $status = 'cancelled';
+                    } else {
+                        $status = 'approved';
+                    }
+                } elseif (in_array($rawSt, ['cancelled', 'cancel', 'canceled'])) {
                     $status = 'cancelled';
                 } elseif (in_array($rawSt, ['good_no_response', 'good but no response'])) {
                     $status = 'good_no_response';
@@ -511,7 +520,7 @@ class DashboardController extends Controller
                     $status = 'advance_payment';
                 } elseif (in_array($rawSt, ['on_hold', 'on hold', 'hold', 'rescheduled'])) {
                     $status = 'on_hold';
-                } elseif (in_array($rawSt, ['approved', 'delivered']) || !empty($wo->invoice_id) || $wo->invoice !== null) {
+                } elseif (in_array($rawSt, ['approved', 'delivered'])) {
                     $status = 'approved';
                 } elseif (in_array($rawSt, ['processing', 'pending', 'new', 'unpaid'])) {
                     $status = 'processing';
@@ -581,7 +590,16 @@ class DashboardController extends Controller
             $linkedIds = [];
             foreach ($webOrders as $wo) {
                 $rawSt = strtolower(trim((string)($wo->status ?: $wo->order_status ?: 'processing')));
-                if (in_array($rawSt, ['cancelled', 'cancel', 'canceled'])) {
+                $hasInvoice = (!empty($wo->invoice_id) || $wo->invoice !== null);
+
+                if ($hasInvoice) {
+                    $invSt = strtolower(trim((string)($wo->invoice?->order_status ?? '')));
+                    if (in_array($invSt, ['cancelled', 'cancel', 'canceled']) && empty($wo->invoice?->consignment_id)) {
+                        $status = 'cancelled';
+                    } else {
+                        $status = 'approved';
+                    }
+                } elseif (in_array($rawSt, ['cancelled', 'cancel', 'canceled'])) {
                     $status = 'cancelled';
                 } elseif (in_array($rawSt, ['good_no_response', 'good but no response'])) {
                     $status = 'good_no_response';
@@ -591,7 +609,7 @@ class DashboardController extends Controller
                     $status = 'advance_payment';
                 } elseif (in_array($rawSt, ['on_hold', 'on hold', 'hold', 'rescheduled'])) {
                     $status = 'on_hold';
-                } elseif (in_array($rawSt, ['approved', 'delivered']) || !empty($wo->invoice_id) || $wo->invoice !== null) {
+                } elseif (in_array($rawSt, ['approved', 'delivered'])) {
                     $status = 'approved';
                 } elseif (in_array($rawSt, ['processing', 'pending', 'new', 'unpaid'])) {
                     $status = 'processing';

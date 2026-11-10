@@ -48,8 +48,11 @@ class Invoice extends Model
         if (in_array($st, ['delivered', 'completed', 'delivered approval pending', 'cod processing'])) {
             return 'Delivered';
         }
-        if (in_array($st, ['cancelled', 'cancel', 'failed', 'returned', 'return', 'pending return', 'pickup cancel', 'pickup cancelled', 'canceled'])) {
+        if (in_array($st, ['cancelled', 'cancel', 'canceled'])) {
             return 'Cancelled';
+        }
+        if (in_array($st, ['returned', 'return', 'pending return', 'pickup cancel', 'pickup cancelled', 'failed'])) {
+            return 'Approved';
         }
         if (in_array($st, ['good but no response', 'good no response'])) {
             return 'Good But No Response';
