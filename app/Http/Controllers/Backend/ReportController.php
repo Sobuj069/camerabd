@@ -2216,6 +2216,11 @@ class ReportController extends Controller
         }
 
         // 5. Calculate Real KPI Metrics from actual filtered database orders
+        $deliveredOrders = $ordersList->filter(fn($o) => in_array($o->status, ['Delivered', 'COD Processing']));
+        $cancelledOrders = $ordersList->where('status', 'Cancelled');
+        $returnedOrders  = $ordersList->where('status', 'Returned');
+        $pendingOrders   = $ordersList->filter(fn($o) => in_array($o->status, ['Pending', 'In Transit', 'In Review', 'On Hold', 'RTS']));
+
         if ($isPipelineView) {
             $totalOrdersCount = $ordersList->count() >= $pipelineTotal ? $pipelineTotal : $ordersList->count();
             $websiteOrdersCount = $ordersList->where('source', 'Website')->count();
@@ -2225,15 +2230,12 @@ class ReportController extends Controller
             $sentWebsiteQty = (int)$ordersList->where('source', 'Website')->sum('qty');
             $sentManualQty = (int)$ordersList->where('source', 'Manual')->sum('qty');
 
-            $deliveredOrders = $ordersList->filter(fn($o) => in_array($o->status, ['Delivered', 'COD Processing']));
             $deliveredOrdersCount = $pipelineCod;
             $deliveredQty = (int)$deliveredOrders->sum('qty');
 
-            $cancelledOrders = $ordersList->where('status', 'Cancelled');
             $cancelledOrdersCount = 0;
             $cancelledQty = 0;
 
-            $returnedOrders = $ordersList->where('status', 'Returned');
             $returnedOrdersCount = $pipelineReturn;
             $returnedQty = (int)$returnedOrders->sum('qty');
 
@@ -2266,36 +2268,31 @@ class ReportController extends Controller
             $returnedQty = (int)$sfReturnedInvs->sum(fn($i) => $i->invoiceItems->sum('main_qty') ?: 1);
 
             // Also check ordersList if wide date range
-            $localDelivered = $ordersList->filter(fn($o) => in_array($o->status, ['Delivered', 'COD Processing']))->count();
+            $localDelivered = $deliveredOrders->count();
             if ($localDelivered > $deliveredOrdersCount) {
                 $deliveredOrdersCount = $localDelivered;
-                $deliveredQty = (int)$ordersList->filter(fn($o) => in_array($o->status, ['Delivered', 'COD Processing']))->sum('qty');
+                $deliveredQty = (int)$deliveredOrders->sum('qty');
             }
-            $localCancelled = $ordersList->where('status', 'Cancelled')->count();
+            $localCancelled = $cancelledOrders->count();
             if ($localCancelled > $cancelledOrdersCount) {
                 $cancelledOrdersCount = $localCancelled;
-                $cancelledQty = (int)$ordersList->where('status', 'Cancelled')->sum('qty');
+                $cancelledQty = (int)$cancelledOrders->sum('qty');
             }
-            $localReturned = $ordersList->where('status', 'Returned')->count();
+            $localReturned = $returnedOrders->count();
             if ($localReturned > $returnedOrdersCount) {
                 $returnedOrdersCount = $localReturned;
-                $returnedQty = (int)$ordersList->where('status', 'Returned')->sum('qty');
+                $returnedQty = (int)$returnedOrders->sum('qty');
             }
 
-            $pendingOrders = $ordersList->filter(fn($o) => in_array($o->status, ['Pending', 'In Transit', 'In Review', 'On Hold', 'RTS']));
             $pendingOrdersCount = $pendingOrders->count();
             $pendingQty = (int)$pendingOrders->sum('qty');
 
             $totalDeliveryCharge = (float)$ordersList->sum('courier_charge');
             $totalCodCollection = (float)$sfDeliveredInvs->sum('total_amount');
             if ($totalCodCollection <= 0) {
-                $totalCodCollection = (float)$ordersList->filter(fn($o) => in_array($o->status, ['Delivered', 'COD Processing']))->sum('order_amount');
+                $totalCodCollection = (float)$deliveredOrders->sum('order_amount');
             }
         }
-        $pendingQty = (int)$pendingOrders->sum('qty');
-
-        $totalDeliveryCharge = (float)$ordersList->sum('courier_charge');
-        $totalCodCollection = (float)$deliveredOrders->sum('order_amount');
 
         // 6. Dynamic Courier Wise Summary Table
         $courierGroups = $ordersList->groupBy('courier');
