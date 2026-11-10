@@ -2730,9 +2730,11 @@ class InvoiceController extends Controller
 
     public function syncCourierStatus(Request $request)
     {
-        // When syncing all active shipments from Report or general sync button, use high-speed parallel pool
         $rawIds = $request->input('invoice_ids');
-        if (!$request->filled('invoice_id') && empty($rawIds) && !$request->input('select_all_pages')) {
+        $fromReport = $request->boolean('from_report');
+
+        // Only do the high-level report pipeline cache refresh if explicitly requested by Report page
+        if ($fromReport && !$request->filled('invoice_id') && empty($rawIds) && !$request->input('select_all_pages')) {
             \Illuminate\Support\Facades\Cache::forget('steadfast_live_pipeline_cache');
             $reportCtrl = new \App\Http\Controllers\Backend\ReportController();
             $liveData = $reportCtrl->getLiveSteadfastPipelineData(true);
@@ -2764,17 +2766,24 @@ class InvoiceController extends Controller
                 $query->whereIn('id', $ids);
             }
         } else {
-            // High-speed optimization: Sync all active in-courier shipments (exclude final delivered/returned/cancelled, and exclude RTS since RTS stays in RTS until moved to In Courier)
-            $query->whereIn('order_status', [
-                'In Courier', 'in_courier',
-                'Pending', 'pending',
-                'In Review', 'in_review',
-                'In Transit', 'in_transit',
-                'Shipping', 'shipping',
-                'Picked Up', 'picked_up',
-                'On Hold', 'on_hold',
-                'Delivered Approval Pending', 'delivered_approval_pending'
-            ])->orderBy('id', 'desc');
+            // When user clicks Sync Courier Status on Online Sales without checkboxes:
+            // Sync all matching invoices from current filtered query, or active shipments
+            $matchingQuery = $this->buildOnlineSaleFilteredQuery($request);
+            $matchingIds = (clone $matchingQuery)->whereNotNull('consignment_id')->where('consignment_id', '!=', '')->pluck('id')->toArray();
+            if (!empty($matchingIds)) {
+                $query->whereIn('id', $matchingIds);
+            } else {
+                $query->whereIn('order_status', [
+                    'In Courier', 'in_courier',
+                    'Pending', 'pending',
+                    'In Review', 'in_review',
+                    'In Transit', 'in_transit',
+                    'Shipping', 'shipping',
+                    'Picked Up', 'picked_up',
+                    'On Hold', 'on_hold',
+                    'Delivered Approval Pending', 'delivered_approval_pending'
+                ])->orderBy('id', 'desc')->take(100);
+            }
         }
 
         $invoices = $query->get();

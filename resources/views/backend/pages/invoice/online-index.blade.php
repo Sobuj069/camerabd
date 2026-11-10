@@ -856,9 +856,17 @@
                                             @php
                                                 $cStatus = strtolower(trim($data->order_status ?? 'pending'));
                                             @endphp
-                                            <span class="badge" style="background:#ffedd5; color:#c2410c; font-size:11px; font-weight:700; padding:4px 8px; border-radius:6px;">
+                                            <span class="badge" style="background:#ffedd5; color:#c2410c; font-size:11px; font-weight:700; padding:4px 8px; border-radius:6px;" id="courierStatusBadge-{{ $data->id }}">
                                                 <i class="feather icon-clock mr-1"></i> {{ ucfirst(str_replace('_', ' ', $cStatus)) }}
                                             </span>
+                                            @if(!empty($data->consignment_id))
+                                                <button type="button" class="btn btn-xs btn-outline-info ml-1" style="font-size: 10px; padding: 2px 6px; border-radius: 4px;" onclick="syncSingleInvoice({{ $data->id }})" title="Sync Live Status from Steadfast">
+                                                    <i class="feather icon-refresh-cw" id="syncIcon-{{ $data->id }}"></i>
+                                                </button>
+                                                <a href="{{ route('courier.tracking', ['consignment_id' => $data->consignment_id]) }}" target="_blank" class="btn btn-xs btn-light border ml-1" style="font-size: 10px; padding: 2px 6px; border-radius: 4px;" title="View Tracking Details">
+                                                    <i class="feather icon-external-link"></i>
+                                                </a>
+                                            @endif
                                             <div class="mt-1">
                                                 <button type="button" class="btn btn-xs btn-light border" style="font-size:10px; padding:2px 6px;" onclick="viewOrderNote({{ $data->id }}, '{{ addslashes($data->note ?? '') }}')">
                                                     <i class="feather icon-file-text text-muted"></i> View Note
@@ -2045,6 +2053,62 @@
                     btn.disabled = false;
                     btn.innerHTML = originalHtml;
                 }
+            });
+        }
+
+        // Sync a single invoice live from Steadfast
+        function syncSingleInvoice(invoiceId) {
+            var icon = document.getElementById('syncIcon-' + invoiceId);
+            if (icon) {
+                icon.classList.add('fa-spin');
+            }
+
+            fetch(`{{ route('invoice.online.sync-courier') }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ invoice_id: invoiceId })
+            })
+            .then(async res => {
+                const data = await res.json().catch(() => ({}));
+                return { ok: res.ok, data: data };
+            })
+            .then(({ ok, data }) => {
+                if (icon) icon.classList.remove('fa-spin');
+                if (ok && data.success) {
+                    var newSt = data.new_status || '';
+                    if (newSt) {
+                        var badge = document.getElementById('courierStatusBadge-' + invoiceId);
+                        if (badge) {
+                            badge.innerHTML = '<i class="feather icon-check mr-1"></i> ' + newSt;
+                            if (newSt.toLowerCase() === 'delivered') {
+                                badge.style.background = '#dcfce7';
+                                badge.style.color = '#16a34a';
+                            } else if (newSt.toLowerCase().includes('return')) {
+                                badge.style.background = '#fee2e2';
+                                badge.style.color = '#dc2626';
+                            } else if (newSt.toLowerCase().includes('transit')) {
+                                badge.style.background = '#e0f2fe';
+                                badge.style.color = '#0284c7';
+                            }
+                        }
+                    }
+                    if (typeof toastr !== 'undefined') {
+                        toastr.success(data.message || 'Status synced successfully!');
+                    } else {
+                        alert(data.message || 'Status synced successfully!');
+                    }
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    alert(data.message || 'Single sync failed.');
+                }
+            })
+            .catch(err => {
+                if (icon) icon.classList.remove('fa-spin');
+                alert('Sync error: ' + err);
             });
         }
     </script>
