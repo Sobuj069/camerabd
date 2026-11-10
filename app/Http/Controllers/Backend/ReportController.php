@@ -11,6 +11,7 @@ use App\Models\Category;
 use App\Models\SubCategory;
 use App\Models\Customer;
 use App\Models\Supplier;
+use App\Models\WebsiteOrder;
 use Carbon\CarbonPeriod;
 use App\Models\OwnerShip;
 use App\Models\DamageItem;
@@ -1868,7 +1869,7 @@ class ReportController extends Controller
 
         // 2. Query Database Invoices based on filter
         // Fetch all website order linked invoice IDs and order numbers for 100% precision
-        $webOrders = WebsiteOrder::select('id', 'order_no', 'invoice_id')->get();
+        $webOrders = \App\Models\WebsiteOrder::select('id', 'order_no', 'invoice_id')->get();
         $webOrderLinkedInvIds = $webOrders->pluck('invoice_id')->filter()->toArray();
         $webOrderNos = $webOrders->pluck('order_no')->filter()->toArray();
 
