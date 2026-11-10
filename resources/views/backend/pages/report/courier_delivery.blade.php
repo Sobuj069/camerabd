@@ -536,14 +536,14 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- 4. EIGHT (8) METRIC / KPI CARDS -->
+    <!-- 4. SEVEN (7) METRIC / KPI CARDS -->
     <!-- ========================================== -->
     @if($datePreset === 'today')
         <div class="alert alert-info py-2 px-3 mb-3 d-flex flex-wrap align-items-center justify-content-between shadow-xs" style="font-size: 12.5px; border-radius: 8px; background: #f0fdf4; border: 1px solid #86efac; color: #166534;">
             <div class="d-flex align-items-center mb-1 mb-md-0">
                 <i class="feather icon-info mr-2" style="font-size: 17px; color: #16a34a;"></i>
                 <span>
-                    <strong>আজকের নতুন চালান/কুরিয়ার ভিউ:</strong> আজকে ({{ date('d M Y') }}) কুরিয়ারে প্রেরণের জন্য মোট <strong>{{ $totalOrdersCount }}টি চালান</strong> তৈরি হয়েছে (ওয়েবসাইট অর্ডার থেকে কনফার্মড: {{ $websiteOrdersCount }}টি, অনলাইন পিওএস থেকে ম্যানুয়াল: {{ $manualOrdersCount }}টি)। নতুন পার্সেল ডেলিভারি ও রিটার্ন হতে ১–৩ দিন সময় লাগে, তাই আজকের Delivered: 0 এবং Returned: 0। কুরিয়ারে বর্তমানে রানিং সকল পার্সেল দেখতে <strong>"লাইভ পাইপলাইন"</strong>-এ ক্লিক করুন।
+                    <strong>আজকের ডেলিভারি ও অর্ডার ভিউ:</strong> আজকে ({{ date('d M Y') }}) মোট <strong>{{ $totalOrdersCount }}টি অর্ডার</strong> এসেছে (ওয়েবসাইট অর্ডার: {{ $websiteOrdersCount }}টি, অনলাইন পিওএস ম্যানুয়াল: {{ $manualOrdersCount }}টি)। আজকে কুরিয়ারে ডেলিভার্ড, রিটার্ন ও ক্যান্সেল হওয়া পার্সেলের লাইভ ডাটা Steadfast থেকে প্রদর্শিত হচ্ছে।
                 </span>
             </div>
             <button type="button" onclick="setDatePreset('all_active')" class="btn btn-sm btn-success px-3 font-weight-bold" style="font-size: 11.5px; border-radius: 6px; white-space: nowrap;">
@@ -564,7 +564,7 @@
         </div>
     @endif
 
-    <div class="row row-cols-2 row-cols-sm-4 row-cols-xl-8 g-2 mb-3 px-1">
+    <div class="row row-cols-2 row-cols-sm-4 row-cols-xl-7 g-2 mb-3 px-1">
         <!-- 1. Total Orders -->
         <div class="col px-1 mb-2">
             <div class="cd-stat-card">
@@ -660,26 +660,7 @@
             </div>
         </div>
 
-        <!-- 6. Pending / In Transit -->
-        <div class="col px-1 mb-2">
-            <div class="cd-stat-card">
-                <div class="d-flex align-items-center justify-content-between mb-1">
-                    <div class="cd-icon-box" style="background: #f5f3ff; color: #8b5cf6;">
-                        <i class="feather icon-clock" style="font-size: 16px;"></i>
-                    </div>
-                    <span class="badge-pill-soft badge-soft-purple"><i class="feather icon-arrow-up" style="font-size: 9px;"></i> 5%</span>
-                </div>
-                <div>
-                    <span class="text-muted d-block" style="font-size: 11px; font-weight: 600;">{{ __('Pending / In Transit') }}</span>
-                    <h4 class="mb-0 font-weight-bold" style="font-size: 20px; color: #7c3aed;">{{ $pendingOrdersCount }}</h4>
-                </div>
-                <div class="text-muted mt-1" style="font-size: 10px; border-top: 1px solid #f1f5f9; padding-top: 3px;">
-                    Qty: {{ $pendingQty }}
-                </div>
-            </div>
-        </div>
-
-        <!-- 7. Total Delivery Charge -->
+        <!-- 6. Total Delivery Charge -->
         <div class="col px-1 mb-2">
             <div class="cd-stat-card">
                 <div class="d-flex align-items-center justify-content-between mb-1">
@@ -698,7 +679,7 @@
             </div>
         </div>
 
-        <!-- 8. Total COD Collection -->
+        <!-- 7. Total COD Collection -->
         <div class="col px-1 mb-2">
             <div class="cd-stat-card">
                 <div class="d-flex align-items-center justify-content-between mb-1">

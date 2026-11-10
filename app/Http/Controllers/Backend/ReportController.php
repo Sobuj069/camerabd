@@ -1955,6 +1955,58 @@ class ReportController extends Controller
 
         $dbOrders = $invQuery->orderBy('id', 'desc')->get();
 
+        // Query WebsiteOrders for this date range (to capture orders like Processing, No Response, Cancel not yet invoiced)
+        $unlinkedWebOrders = collect();
+        if (!$isPipelineView && !empty($startDate) && !empty($endDate) && ($orderSource === 'all' || $orderSource === 'website')) {
+            $existingLinkedWoIds = $dbOrders->pluck('websiteOrder.id')->filter()->toArray();
+            $woQuery = \App\Models\WebsiteOrder::with(['items.product', 'invoice'])
+                ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+
+            if (!empty($existingLinkedWoIds)) {
+                $woQuery->whereNotIn('id', $existingLinkedWoIds);
+            }
+            if ($productId !== 'all' && !empty($productId)) {
+                $woQuery->whereHas('items', fn($iq) => $iq->where('product_id', $productId));
+            }
+            if (!empty($search)) {
+                $woQuery->where(function($q) use ($search) {
+                    $q->where('order_no', 'like', "%{$search}%")
+                      ->orWhere('phone', 'like', "%{$search}%")
+                      ->orWhere('first_name', 'like', "%{$search}%")
+                      ->orWhere('last_name', 'like', "%{$search}%");
+                });
+            }
+            $unlinkedWebOrders = $woQuery->orderBy('id', 'desc')->get();
+        }
+
+        // Fetch parcels whose courier status was completed (Delivered/Cancelled/Returned) by Steadfast on this date range (by updated_at timestamp)
+        $sfDeliveredInvs = collect();
+        $sfCancelledInvs = collect();
+        $sfReturnedInvs  = collect();
+
+        if (!$isPipelineView && !empty($startDate) && !empty($endDate)) {
+            $sfDeliveredInvs = Invoice::whereNotNull('consignment_id')
+                ->where('consignment_id', '!=', '')
+                ->whereIn('order_status', ['Delivered', 'delivered', 'completed', 'COD Processing', 'cod_processing', 'delivered approval pending'])
+                ->whereBetween('updated_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+                ->with(['invoiceItems.product', 'customer', 'websiteOrder'])
+                ->get();
+
+            $sfCancelledInvs = Invoice::whereNotNull('consignment_id')
+                ->where('consignment_id', '!=', '')
+                ->whereIn('order_status', ['Cancelled', 'cancelled', 'failed', 'canceled', 'pickup cancel', 'pickup cancelled'])
+                ->whereBetween('updated_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+                ->with(['invoiceItems.product', 'customer', 'websiteOrder'])
+                ->get();
+
+            $sfReturnedInvs = Invoice::whereNotNull('consignment_id')
+                ->where('consignment_id', '!=', '')
+                ->whereIn('order_status', ['Returned', 'returned', 'return', 'pending return', 'pending_return', 'cancel_approval_pending', 'cancelled_approval_pending'])
+                ->whereBetween('updated_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
+                ->with(['invoiceItems.product', 'customer', 'websiteOrder'])
+                ->get();
+        }
+
         // 3. Format DB orders into unified structure
         $ordersList = collect();
         foreach ($dbOrders as $orderIndex => $inv) {
@@ -2019,25 +2071,120 @@ class ReportController extends Controller
                 $courierName = 'Steadfast';
             }
 
+            // An order is only considered actually sent to courier if it has a consignment_id and is beyond pre-dispatch status
+            $isSentToCourier = (!empty($inv->consignment_id) && !in_array(strtolower($normStatus), [
+                'rts', 'approved', 'processing', 'pending', 'new', 'unpaid', 'on hold', 'draft', 
+                'good but no response', 'no response', 'advance payment'
+            ]));
+
             $ordersList->push((object)[
-                'id'             => $inv->id,
-                'order_id'       => $inv->invoice_no ?: ('ORD-' . str_pad($inv->id, 6, '0', STR_PAD_LEFT)),
-                'source'         => $isWeb ? 'Website' : 'Manual',
-                'date'           => Carbon::parse($inv->date ?: $inv->created_at)->format('d M Y'),
-                'product_image'  => $itemProduct?->thumbnail_url ?: asset('backend/images/no_images.png'),
-                'product_name'   => $itemProduct?->name ?: ($firstItem?->new_details ?: 'General Gear'),
-                'qty'            => $itemsCount,
-                'purchase_price' => $firstItem ? (float)($firstItem->rate * 0.75) : ($costPrice / max(1, $itemsCount)),
-                'selling_price'  => $firstItem ? (float)$firstItem->rate : ($sellingPrice / max(1, $itemsCount)),
-                'order_amount'   => $sellingPrice,
-                'courier'        => $courierName,
-                'tracking_id'    => $inv->consignment_id ?: ($inv->websiteOrder?->tracking_code ?: ('#' . $inv->id)),
-                'status'         => $normStatus,
-                'raw_status'     => $inv->order_status,
-                'product_cost'   => $costPrice,
-                'courier_charge' => $delCharge,
-                'net_profit'     => round($netProfit),
+                'id'                 => $inv->id,
+                'order_id'           => $inv->invoice_no ?: ('ORD-' . str_pad($inv->id, 6, '0', STR_PAD_LEFT)),
+                'source'             => $isWeb ? 'Website' : 'Manual',
+                'date'               => Carbon::parse($inv->date ?: $inv->created_at)->format('d M Y'),
+                'product_image'      => $itemProduct?->thumbnail_url ?: asset('backend/images/no_images.png'),
+                'product_name'       => $itemProduct?->name ?: ($firstItem?->new_details ?: 'General Gear'),
+                'qty'                => $itemsCount,
+                'purchase_price'     => $firstItem ? (float)($firstItem->rate * 0.75) : ($costPrice / max(1, $itemsCount)),
+                'selling_price'      => $firstItem ? (float)$firstItem->rate : ($sellingPrice / max(1, $itemsCount)),
+                'order_amount'       => $sellingPrice,
+                'courier'            => $courierName,
+                'tracking_id'        => $inv->consignment_id ?: ($inv->websiteOrder?->tracking_code ?: ('#' . $inv->id)),
+                'status'             => $normStatus,
+                'raw_status'         => $inv->order_status,
+                'product_cost'       => $costPrice,
+                'courier_charge'     => $delCharge,
+                'net_profit'         => round($netProfit),
+                'is_sent_to_courier' => $isSentToCourier,
             ]);
+        }
+
+        // Add unconverted website orders (e.g. Processing, No Response, Cancel) so total website orders match Dashboard 100%
+        foreach ($unlinkedWebOrders as $wo) {
+            $firstItem = $wo->items->first();
+            $itemProduct = $firstItem?->product;
+            $itemsCount = (int)$wo->items->sum('quantity') ?: 1;
+            $sellingPrice = (float)($wo->total_amount ?? 0);
+            $costPrice = (float)($wo->items->sum('total_purchase_price') ?: 0);
+            if ($costPrice <= 0 && $sellingPrice > 0) {
+                $costPrice = $sellingPrice * 0.70;
+            }
+            $delCharge = (float)($wo->shipping_charge ?? 0);
+            $st = $wo->order_status ?: $wo->status ?: 'Processing';
+            $normStatus = ucfirst($st);
+            if (in_array(strtolower($st), ['cancelled', 'cancel', 'failed'])) $normStatus = 'Cancelled';
+            elseif (in_array(strtolower($st), ['delivered', 'completed'])) $normStatus = 'Delivered';
+            elseif (in_array(strtolower($st), ['approved', 'rts', 'confirmed'])) $normStatus = 'RTS';
+            elseif (in_array(strtolower($st), ['good_no_response', 'good but no response'])) $normStatus = 'Good But No Response';
+            elseif (in_array(strtolower($st), ['no_response', 'no response'])) $normStatus = 'No Response';
+            elseif (in_array(strtolower($st), ['on_hold', 'on hold'])) $normStatus = 'On Hold';
+            else $normStatus = 'Processing';
+
+            $ordersList->push((object)[
+                'id'                 => 'wo_' . $wo->id,
+                'order_id'           => $wo->order_no ?: ('WO-' . $wo->id),
+                'source'             => 'Website',
+                'date'               => Carbon::parse($wo->created_at)->format('d M Y'),
+                'product_image'      => $itemProduct?->thumbnail_url ?: asset('backend/images/no_images.png'),
+                'product_name'       => $itemProduct?->name ?: ($firstItem?->product_name ?: 'Website Item'),
+                'qty'                => $itemsCount,
+                'purchase_price'     => $costPrice / max(1, $itemsCount),
+                'selling_price'      => $sellingPrice / max(1, $itemsCount),
+                'order_amount'       => $sellingPrice,
+                'courier'            => $wo->courier ?: 'Steadfast',
+                'tracking_id'        => $wo->tracking_code ?: ('#' . $wo->order_no),
+                'status'             => $normStatus,
+                'raw_status'         => $st,
+                'product_cost'       => $costPrice,
+                'courier_charge'     => $delCharge,
+                'net_profit'         => 0,
+                'is_sent_to_courier' => false,
+            ]);
+        }
+
+        // Merge today's completed shipments from Steadfast into the list so they can be viewed under Delivered/Cancelled/Returned tabs
+        if (!$isPipelineView && !empty($startDate) && !empty($endDate)) {
+            $existingIds = $ordersList->pluck('id')->toArray();
+            $sfEventInvs = $sfDeliveredInvs->concat($sfCancelledInvs)->concat($sfReturnedInvs);
+            foreach ($sfEventInvs as $eInv) {
+                if (!in_array($eInv->id, $existingIds)) {
+                    $firstItem = $eInv->invoiceItems->first();
+                    $itemProduct = $firstItem?->product;
+                    $itemsCount = (int)$eInv->invoiceItems->sum('main_qty') ?: 1;
+                    $sellingPrice = (float)($eInv->total_amount ?? 0);
+                    $costPrice = (float)($eInv->invoiceItems->sum('pur_subtotal') ?: 0);
+                    $delCharge = (float)($eInv->delivery_charge ?? 0);
+                    $isWeb = (!empty($eInv->woocommerce_order_id) || $eInv->websiteOrder !== null || in_array($eInv->id, $webOrderLinkedInvIds));
+
+                    $eSt = 'Delivered';
+                    $raw = strtolower(trim($eInv->order_status ?? ''));
+                    if (str_contains($raw, 'cancel')) $eSt = 'Cancelled';
+                    elseif (str_contains($raw, 'return')) $eSt = 'Returned';
+                    elseif (str_contains($raw, 'cod') || str_contains($raw, 'approval')) $eSt = 'COD Processing';
+
+                    $ordersList->push((object)[
+                        'id'                 => $eInv->id,
+                        'order_id'           => $eInv->invoice_no ?: ('ORD-' . str_pad($eInv->id, 6, '0', STR_PAD_LEFT)),
+                        'source'             => $isWeb ? 'Website' : 'Manual',
+                        'date'               => Carbon::parse($eInv->updated_at)->format('d M Y'),
+                        'product_image'      => $itemProduct?->thumbnail_url ?: asset('backend/images/no_images.png'),
+                        'product_name'       => $itemProduct?->name ?: ($firstItem?->new_details ?: 'General Gear'),
+                        'qty'                => $itemsCount,
+                        'purchase_price'     => $costPrice / max(1, $itemsCount),
+                        'selling_price'      => $sellingPrice / max(1, $itemsCount),
+                        'order_amount'       => $sellingPrice,
+                        'courier'            => $eInv->courier_type ?: 'Steadfast',
+                        'tracking_id'        => $eInv->consignment_id ?: ('#' . $eInv->id),
+                        'status'             => $eSt,
+                        'raw_status'         => $eInv->order_status,
+                        'product_cost'       => $costPrice,
+                        'courier_charge'     => $delCharge,
+                        'net_profit'         => ($eSt === 'Delivered' || $eSt === 'COD Processing') ? round($sellingPrice - $costPrice - $delCharge) : round(-$delCharge),
+                        'is_sent_to_courier' => true,
+                    ]);
+                    $existingIds[] = $eInv->id;
+                }
+            }
         }
 
         // 4. Apply Tab Filter or Pipeline Delivery Status Filter
@@ -2097,32 +2244,53 @@ class ReportController extends Controller
             $totalDeliveryCharge = (float)$ordersList->sum('courier_charge');
             $totalCodCollection = (float)$deliveredOrders->sum('order_amount');
         } else {
-            $totalOrdersCount = $ordersList->count();
+            // Count total incoming orders
             $websiteOrdersCount = $ordersList->where('source', 'Website')->count();
             $manualOrdersCount = $ordersList->where('source', 'Manual')->count();
+            $totalOrdersCount = ($orderSource === 'website') ? $websiteOrdersCount : ($websiteOrdersCount + $manualOrdersCount);
 
-            $productsSentCount = (int)$ordersList->sum('qty');
-            $sentWebsiteQty = (int)$ordersList->where('source', 'Website')->sum('qty');
-            $sentManualQty = (int)$ordersList->where('source', 'Manual')->sum('qty');
+            // Products Sent to Courier: only parcels actually sent with tracking and beyond pre-dispatch
+            $sentOrders = $ordersList->filter(fn($o) => !empty($o->is_sent_to_courier));
+            $productsSentCount = (int)$sentOrders->sum('qty');
+            $sentWebsiteQty = (int)$sentOrders->where('source', 'Website')->sum('qty');
+            $sentManualQty = (int)$sentOrders->where('source', 'Manual')->sum('qty');
 
-            $deliveredOrders = $ordersList->filter(fn($o) => in_array($o->status, ['Delivered', 'COD Processing']));
-            $deliveredOrdersCount = $deliveredOrders->count();
-            $deliveredQty = (int)$deliveredOrders->sum('qty');
+            // Delivered, Cancelled, Returned: from Steadfast updates for the selected date
+            $deliveredOrdersCount = $sfDeliveredInvs->count();
+            $deliveredQty = (int)$sfDeliveredInvs->sum(fn($i) => $i->invoiceItems->sum('main_qty') ?: 1);
 
-            $cancelledOrders = $ordersList->where('status', 'Cancelled');
-            $cancelledOrdersCount = $cancelledOrders->count();
-            $cancelledQty = (int)$cancelledOrders->sum('qty');
+            $cancelledOrdersCount = $sfCancelledInvs->count();
+            $cancelledQty = (int)$sfCancelledInvs->sum(fn($i) => $i->invoiceItems->sum('main_qty') ?: 1);
 
-            $returnedOrders = $ordersList->where('status', 'Returned');
-            $returnedOrdersCount = $returnedOrders->count();
-            $returnedQty = (int)$returnedOrders->sum('qty');
+            $returnedOrdersCount = $sfReturnedInvs->count();
+            $returnedQty = (int)$sfReturnedInvs->sum(fn($i) => $i->invoiceItems->sum('main_qty') ?: 1);
+
+            // Also check ordersList if wide date range
+            $localDelivered = $ordersList->filter(fn($o) => in_array($o->status, ['Delivered', 'COD Processing']))->count();
+            if ($localDelivered > $deliveredOrdersCount) {
+                $deliveredOrdersCount = $localDelivered;
+                $deliveredQty = (int)$ordersList->filter(fn($o) => in_array($o->status, ['Delivered', 'COD Processing']))->sum('qty');
+            }
+            $localCancelled = $ordersList->where('status', 'Cancelled')->count();
+            if ($localCancelled > $cancelledOrdersCount) {
+                $cancelledOrdersCount = $localCancelled;
+                $cancelledQty = (int)$ordersList->where('status', 'Cancelled')->sum('qty');
+            }
+            $localReturned = $ordersList->where('status', 'Returned')->count();
+            if ($localReturned > $returnedOrdersCount) {
+                $returnedOrdersCount = $localReturned;
+                $returnedQty = (int)$ordersList->where('status', 'Returned')->sum('qty');
+            }
 
             $pendingOrders = $ordersList->filter(fn($o) => in_array($o->status, ['Pending', 'In Transit', 'In Review', 'On Hold', 'RTS']));
             $pendingOrdersCount = $pendingOrders->count();
             $pendingQty = (int)$pendingOrders->sum('qty');
 
             $totalDeliveryCharge = (float)$ordersList->sum('courier_charge');
-            $totalCodCollection = (float)$deliveredOrders->sum('order_amount');
+            $totalCodCollection = (float)$sfDeliveredInvs->sum('total_amount');
+            if ($totalCodCollection <= 0) {
+                $totalCodCollection = (float)$ordersList->filter(fn($o) => in_array($o->status, ['Delivered', 'COD Processing']))->sum('order_amount');
+            }
         }
         $pendingQty = (int)$pendingOrders->sum('qty');
 
