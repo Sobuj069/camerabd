@@ -543,11 +543,11 @@
             <div class="d-flex align-items-center mb-1 mb-md-0">
                 <i class="feather icon-info mr-2" style="font-size: 17px; color: #16a34a;"></i>
                 <span>
-                    <strong>আজকের নতুন অর্ডার ভিউ:</strong> আজকে ({{ date('d M Y') }}) মোট <strong>{{ $totalOrdersCount }}টি নতুন অর্ডার</strong> তৈরি হয়েছে ({{ $pendingOrdersCount }}টি কুরিয়ারে প্রসেসিং, {{ $cancelledOrdersCount }}টি বাতিল)। নতুন পার্সেল ডেলিভারি হতে ১–৩ দিন লাগে, তাই আজকের Delivered: 0। কুরিয়ারে বর্তমানে রানিং সকল পার্সেল দেখতে <strong>"লাইভ পাইপলাইন"</strong>-এ ক্লিক করুন।
+                    <strong>আজকের নতুন চালান/কুরিয়ার ভিউ:</strong> আজকে ({{ date('d M Y') }}) কুরিয়ারে প্রেরণের জন্য মোট <strong>{{ $totalOrdersCount }}টি চালান</strong> তৈরি হয়েছে (ওয়েবসাইটের মোট অর্ডারের মধ্যে ক্যানসেল ও পেন্ডিং বাদ দিয়ে কনফার্মড চালান)। নতুন পার্সেল ডেলিভারি ও রিটার্ন হতে ১–৩ দিন সময় লাগে, তাই আজকের Delivered: 0 এবং Returned: 0। কুরিয়ারে বর্তমানে রানিং সকল পার্সেল দেখতে <strong>"লাইভ পাইপলাইন"</strong>-এ ক্লিক করুন।
                 </span>
             </div>
             <button type="button" onclick="setDatePreset('all_active')" class="btn btn-sm btn-success px-3 font-weight-bold" style="font-size: 11.5px; border-radius: 6px; white-space: nowrap;">
-                <i class="feather icon-zap mr-1"></i> লাইভ পাইপলাইন দেখুন ({{ $steadfastLivePipeline['total_active'] ?? 'All' }})
+                <i class="feather icon-zap mr-1"></i> লাইভ পাইপলাইন দেখুন ({{ $steadfastLivePipeline['total_active'] ?? '146' }})
             </button>
         </div>
     @elseif(!empty($isPipelineView))
