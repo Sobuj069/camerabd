@@ -2897,6 +2897,10 @@ if (!function_exists('syncInvoiceCourierStatusAndAutoPay')) {
 
         // 2. Fetch live status if consignment_id is present
         if (!empty($invoice->consignment_id)) {
+            $curStatus = strtolower(trim((string)$invoice->order_status));
+            if ($curStatus === 'rts') {
+                return false; // Protect RTS orders from auto-move
+            }
             $cType = strtolower(trim($invoice->courier_type ?? ''));
             $fetchedStatus = null;
 

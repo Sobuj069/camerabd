@@ -58,6 +58,22 @@ class SteadfastWebhookController extends Controller
         }
 
         if (!empty($rawStatus)) {
+            $curStatus = strtolower(trim((string)$invoice->order_status));
+            // User requirement: RTS orders must remain in RTS until manually moved by user
+            if ($curStatus === 'rts') {
+                if (!empty($consignmentId) && empty($invoice->consignment_id)) {
+                    $invoice->consignment_id = $consignmentId;
+                    $invoice->save();
+                }
+                Log::info("Steadfast Webhook: Invoice #{$invoice->invoice_no} is currently in RTS - automatic status change skipped.");
+                return response()->json([
+                    'status'     => 200,
+                    'message'    => 'Invoice is in RTS status, automatic change skipped.',
+                    'invoice_id' => $invoice->id,
+                    'status_set' => $invoice->order_status
+                ]);
+            }
+
             $mappedStatus = function_exists('mapCourierStatus') ? mapCourierStatus($rawStatus) : ucfirst($rawStatus);
             $oldStatus    = $invoice->order_status;
 

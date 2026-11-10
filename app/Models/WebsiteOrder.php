@@ -84,10 +84,17 @@ class WebsiteOrder extends Model
         static::saved(function ($order) {
             if (($order->wasChanged('order_status') || $order->wasChanged('status')) && !empty($order->invoice_id)) {
                 $invoice = Invoice::find($order->invoice_id);
-                $st = ucfirst($order->status ?: $order->order_status);
-                if ($invoice && $invoice->order_status !== $st) {
-                    $invoice->order_status = $st;
-                    $invoice->saveQuietly();
+                if ($invoice) {
+                    $invSt = strtolower(trim((string)$invoice->order_status));
+                    $newSt = strtolower(trim((string)($order->status ?: $order->order_status)));
+                    // Protect RTS: An RTS invoice must stay in RTS unless explicitly cancelled
+                    if ($invSt !== 'rts' || in_array($newSt, ['cancelled', 'cancel'])) {
+                        $st = ucfirst($order->status ?: $order->order_status);
+                        if ($invoice->order_status !== $st) {
+                            $invoice->order_status = $st;
+                            $invoice->saveQuietly();
+                        }
+                    }
                 }
             }
 

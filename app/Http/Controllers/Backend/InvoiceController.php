@@ -2810,7 +2810,11 @@ class InvoiceController extends Controller
             }
 
             $curStatusNorm = strtolower(trim(str_replace(['_', '-'], ' ', $inv->order_status ?? '')));
-            $isPreDispatch = in_array($curStatusNorm, ['rts', 'approved', 'processing']);
+            // User requirement: RTS orders must NEVER automatically move to another tab until manually moved by user
+            if ($curStatusNorm === 'rts') {
+                continue;
+            }
+            $isPreDispatch = in_array($curStatusNorm, ['approved', 'processing']);
 
             if (!empty($newStatus)) {
                 if ($isPreDispatch && !$singleSync && in_array($newStatus, ['Pending', 'In Review'])) {

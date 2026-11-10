@@ -2387,7 +2387,9 @@ class ReportController extends Controller
 
                         if ($mapped) {
                             $activeStatusMap[$inv->id] = $mapped;
-                            if ($inv->order_status !== $mapped) {
+                            $currentSt = strtolower(trim((string)$inv->order_status));
+                            // Protect RTS & Pre-dispatch: Never automatically move RTS orders to another status/tab
+                            if (!in_array($currentSt, ['rts', 'approved', 'processing']) && $inv->order_status !== $mapped) {
                                 $inv->order_status = $mapped;
                                 $inv->save();
                             }

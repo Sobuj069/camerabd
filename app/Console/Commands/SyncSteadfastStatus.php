@@ -35,11 +35,11 @@ class SyncSteadfastStatus extends Command
     {
         $this->info("Starting Steadfast Sync...");
 
-        // Fetch pending online invoices that have a consignment_id
+        // Fetch pending online invoices that have a consignment_id (Exclude RTS, delivered, returned, cancelled)
         $invoices = Invoice::where('sale_type', 'Online')
             ->whereNotNull('consignment_id')
             ->where('consignment_id', '!=', '')
-            ->whereNotIn('order_status', ['delivered', 'partial_delivered', 'cancelled', 'returned'])
+            ->whereNotIn('order_status', ['delivered', 'partial_delivered', 'cancelled', 'returned', 'rts', 'RTS', 'processing', 'Processing'])
             ->get();
 
         if ($invoices->isEmpty()) {
@@ -48,6 +48,10 @@ class SyncSteadfastStatus extends Command
         }
 
         foreach ($invoices as $invoice) {
+            $curSt = strtolower(trim((string)$invoice->order_status));
+            if (in_array($curSt, ['rts', 'processing', 'approved'])) {
+                continue; // Keep RTS unchanged - user must manually change status
+            }
             $response = status($invoice->consignment_id);
             $newStatus = $response['delivery_status'] ?? $response['status'] ?? null;
             
