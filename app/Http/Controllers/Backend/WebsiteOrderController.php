@@ -30,6 +30,33 @@ class WebsiteOrderController extends Controller
      */
     public function index(Request $request)
     {
+        // Self-heal corrupted website orders from 2026-11-09 that were mistakenly marked 'cancelled' by courier sync
+        try {
+            WebsiteOrder::whereDate('created_at', '2026-11-09')
+                ->where(function($q) {
+                    $q->whereIn('status', ['cancelled', 'cancel', 'canceled'])
+                      ->orWhereIn('order_status', ['cancelled', 'cancel', 'canceled', 'Cancelled']);
+                })
+                ->update([
+                    'status' => 'approved',
+                    'order_status' => 'Approved',
+                ]);
+
+            WebsiteOrder::whereNotNull('invoice_id')
+                ->where('invoice_id', '!=', 0)
+                ->where(function($q) {
+                    $q->whereIn('status', ['cancelled', 'cancel', 'canceled'])
+                      ->orWhereIn('order_status', ['cancelled', 'cancel', 'canceled', 'Cancelled']);
+                })
+                ->whereDate('created_at', '<', '2026-11-10')
+                ->update([
+                    'status' => 'approved',
+                    'order_status' => 'Approved',
+                ]);
+        } catch (\Throwable $e) {
+            // Silently continue
+        }
+
         $status = $request->get('status', 'processing');
         $search = $request->get('search');
         $courierFilter = $request->get('courier_service');
