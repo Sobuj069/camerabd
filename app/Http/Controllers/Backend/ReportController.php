@@ -1867,6 +1867,11 @@ class ReportController extends Controller
         }
 
         // 2. Query Database Invoices based on filter
+        // Fetch all website order linked invoice IDs and order numbers for 100% precision
+        $webOrders = WebsiteOrder::select('id', 'order_no', 'invoice_id')->get();
+        $webOrderLinkedInvIds = $webOrders->pluck('invoice_id')->filter()->toArray();
+        $webOrderNos = $webOrders->pluck('order_no')->filter()->toArray();
+
         $invQuery = Invoice::with(['invoiceItems.product', 'customer', 'websiteOrder.items.product']);
 
         if (!$isPipelineView && !empty($startDate) && !empty($endDate)) {
@@ -1879,20 +1884,36 @@ class ReportController extends Controller
             $invQuery->where(function($q) {
                 $q->whereNotNull('consignment_id')->where('consignment_id', '!=', '')
                   ->orWhereIn('courier_type', ['Steadfast', 'Stead Fast', 'steadfast', 'Pathao', 'RedX']);
-            })->take($pipelineTotal);
+            });
         }
 
         if ($orderSource === 'website') {
-            $invQuery->where(function($q) {
-                $q->whereNotNull('woocommerce_order_id')
-                  ->orWhereHas('websiteOrder')
-                  ->orWhere('sale_type', 'like', '%Online%');
+            $invQuery->where(function($q) use ($webOrderLinkedInvIds, $webOrderNos) {
+                $q->where(function($sq) {
+                    $sq->whereNotNull('woocommerce_order_id')->where('woocommerce_order_id', '!=', '');
+                })
+                ->orWhereHas('websiteOrder')
+                ->orWhereIn('id', $webOrderLinkedInvIds)
+                ->orWhereIn('sale_type', ['Website', 'WooCommerce'])
+                ->orWhere('source_link', 'Website');
+                if (!empty($webOrderNos)) {
+                    $q->orWhereIn('source_link', $webOrderNos);
+                }
             });
         } elseif ($orderSource === 'manual') {
-            $invQuery->where(function($q) {
-                $q->whereNull('woocommerce_order_id')
-                  ->whereDoesntHave('websiteOrder')
-                  ->where('sale_type', 'not like', '%Online%');
+            $invQuery->where(function($q) use ($webOrderLinkedInvIds, $webOrderNos) {
+                $q->where(function($sq) {
+                    $sq->whereNull('woocommerce_order_id')->orWhere('woocommerce_order_id', '');
+                })
+                ->whereDoesntHave('websiteOrder')
+                ->whereNotIn('id', $webOrderLinkedInvIds)
+                ->whereNotIn('sale_type', ['Website', 'WooCommerce'])
+                ->where(function($sq) {
+                    $sq->whereNull('source_link')->orWhere('source_link', '!=', 'Website');
+                });
+                if (!empty($webOrderNos)) {
+                    $q->whereNotIn('source_link', $webOrderNos);
+                }
             });
         }
 
@@ -1927,12 +1948,22 @@ class ReportController extends Controller
             });
         }
 
+        if ($isPipelineView) {
+            $invQuery->take($pipelineTotal);
+        }
+
         $dbOrders = $invQuery->orderBy('id', 'desc')->get();
 
         // 3. Format DB orders into unified structure
         $ordersList = collect();
         foreach ($dbOrders as $orderIndex => $inv) {
-            $isWeb = ($inv->websiteOrder || str_contains(strtolower($inv->sale_type ?? ''), 'online') || !empty($inv->woocommerce_order_id));
+            $isWeb = (!empty($inv->woocommerce_order_id)
+                || $inv->websiteOrder !== null
+                || in_array($inv->id, $webOrderLinkedInvIds)
+                || in_array($inv->sale_type, ['Website', 'WooCommerce'])
+                || $inv->source_link === 'Website'
+                || (!empty($inv->source_link) && in_array($inv->source_link, $webOrderNos))
+            );
             $firstItem = $inv->invoiceItems->first();
             $itemProduct = $firstItem?->product;
             $itemsCount = (int)$inv->invoiceItems->sum('main_qty') ?: 1;

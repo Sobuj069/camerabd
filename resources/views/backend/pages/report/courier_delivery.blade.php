@@ -470,7 +470,7 @@
                     <select name="order_source" class="filter-select">
                         <option value="all" {{ $orderSource === 'all' ? 'selected' : '' }}>{{ __('All (Website + Manual)') }}</option>
                         <option value="website" {{ $orderSource === 'website' ? 'selected' : '' }}>{{ __('Website Orders') }}</option>
-                        <option value="manual" {{ $orderSource === 'manual' ? 'selected' : '' }}>{{ __('Manual Orders') }}</option>
+                        <option value="manual" {{ $orderSource === 'manual' ? 'selected' : '' }}>{{ __('Manual Orders (Online POS)') }}</option>
                     </select>
                 </div>
 
@@ -543,7 +543,7 @@
             <div class="d-flex align-items-center mb-1 mb-md-0">
                 <i class="feather icon-info mr-2" style="font-size: 17px; color: #16a34a;"></i>
                 <span>
-                    <strong>আজকের নতুন চালান/কুরিয়ার ভিউ:</strong> আজকে ({{ date('d M Y') }}) কুরিয়ারে প্রেরণের জন্য মোট <strong>{{ $totalOrdersCount }}টি চালান</strong> তৈরি হয়েছে (ওয়েবসাইটের মোট অর্ডারের মধ্যে ক্যানসেল ও পেন্ডিং বাদ দিয়ে কনফার্মড চালান)। নতুন পার্সেল ডেলিভারি ও রিটার্ন হতে ১–৩ দিন সময় লাগে, তাই আজকের Delivered: 0 এবং Returned: 0। কুরিয়ারে বর্তমানে রানিং সকল পার্সেল দেখতে <strong>"লাইভ পাইপলাইন"</strong>-এ ক্লিক করুন।
+                    <strong>আজকের নতুন চালান/কুরিয়ার ভিউ:</strong> আজকে ({{ date('d M Y') }}) কুরিয়ারে প্রেরণের জন্য মোট <strong>{{ $totalOrdersCount }}টি চালান</strong> তৈরি হয়েছে (ওয়েবসাইট অর্ডার থেকে কনফার্মড: {{ $websiteOrdersCount }}টি, অনলাইন পিওএস থেকে ম্যানুয়াল: {{ $manualOrdersCount }}টি)। নতুন পার্সেল ডেলিভারি ও রিটার্ন হতে ১–৩ দিন সময় লাগে, তাই আজকের Delivered: 0 এবং Returned: 0। কুরিয়ারে বর্তমানে রানিং সকল পার্সেল দেখতে <strong>"লাইভ পাইপলাইন"</strong>-এ ক্লিক করুন।
                 </span>
             </div>
             <button type="button" onclick="setDatePreset('all_active')" class="btn btn-sm btn-success px-3 font-weight-bold" style="font-size: 11.5px; border-radius: 6px; white-space: nowrap;">
@@ -751,7 +751,7 @@
                         <div>
                             <div class="d-flex align-items-center gap-2 mb-1">
                                 <span style="width: 10px; height: 10px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
-                                <span class="font-weight-bold" style="font-size: 13px; color: #1e293b;">{{ __('Manual Orders') }}</span>
+                                <span class="font-weight-bold" style="font-size: 13px; color: #1e293b;">{{ __('Manual Orders (Online POS)') }}</span>
                             </div>
                             <div class="pl-3" style="font-size: 14px; font-weight: 700; color: #10b981;">
                                 {{ $manualOrdersCount }} ({{ $manPct }}%)
@@ -998,9 +998,15 @@
                             <td class="text-muted font-weight-bold">{{ $idx + 1 }}</td>
                             <td class="font-weight-bold" style="color: #0f172a;">{{ $item->order_id }}</td>
                             <td>
-                                <span class="badge {{ $item->source === 'Website' ? 'badge-primary' : 'badge-secondary' }} px-2 py-1 font-weight-bold" style="font-size: 11px;">
-                                    {{ $item->source }}
-                                </span>
+                                @if($item->source === 'Website')
+                                    <span class="badge px-2 py-1 font-weight-bold" style="font-size: 11px; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;">
+                                        <i class="feather icon-globe mr-1"></i> {{ __('Website') }}
+                                    </span>
+                                @else
+                                    <span class="badge px-2 py-1 font-weight-bold" style="font-size: 11px; background: #f8fafc; color: #475569; border: 1px solid #cbd5e1;">
+                                        <i class="feather icon-edit mr-1"></i> {{ __('Manual (POS)') }}
+                                    </span>
+                                @endif
                             </td>
                             <td class="text-muted">{{ $item->date }}</td>
                             <td>
@@ -1047,7 +1053,7 @@
         // Render Order by Source Donut Chart
         var options = {
             series: [{{ $websiteOrdersCount }}, {{ $manualOrdersCount }}],
-            labels: ['Website Orders', 'Manual Orders'],
+            labels: ['Website Orders', 'Manual Orders (POS)'],
             chart: {
                 type: 'donut',
                 height: 180,
