@@ -57,107 +57,38 @@ class WebsiteOrderController extends Controller
             // Silently continue
         }
 
-        $status = $request->get('status', 'processing');
+        $status = $this->normalizeStatusFilter($request->get('status', 'processing'));
         $search = $request->get('search');
         $courierFilter = $request->get('courier_service');
+        [$datePreset, $startDate, $endDate] = $this->resolveDateRange($request);
 
-        // Status counts for top carousel pills
-        $counts = [
-            'processing' => WebsiteOrder::where(function($q) {
-                $q->whereNull('invoice_id')->orWhere('invoice_id', 0)->orWhere('invoice_id', '');
-            })->where(function($q) {
-                $q->whereIn('status', ['processing', 'pending'])
-                  ->orWhereNull('status');
-            })->whereNotIn('status', ['approved', 'delivered', 'cancelled', 'good_no_response', 'no_response', 'advance_payment', 'on_hold'])
-              ->whereNotIn(DB::raw('LOWER(order_status)'), ['approved', 'delivered', 'cancelled', 'good but no response', 'no response', 'advance payment', 'on hold'])
-              ->count(),
-            'good_no_response' => WebsiteOrder::where(function($q) {
-                $q->where('status', 'good_no_response')
-                  ->orWhere(DB::raw('LOWER(order_status)'), 'good_no_response');
-            })->count(),
-            'no_response' => WebsiteOrder::where(function($q) {
-                $q->where('status', 'no_response')
-                  ->orWhere(DB::raw('LOWER(order_status)'), 'no_response');
-            })->count(),
-            'advance_payment' => WebsiteOrder::where(function($q) {
-                $q->where('status', 'advance_payment')
-                  ->orWhere(DB::raw('LOWER(order_status)'), 'advance_payment');
-            })->count(),
-            'on_hold' => WebsiteOrder::where(function($q) {
-                $q->where('status', 'on_hold')
-                  ->orWhere(DB::raw('LOWER(order_status)'), 'on_hold');
-            })->count(),
-            'approved' => WebsiteOrder::where(function($q) {
-                $q->where('status', 'approved')
-                  ->orWhere(DB::raw('LOWER(order_status)'), 'approved')
-                  ->orWhere(function($subQ) {
-                      $subQ->whereNotNull('invoice_id')->where('invoice_id', '!=', 0)->where('invoice_id', '!=', '');
-                  });
-            })->whereNotIn('status', ['delivered', 'cancelled'])
-              ->whereNotIn(DB::raw('LOWER(order_status)'), ['delivered', 'cancelled'])
-              ->count(),
-            'delivered' => WebsiteOrder::where(function($q) {
-                $q->where('status', 'delivered')
-                  ->orWhere(DB::raw('LOWER(order_status)'), 'delivered');
-            })->count(),
-            'cancelled' => WebsiteOrder::where(function($q) {
-                $q->where('status', 'cancelled')
-                  ->orWhere(DB::raw('LOWER(order_status)'), 'cancelled');
-            })->count(),
-            'all' => WebsiteOrder::count(),
+        $overallTotal = WebsiteOrder::count();
+
+        // Shared base query so top carousel pill counts and order rows always match
+        $baseQuery = WebsiteOrder::query();
+        $this->applyBaseFilters($baseQuery, $startDate, $endDate, $search, $courierFilter);
+
+        $statusKeys = [
+            'processing',
+            'good_no_response',
+            'no_response',
+            'advance_payment',
+            'on_hold',
+            'approved',
+            'delivered',
+            'cancelled',
+            'all',
         ];
 
-        $query = WebsiteOrder::with(['items.product.unit', 'items.variation', 'invoice'])
+        $counts = [];
+        foreach ($statusKeys as $key) {
+            $counts[$key] = $this->applyStatusFilter(clone $baseQuery, $key)->count();
+        }
+
+        $query = (clone $baseQuery)
+            ->with(['items.product.unit', 'items.variation', 'invoice'])
             ->orderBy('created_at', 'desc');
-
-        // Filter by Status (unless 'all')
-        if (!empty($status) && $status !== 'all') {
-            if ($status === 'processing') {
-                $query->where(function($q) {
-                    $q->whereNull('invoice_id')->orWhere('invoice_id', 0)->orWhere('invoice_id', '');
-                })->where(function($q) {
-                    $q->whereIn('status', ['processing', 'pending'])
-                      ->orWhereNull('status');
-                })->whereNotIn('status', ['approved', 'delivered', 'cancelled', 'good_no_response', 'no_response', 'advance_payment', 'on_hold'])
-                  ->whereNotIn(DB::raw('LOWER(order_status)'), ['approved', 'delivered', 'cancelled', 'good but no response', 'no response', 'advance payment', 'on hold']);
-            } elseif ($status === 'approved') {
-                $query->where(function($q) {
-                    $q->where('status', 'approved')
-                      ->orWhere(DB::raw('LOWER(order_status)'), 'approved')
-                      ->orWhere(function($subQ) {
-                          $subQ->whereNotNull('invoice_id')->where('invoice_id', '!=', 0)->where('invoice_id', '!=', '');
-                      });
-                })->whereNotIn('status', ['delivered', 'cancelled'])
-                  ->whereNotIn(DB::raw('LOWER(order_status)'), ['delivered', 'cancelled']);
-            } else {
-                $query->where(function($q) use ($status) {
-                    $q->where('status', $status)
-                      ->orWhere(DB::raw('LOWER(order_status)'), strtolower($status));
-                });
-            }
-        }
-
-        // Search query
-        if (!empty($search)) {
-            $searchVal = trim($search);
-            $query->where(function ($q) use ($searchVal) {
-                $q->where('order_no', 'like', "%{$searchVal}%")
-                  ->orWhere('customer_name', 'like', "%{$searchVal}%")
-                  ->orWhere('customer_phone', 'like', "%{$searchVal}%")
-                  ->orWhere('phone', 'like', "%{$searchVal}%")
-                  ->orWhere('customer_address', 'like', "%{$searchVal}%")
-                  ->orWhere('delivery_address', 'like', "%{$searchVal}%")
-                  ->orWhereHas('items', function ($itemQ) use ($searchVal) {
-                      $itemQ->where('product_name', 'like', "%{$searchVal}%")
-                            ->orWhere('product_code', 'like', "%{$searchVal}%")
-                            ->orWhere('product_barcode', 'like', "%{$searchVal}%");
-                  });
-            });
-        }
-
-        if (!empty($courierFilter)) {
-            $query->where('courier_service', $courierFilter);
-        }
+        $this->applyStatusFilter($query, $status);
 
         $orders = $query->paginate(20)->appends($request->all());
 
@@ -217,7 +148,203 @@ class WebsiteOrderController extends Controller
             return $order;
         });
 
-        return view('backend.pages.website_orders.index', compact('orders', 'counts', 'status', 'search'));
+        return view('backend.pages.website_orders.index', compact(
+            'orders',
+            'counts',
+            'overallTotal',
+            'status',
+            'search',
+            'datePreset',
+            'startDate',
+            'endDate',
+            'courierFilter'
+        ));
+    }
+
+    /**
+     * Normalize incoming status query parameters (including UI label aliases) to canonical keys.
+     */
+    private function normalizeStatusFilter($rawStatus): string
+    {
+        $normalized = strtolower(trim((string) $rawStatus));
+        if ($normalized === '') {
+            return 'processing';
+        }
+
+        $aliasMap = [
+            'processing'            => 'processing',
+            'pending'               => 'processing',
+            'good_no_response'      => 'good_no_response',
+            'good but no response'  => 'good_no_response',
+            'no_response'           => 'no_response',
+            'no response'           => 'no_response',
+            'advance_payment'       => 'advance_payment',
+            'advance payment'       => 'advance_payment',
+            'on_hold'               => 'on_hold',
+            'on hold'               => 'on_hold',
+            'approved'              => 'approved',
+            'delivered'             => 'delivered',
+            'cancelled'             => 'cancelled',
+            'canceled'              => 'cancelled',
+            'cancel'                => 'cancelled',
+            'all'                   => 'all',
+        ];
+
+        return $aliasMap[$normalized] ?? 'processing';
+    }
+
+    /**
+     * Resolve the active date preset and normalized Y-m-d bounds in app timezone.
+     */
+    private function resolveDateRange(Request $request): array
+    {
+        $preset = strtolower(trim((string) $request->get('date_preset', '')));
+        $today = Carbon::today();
+
+        switch ($preset) {
+            case 'today':
+                $date = $today->toDateString();
+                return ['today', $date, $date];
+            case 'yesterday':
+                $date = $today->copy()->subDay()->toDateString();
+                return ['yesterday', $date, $date];
+            case 'last_7_days':
+                return ['last_7_days', $today->copy()->subDays(6)->toDateString(), $today->toDateString()];
+            case 'last_30_days':
+                return ['last_30_days', $today->copy()->subDays(29)->toDateString(), $today->toDateString()];
+            case 'this_month':
+                return ['this_month', $today->copy()->startOfMonth()->toDateString(), $today->copy()->endOfMonth()->toDateString()];
+            case 'last_month':
+                $lastMonth = $today->copy()->subMonthNoOverflow();
+                return ['last_month', $lastMonth->copy()->startOfMonth()->toDateString(), $lastMonth->copy()->endOfMonth()->toDateString()];
+            case 'all':
+                return ['all', null, null];
+        }
+
+        $startDate = $this->parseDateOrNull($request->get('start_date'));
+        $endDate = $this->parseDateOrNull($request->get('end_date'));
+
+        if ($startDate && $endDate && $startDate > $endDate) {
+            [$startDate, $endDate] = [$endDate, $startDate];
+        }
+
+        if ($startDate !== null || $endDate !== null) {
+            return ['custom', $startDate, $endDate];
+        }
+
+        return ['all', null, null];
+    }
+
+    /**
+     * Parse a user-supplied date string to Y-m-d, returning null if empty or invalid.
+     */
+    private function parseDateOrNull($value): ?string
+    {
+        $trimmed = trim((string) $value);
+        if ($trimmed === '') {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($trimmed)->toDateString();
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Apply non-status filters shared across carousel status counts and the paginated table query.
+     */
+    private function applyBaseFilters($query, ?string $startDate, ?string $endDate, ?string $search, ?string $courierFilter)
+    {
+        if ($startDate !== null && $endDate !== null) {
+            $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+        } elseif ($startDate !== null) {
+            $query->where('created_at', '>=', $startDate . ' 00:00:00');
+        } elseif ($endDate !== null) {
+            $query->where('created_at', '<=', $endDate . ' 23:59:59');
+        }
+
+        if (!empty($search)) {
+            $searchVal = trim($search);
+            $query->where(function ($q) use ($searchVal) {
+                $q->where('order_no', 'like', "%{$searchVal}%")
+                  ->orWhere('customer_name', 'like', "%{$searchVal}%")
+                  ->orWhere('customer_phone', 'like', "%{$searchVal}%")
+                  ->orWhere('phone', 'like', "%{$searchVal}%")
+                  ->orWhere('customer_address', 'like', "%{$searchVal}%")
+                  ->orWhere('delivery_address', 'like', "%{$searchVal}%")
+                  ->orWhereHas('items', function ($itemQ) use ($searchVal) {
+                      $itemQ->where('product_name', 'like', "%{$searchVal}%")
+                            ->orWhere('product_code', 'like', "%{$searchVal}%")
+                            ->orWhere('product_barcode', 'like', "%{$searchVal}%");
+                  });
+            });
+        }
+
+        if (!empty($courierFilter)) {
+            $query->where('courier_service', $courierFilter);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Apply a canonical status filter uniformly across counts and table queries.
+     */
+    private function applyStatusFilter($query, string $status)
+    {
+        if (empty($status) || $status === 'all') {
+            return $query;
+        }
+
+        $nonProcessingLabels = [
+            'approved', 'delivered',
+            'cancelled', 'canceled', 'cancel',
+            'good_no_response', 'good but no response',
+            'no_response', 'no response',
+            'advance_payment', 'advance payment',
+            'on_hold', 'on hold',
+        ];
+
+        if ($status === 'processing') {
+            return $query->where(function ($q) {
+                $q->whereNull('invoice_id')->orWhere('invoice_id', 0)->orWhere('invoice_id', '');
+            })->where(function ($q) {
+                $q->whereIn(DB::raw("LOWER(COALESCE(status, ''))"), ['processing', 'pending', ''])
+                  ->orWhereNull('status');
+            })->whereNotIn(DB::raw("LOWER(COALESCE(status, ''))"), $nonProcessingLabels)
+              ->whereNotIn(DB::raw("LOWER(COALESCE(order_status, ''))"), $nonProcessingLabels);
+        }
+
+        if ($status === 'approved') {
+            return $query->where(function ($q) {
+                $q->where(DB::raw("LOWER(COALESCE(status, ''))"), 'approved')
+                  ->orWhere(DB::raw("LOWER(COALESCE(order_status, ''))"), 'approved')
+                  ->orWhere(function ($subQ) {
+                      $subQ->whereNotNull('invoice_id')
+                           ->where('invoice_id', '!=', 0)
+                           ->where('invoice_id', '!=', '');
+                  });
+            })->whereNotIn(DB::raw("LOWER(COALESCE(status, ''))"), ['delivered', 'cancelled', 'canceled', 'cancel'])
+              ->whereNotIn(DB::raw("LOWER(COALESCE(order_status, ''))"), ['delivered', 'cancelled', 'canceled', 'cancel']);
+        }
+
+        $statusVariants = [
+            'good_no_response' => ['good_no_response', 'good but no response'],
+            'no_response'      => ['no_response', 'no response'],
+            'advance_payment'  => ['advance_payment', 'advance payment'],
+            'on_hold'          => ['on_hold', 'on hold'],
+            'delivered'        => ['delivered'],
+            'cancelled'        => ['cancelled', 'canceled', 'cancel'],
+        ];
+
+        $matches = $statusVariants[$status] ?? [strtolower($status)];
+
+        return $query->where(function ($q) use ($matches) {
+            $q->whereIn(DB::raw("LOWER(COALESCE(status, ''))"), $matches)
+              ->orWhereIn(DB::raw("LOWER(COALESCE(order_status, ''))"), $matches);
+        });
     }
 
     /**

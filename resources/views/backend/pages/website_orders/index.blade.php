@@ -230,6 +230,132 @@
         border-color: #94a3b8;
     }
 
+    /* Date-Wise Filter Bar */
+    .active-date-badge {
+        background: #ede9fe;
+        color: #6d28d9;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .date-filter-bar {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 10px 14px;
+        margin-bottom: 14px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
+    }
+    .date-presets-group {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+    }
+    .date-presets-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: #475569;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-right: 4px;
+    }
+    .date-preset-btn {
+        background: #f8fafc;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 5px 11px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.18s ease;
+        white-space: nowrap;
+    }
+    .date-preset-btn:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+        color: #1e293b;
+    }
+    .date-preset-btn.active {
+        background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+        color: #ffffff;
+        border-color: #6d28d9;
+        box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25);
+    }
+    .date-range-group {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+    }
+    .date-range-sep {
+        font-size: 12px;
+        color: #64748b;
+        font-weight: 600;
+    }
+    .date-input-modern {
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 5px 10px;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #1e293b;
+        outline: none;
+        transition: border-color 0.2s ease;
+    }
+    .date-input-modern:focus {
+        border-color: #7c3aed;
+        background: #ffffff;
+    }
+    .btn-date-apply {
+        background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        padding: 6px 13px;
+        font-size: 12.5px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        cursor: pointer;
+        transition: opacity 0.2s ease;
+    }
+    .btn-date-apply:hover {
+        opacity: 0.92;
+    }
+    .btn-date-reset {
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        padding: 5px 11px;
+        font-size: 12.5px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    .btn-date-reset:hover {
+        background: #fee2e2;
+        color: #b91c1c;
+        text-decoration: none;
+    }
+
     /* Courier & Stock Transfer Bar */
     .dispatch-bar {
         background: #ffffff;
@@ -558,12 +684,72 @@
         </div>
     @endif
 
+    @php
+        $hasDateFilter = !empty($datePreset) && $datePreset !== 'all';
+        $hasAnyFilter = $hasDateFilter || !empty($search) || !empty($courierFilter);
+
+        $formattedDateRange = null;
+        if ($hasDateFilter) {
+            if (!empty($startDate) && !empty($endDate)) {
+                $formattedDateRange = ($startDate === $endDate)
+                    ? \Carbon\Carbon::parse($startDate)->format('d M Y')
+                    : \Carbon\Carbon::parse($startDate)->format('d M Y') . ' - ' . \Carbon\Carbon::parse($endDate)->format('d M Y');
+            } elseif (!empty($startDate)) {
+                $formattedDateRange = 'From ' . \Carbon\Carbon::parse($startDate)->format('d M Y');
+            } elseif (!empty($endDate)) {
+                $formattedDateRange = 'Until ' . \Carbon\Carbon::parse($endDate)->format('d M Y');
+            }
+        }
+
+        $pillBaseQuery = array_filter([
+            'date_preset' => $hasDateFilter ? $datePreset : null,
+            'start_date' => ($datePreset === 'custom' && !empty($startDate)) ? $startDate : null,
+            'end_date' => ($datePreset === 'custom' && !empty($endDate)) ? $endDate : null,
+            'search' => !empty($search) ? $search : null,
+            'courier_service' => !empty($courierFilter) ? $courierFilter : null,
+        ], fn($v) => $v !== null && $v !== '');
+
+        $datePresets = [
+            'all'          => 'All Time',
+            'today'        => 'Today',
+            'yesterday'    => 'Yesterday',
+            'last_7_days'  => 'Last 7 Days',
+            'last_30_days' => 'Last 30 Days',
+            'this_month'   => 'This Month',
+            'last_month'   => 'Last Month',
+        ];
+
+        $statusTabs = [
+            ['key' => 'processing',       'label' => 'Processing',           'dot' => '#f59e0b', 'option' => '🟡 Processing'],
+            ['key' => 'good_no_response', 'label' => 'Good But No Response', 'icon' => '👍',     'option' => '👍 Good But No Response'],
+            ['key' => 'no_response',      'label' => 'No Response',          'icon' => '🚫', 'color' => '#ef4444', 'option' => '🚫 No Response'],
+            ['key' => 'advance_payment',  'label' => 'Advance Payment',      'icon' => '📝',     'option' => '📝 Advance Payment'],
+            ['key' => 'on_hold',          'label' => 'On Hold',              'icon' => '⏸️', 'color' => '#0284c7', 'option' => '⏸️ On Hold'],
+            ['key' => 'approved',         'label' => 'Approved',             'icon' => '✔',  'color' => '#10b981', 'option' => '✔ Approved'],
+            ['key' => 'delivered',        'label' => 'Delivered',            'icon' => '📦',     'option' => '📦 Delivered'],
+            ['key' => 'cancelled',        'label' => 'Cancelled',            'icon' => '❌', 'color' => '#ef4444', 'option' => '❌ Cancelled'],
+            ['key' => 'all',              'label' => 'ALL',                  'icon' => '📋',     'option' => '📋 All Orders'],
+        ];
+    @endphp
+
     {{-- Top Header Bar --}}
     <div class="order-header-bar">
         <div class="order-header-title">
             <i class="feather icon-shopping-bag"></i>
             <span>{{ __('Website Orders') }}</span>
-            <span class="order-total-badge">{{ $counts['all'] }} Total</span>
+            <span class="order-total-badge">
+                @if($hasAnyFilter)
+                    {{ $counts['all'] }} {{ __('Matched') }} <span style="opacity: 0.75; font-weight: 500;">/ {{ $overallTotal }} {{ __('Total') }}</span>
+                @else
+                    {{ $counts['all'] }} {{ __('Total') }}
+                @endif
+            </span>
+            @if(!empty($formattedDateRange))
+                <span class="active-date-badge">
+                    <i class="feather icon-calendar"></i>
+                    {{ $formattedDateRange }}
+                </span>
+            @endif
         </div>
         <div class="d-flex align-items-center gap-2" style="gap: 10px;">
             <a href="{{ route('invoice.online.sale') }}" class="header-action-btn btn-cyan">
@@ -577,93 +763,77 @@
         </div>
     </div>
 
-    {{-- Carousel Status Filter Tabs --}}
-    <div class="status-carousel-container">
-        <button type="button" class="carousel-nav-btn" id="scrollPillsLeft" title="Scroll Left">
-            <i class="feather icon-chevron-left"></i>
-        </button>
+    {{-- Filter Form Wrapping Date Filter Bar, Status Tabs & Search --}}
+    <form action="{{ route('website-orders.index') }}" method="GET" id="filterForm">
+        <input type="hidden" name="date_preset" id="filterDatePreset" value="{{ $datePreset ?? 'all' }}">
+        @if(!empty($courierFilter))
+            <input type="hidden" name="courier_service" value="{{ $courierFilter }}">
+        @endif
 
-        <div class="status-pills-scroll" id="pillsScrollTrack">
-            {{-- Processing --}}
-            <a href="{{ route('website-orders.index', ['status' => 'processing']) }}"
-               class="status-pill {{ $status === 'processing' ? 'active' : '' }}">
-                <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#f59e0b;"></span>
-                <span>Processing</span>
-                <span class="pill-count">{{ $counts['processing'] }}</span>
-            </a>
+        {{-- Date-Wise Filter Bar --}}
+        <div class="date-filter-bar">
+            <div class="date-presets-group">
+                <span class="date-presets-label">
+                    <i class="feather icon-calendar" style="color: #7c3aed;"></i>
+                    {{ __('Date:') }}
+                </span>
+                @foreach($datePresets as $presetKey => $presetLabel)
+                    <button type="button"
+                            class="date-preset-btn {{ ($datePreset ?? 'all') === $presetKey ? 'active' : '' }}"
+                            onclick="selectDatePreset('{{ $presetKey }}')">
+                        {{ __($presetLabel) }}
+                    </button>
+                @endforeach
+            </div>
 
-            {{-- Good But No Response --}}
-            <a href="{{ route('website-orders.index', ['status' => 'good_no_response']) }}"
-               class="status-pill {{ $status === 'good_no_response' ? 'active' : '' }}">
-                <span>👍</span>
-                <span>Good But No Response</span>
-                <span class="pill-count">{{ $counts['good_no_response'] }}</span>
-            </a>
-
-            {{-- No Response --}}
-            <a href="{{ route('website-orders.index', ['status' => 'no_response']) }}"
-               class="status-pill {{ $status === 'no_response' ? 'active' : '' }}">
-                <span style="color:#ef4444;">🚫</span>
-                <span>No Response</span>
-                <span class="pill-count">{{ $counts['no_response'] }}</span>
-            </a>
-
-            {{-- Advance Payment --}}
-            <a href="{{ route('website-orders.index', ['status' => 'advance_payment']) }}"
-               class="status-pill {{ $status === 'advance_payment' ? 'active' : '' }}">
-                <span>📝</span>
-                <span>Advance Payment</span>
-                <span class="pill-count">{{ $counts['advance_payment'] }}</span>
-            </a>
-
-            {{-- On Hold --}}
-            <a href="{{ route('website-orders.index', ['status' => 'on_hold']) }}"
-               class="status-pill {{ $status === 'on_hold' ? 'active' : '' }}">
-                <span style="color:#0284c7;">⏸️</span>
-                <span>On Hold</span>
-                <span class="pill-count">{{ $counts['on_hold'] }}</span>
-            </a>
-
-            {{-- Approved --}}
-            <a href="{{ route('website-orders.index', ['status' => 'approved']) }}"
-               class="status-pill {{ $status === 'approved' ? 'active' : '' }}">
-                <span style="color:#10b981;">✔</span>
-                <span>Approved</span>
-                <span class="pill-count">{{ $counts['approved'] }}</span>
-            </a>
-
-            {{-- Delivered --}}
-            <a href="{{ route('website-orders.index', ['status' => 'delivered']) }}"
-               class="status-pill {{ $status === 'delivered' ? 'active' : '' }}">
-                <span>📦</span>
-                <span>Delivered</span>
-                <span class="pill-count">{{ $counts['delivered'] }}</span>
-            </a>
-
-            {{-- Cancelled --}}
-            <a href="{{ route('website-orders.index', ['status' => 'cancelled']) }}"
-               class="status-pill {{ $status === 'cancelled' ? 'active' : '' }}">
-                <span style="color:#ef4444;">❌</span>
-                <span>Cancelled</span>
-                <span class="pill-count">{{ $counts['cancelled'] }}</span>
-            </a>
-
-            {{-- ALL --}}
-            <a href="{{ route('website-orders.index', ['status' => 'all']) }}"
-               class="status-pill {{ $status === 'all' ? 'active' : '' }}">
-                <span>📋</span>
-                <span>ALL</span>
-                <span class="pill-count">{{ $counts['all'] }}</span>
-            </a>
+            <div class="date-range-group">
+                <input type="date" name="start_date" id="filterStartDate" class="date-input-modern"
+                       value="{{ $startDate ?? '' }}" title="{{ __('Start Date') }}">
+                <span class="date-range-sep">{{ __('to') }}</span>
+                <input type="date" name="end_date" id="filterEndDate" class="date-input-modern"
+                       value="{{ $endDate ?? '' }}" title="{{ __('End Date') }}">
+                <button type="submit" class="btn-date-apply">
+                    <i class="feather icon-check"></i>
+                    <span>{{ __('Apply') }}</span>
+                </button>
+                @if($hasAnyFilter)
+                    <a href="{{ route('website-orders.index') }}" class="btn-date-reset" title="{{ __('Clear all filters') }}">
+                        <i class="feather icon-rotate-ccw"></i>
+                        <span>{{ __('Reset') }}</span>
+                    </a>
+                @endif
+            </div>
         </div>
 
-        <button type="button" class="carousel-nav-btn" id="scrollPillsRight" title="Scroll Right">
-            <i class="feather icon-chevron-right"></i>
-        </button>
-    </div>
+        {{-- Carousel Status Filter Tabs --}}
+        <div class="status-carousel-container">
+            <button type="button" class="carousel-nav-btn" id="scrollPillsLeft" title="Scroll Left">
+                <i class="feather icon-chevron-left"></i>
+            </button>
 
-    {{-- Filter Bar --}}
-    <form action="{{ route('website-orders.index') }}" method="GET" id="filterForm">
+            <div class="status-pills-scroll" id="pillsScrollTrack">
+                @foreach($statusTabs as $tab)
+                    <a href="{{ route('website-orders.index', array_merge($pillBaseQuery, ['status' => $tab['key']])) }}"
+                       class="status-pill {{ $status === $tab['key'] ? 'active' : '' }}">
+                        @if(!empty($tab['dot']))
+                            <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:{{ $tab['dot'] }};"></span>
+                        @elseif(!empty($tab['color']))
+                            <span style="color:{{ $tab['color'] }};">{{ $tab['icon'] }}</span>
+                        @else
+                            <span>{{ $tab['icon'] }}</span>
+                        @endif
+                        <span>{{ $tab['label'] }}</span>
+                        <span class="pill-count">{{ $counts[$tab['key']] ?? 0 }}</span>
+                    </a>
+                @endforeach
+            </div>
+
+            <button type="button" class="carousel-nav-btn" id="scrollPillsRight" title="Scroll Right">
+                <i class="feather icon-chevron-right"></i>
+            </button>
+        </div>
+
+        {{-- Search & Status Filter Bar --}}
         <div class="filter-card">
             <div class="search-input-group">
                 <i class="feather icon-search"></i>
@@ -672,15 +842,9 @@
             </div>
 
             <select name="status" class="filter-select" onchange="document.getElementById('filterForm').submit();">
-                <option value="processing" {{ $status === 'processing' ? 'selected' : '' }}>🟡 Processing</option>
-                <option value="good_no_response" {{ $status === 'good_no_response' ? 'selected' : '' }}>👍 Good But No Response</option>
-                <option value="no_response" {{ $status === 'no_response' ? 'selected' : '' }}>🚫 No Response</option>
-                <option value="advance_payment" {{ $status === 'advance_payment' ? 'selected' : '' }}>📝 Advance Payment</option>
-                <option value="on_hold" {{ $status === 'on_hold' ? 'selected' : '' }}>⏸️ On Hold</option>
-                <option value="approved" {{ $status === 'approved' ? 'selected' : '' }}>✔ Approved</option>
-                <option value="delivered" {{ $status === 'delivered' ? 'selected' : '' }}>📦 Delivered</option>
-                <option value="cancelled" {{ $status === 'cancelled' ? 'selected' : '' }}>❌ Cancelled</option>
-                <option value="all" {{ $status === 'all' ? 'selected' : '' }}>📋 All Orders</option>
+                @foreach($statusTabs as $tab)
+                    <option value="{{ $tab['key'] }}" {{ $status === $tab['key'] ? 'selected' : '' }}>{{ $tab['option'] }}</option>
+                @endforeach
             </select>
 
             <button type="submit" class="btn-filter-action">
@@ -994,6 +1158,55 @@
     document.getElementById('scrollPillsRight').addEventListener('click', function() {
         document.getElementById('pillsScrollTrack').scrollBy({ left: 250, behavior: 'smooth' });
     });
+
+    // Date-wise quick preset selector
+    function selectDatePreset(preset) {
+        const presetInput = document.getElementById('filterDatePreset');
+        const startInput = document.getElementById('filterStartDate');
+        const endInput = document.getElementById('filterEndDate');
+        const form = document.getElementById('filterForm');
+        if (!presetInput || !form) return;
+
+        presetInput.value = preset;
+        if (startInput) startInput.value = '';
+        if (endInput) endInput.value = '';
+        form.submit();
+    }
+
+    (function initCustomDateRangeHandlers() {
+        const presetInput = document.getElementById('filterDatePreset');
+        const startInput = document.getElementById('filterStartDate');
+        const endInput = document.getElementById('filterEndDate');
+        if (!presetInput || !startInput || !endInput) return;
+
+        const clearActivePresetButtons = () => {
+            document.querySelectorAll('.date-preset-btn').forEach(btn => btn.classList.remove('active'));
+        };
+
+        startInput.addEventListener('change', function() {
+            clearActivePresetButtons();
+            if (this.value) {
+                presetInput.value = 'custom';
+                if (!endInput.value || endInput.value < this.value) {
+                    endInput.value = this.value;
+                }
+            } else if (!endInput.value) {
+                presetInput.value = 'all';
+            }
+        });
+
+        endInput.addEventListener('change', function() {
+            clearActivePresetButtons();
+            if (this.value) {
+                presetInput.value = 'custom';
+                if (!startInput.value || startInput.value > this.value) {
+                    startInput.value = this.value;
+                }
+            } else if (!startInput.value) {
+                presetInput.value = 'all';
+            }
+        });
+    })();
 
     // Select all checkboxes
     document.getElementById('selectAllCheckbox').addEventListener('change', function() {
