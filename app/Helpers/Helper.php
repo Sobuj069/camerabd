@@ -2361,49 +2361,114 @@ function getActiveCouriers()
 }
 
 // stead fast courier
+function getSteadfastApiConfig()
+{
+    $apiKey = trim((string) (get_setting('steadfast_api_key') ?: env('STEADFAST_API_KEY')));
+    $secretKey = trim((string) (get_setting('steadfast_secret_key') ?: env('STEADFAST_SECRET_KEY')));
+
+    if (empty($apiKey) && !empty($secretKey)) {
+        $apiKey = $secretKey;
+    } elseif (empty($secretKey) && !empty($apiKey)) {
+        $secretKey = $apiKey;
+    }
+
+    $baseUrl = rtrim((string) env('STEADFAST_BASE_URL', 'https://portal.packzy.com/api/v1'), '/');
+    if (str_contains($baseUrl, 'portal.steadfast.com.bd') || empty($baseUrl)) {
+        $baseUrl = 'https://portal.packzy.com/api/v1';
+    }
+
+    return [
+        'api_key' => $apiKey,
+        'secret_key' => $secretKey,
+        'base_url' => $baseUrl,
+    ];
+}
+
 function placeOrder($invoice, $recipient_name, $recipient_phone, $recipient_address, $cod_amount, $note)
 {
     try {
-        $apiKey = trim(get_setting('steadfast_api_key') ?: env('STEADFAST_API_KEY'));
-        $secretKey = trim(get_setting('steadfast_secret_key') ?: env('STEADFAST_SECRET_KEY'));
-
-        if (empty($apiKey) && empty($secretKey)) {
+        $cfg = getSteadfastApiConfig();
+        if (empty($cfg['api_key']) && empty($cfg['secret_key'])) {
             return [
                 'status' => 400,
                 'message' => 'Steadfast API Key and Secret Key are missing. Please enter them in Settings > Operational.'
             ];
         }
-        if (empty($apiKey)) {
-            $apiKey = $secretKey;
-        }
-        if (empty($secretKey)) {
-            $secretKey = $apiKey;
+
+        // Normalize whitespace & enforce Steadfast field length limits so long notes/addresses never trigger silent API rejections
+        $cleanName = mb_substr(trim((string) preg_replace('/\s+/u', ' ', (string) $recipient_name)), 0, 100);
+        $cleanAddress = mb_substr(trim((string) preg_replace('/\s+/u', ' ', (string) $recipient_address)), 0, 250);
+        $cleanNote = mb_substr(trim((string) preg_replace('/\s+/u', ' ', (string) ($note ?? ''))), 0, 250);
+
+        $response = Http::withoutVerifying()
+            ->timeout(15)
+            ->connectTimeout(5)
+            ->withHeaders([
+                'Api-Key' => $cfg['api_key'],
+                'Secret-Key' => $cfg['secret_key'],
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+            ])->post($cfg['base_url'] . '/create_order', [
+                'invoice' => (string) $invoice,
+                'recipient_name' => $cleanName,
+                'recipient_phone' => (string) $recipient_phone,
+                'recipient_address' => $cleanAddress,
+                'cod_amount' => (float) $cod_amount,
+                'note' => $cleanNote,
+            ]);
+
+        $json = $response->json();
+        if (!is_array($json)) {
+            $rawSnippet = mb_substr(trim(strip_tags((string) $response->body())), 0, 180);
+            \Log::error("Steadfast create_order non-JSON response for {$invoice}", [
+                'http_status' => $response->status(),
+                'body' => $rawSnippet,
+            ]);
+            return [
+                'status' => $response->status() ?: 500,
+                'message' => 'Steadfast API HTTP ' . $response->status() . (!empty($rawSnippet) ? ": {$rawSnippet}" : ' (Empty response)'),
+            ];
         }
 
-        $baseUrl = rtrim(env('STEADFAST_BASE_URL', 'https://portal.packzy.com/api/v1'), '/');
-        if (str_contains($baseUrl, 'portal.steadfast.com.bd')) {
-            $baseUrl = 'https://portal.packzy.com/api/v1';
+        if (($json['status'] ?? null) != 200) {
+            \Log::warning("Steadfast create_order rejected {$invoice}", [
+                'http_status' => $response->status(),
+                'response' => $json,
+            ]);
         }
 
-        $response = Http::withoutVerifying()->withHeaders([
-            'Api-Key' => $apiKey,
-            'Secret-Key' => $secretKey,
-            'Content-Type' => 'application/json'
-        ])->post($baseUrl . '/create_order', [
-            'invoice' => (string)$invoice,
-            'recipient_name' => (string)$recipient_name,
-            'recipient_phone' => (string)$recipient_phone,
-            'recipient_address' => (string)$recipient_address,
-            'cod_amount' => (float)$cod_amount,
-            'note' => (string)$note,
-        ]);
-        return $response->json();
+        return $json;
     } catch (\Exception $e) {
         \Log::error('Steadfast Order Placement Error: ' . $e->getMessage());
         return [
             'status' => 500,
             'message' => $e->getMessage()
         ];
+    }
+}
+
+function steadfastStatusByInvoice($invoiceNo)
+{
+    try {
+        $cfg = getSteadfastApiConfig();
+        if (empty($cfg['api_key']) || empty($invoiceNo)) {
+            return [];
+        }
+
+        $response = Http::withoutVerifying()
+            ->timeout(8)
+            ->connectTimeout(3)
+            ->withHeaders([
+                'Api-Key' => $cfg['api_key'],
+                'Secret-Key' => $cfg['secret_key'],
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+            ])->get($cfg['base_url'] . '/status_by_invoice/' . rawurlencode(trim((string) $invoiceNo)));
+
+        return $response->json() ?? [];
+    } catch (\Exception $e) {
+        \Log::error('Steadfast Status By Invoice Error: ' . $e->getMessage());
+        return [];
     }
 }
 
@@ -2585,21 +2650,16 @@ function getOrderSummary($consignmentId, $accessToken)
 function status($consignmentId)
 {
     try {
-        $apiKey = get_setting('steadfast_api_key') ?: env('STEADFAST_API_KEY');
-        $secretKey = get_setting('steadfast_secret_key') ?: env('STEADFAST_SECRET_KEY');
-        $baseUrl = rtrim(env('STEADFAST_BASE_URL', 'https://portal.packzy.com/api/v1'), '/');
-        if (str_contains($baseUrl, 'portal.steadfast.com.bd')) {
-            $baseUrl = 'https://portal.packzy.com/api/v1';
-        }
+        $cfg = getSteadfastApiConfig();
 
         $response = Http::withoutVerifying()
             ->timeout(5)
             ->connectTimeout(3)
             ->withHeaders([
-                'Api-Key' => $apiKey,
-                'Secret-Key' => $secretKey,
+                'Api-Key' => $cfg['api_key'],
+                'Secret-Key' => $cfg['secret_key'],
                 'Content-Type' => 'application/json'
-            ])->get($baseUrl . "/status_by_cid/{$consignmentId}");
+            ])->get($cfg['base_url'] . "/status_by_cid/{$consignmentId}");
 
         if ($response->successful()) {
             return $response->json();

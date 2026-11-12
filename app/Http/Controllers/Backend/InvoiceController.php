@@ -2490,21 +2490,24 @@ class InvoiceController extends Controller
         $cleanPhone = preg_replace('/[^0-9]/', '', $custPhone);
         if (strlen($cleanPhone) === 13 && str_starts_with($cleanPhone, '8801')) {
             $cleanPhone = substr($cleanPhone, 2);
+        } elseif (strlen($cleanPhone) > 11 && preg_match('/01[3-9]\d{8}/', $cleanPhone, $phoneMatch)) {
+            $cleanPhone = $phoneMatch[0];
         }
-        if (empty($cleanPhone) || strlen($cleanPhone) < 11) {
+        if (empty($cleanPhone) || !preg_match('/^01[3-9]\d{8}$/', $cleanPhone)) {
             return [
                 'success' => false,
-                'message' => "Invoice #{$inv->invoice_no}: Customer phone number must be at least 11 digits (Found: '{$custPhone}')."
+                'message' => "Invoice #{$inv->invoice_no}: Valid 11-digit BD phone number missing (Found: '{$custPhone}')."
             ];
         }
 
+        $custAddress = trim((string) preg_replace('/\s+/u', ' ', $custAddress));
         if (empty($custAddress)) {
             return [
                 'success' => false,
-                'message' => "Invoice #{$inv->invoice_no}: Missing delivery address."
+                'message' => "Invoice #{$inv->invoice_no}: Missing delivery address (Customer profile বা Website Order-এ ঠিকানা নেই)।"
             ];
         }
-        if (strlen($custAddress) < 10) {
+        if (mb_strlen($custAddress) < 10) {
             $custAddress = $custAddress . ', Bangladesh';
         }
 
@@ -2545,10 +2548,37 @@ class InvoiceController extends Controller
                         $flatErrors[] = is_array($errList) ? implode(', ', $errList) : $errList;
                     }
                     $errMsg = implode('; ', $flatErrors);
+                } elseif (!empty($res['errors']) && is_string($res['errors'])) {
+                    $errMsg = $res['errors'];
                 }
                 if (empty($errMsg)) {
                     $errMsg = $res['message'] ?? 'Steadfast API placement failed';
                 }
+
+                // If Steadfast says this invoice already exists, try recovering via /status_by_invoice
+                if (str_contains(strtolower($errMsg), 'already') || str_contains(strtolower($errMsg), 'taken')) {
+                    $lookup = function_exists('steadfastStatusByInvoice') ? steadfastStatusByInvoice($inv->invoice_no) : [];
+                    if (!empty($lookup['consignment_id'])) {
+                        $inv->consignment_id = $lookup['consignment_id'];
+                        if (!empty($lookup['delivery_status'])) {
+                            $inv->order_status = $this->mapCourierStatus($lookup['delivery_status']);
+                        } elseif (empty($inv->order_status)) {
+                            $inv->order_status = 'RTS';
+                        }
+                        $inv->save();
+                        return [
+                            'success' => true,
+                            'consignment_id' => $inv->consignment_id,
+                            'courier' => 'Steadfast',
+                            'status' => $inv->order_status,
+                            'message' => "Invoice #{$inv->invoice_no} recovered from Steadfast (Consignment: {$inv->consignment_id})"
+                        ];
+                    }
+                    if (($lookup['status'] ?? null) == 200 && !empty($lookup['delivery_status'])) {
+                        $errMsg = "Steadfast-এ এই ইনভয়েসটি আগে থেকেই আছে (Live Status: {$lookup['delivery_status']}) — কিন্তু API থেকে Consignment ID পাওয়া যায়নি; Steadfast প্যানেলে চেক করুন।";
+                    }
+                }
+
                 return [
                     'success' => false,
                     'message' => "Invoice #{$inv->invoice_no} (Steadfast): {$errMsg}"

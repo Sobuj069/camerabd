@@ -757,6 +757,24 @@
                         <span class="badge badge-primary font-weight-bold">Swipe 👉</span>
                     </div>
 
+                    <!-- Persistent Courier Dispatch Error / Partial-Success Alert -->
+                    <div id="courierDispatchAlert" class="alert alert-danger alert-dismissible fade show d-none mt-2 mb-2" role="alert" style="border-left: 4px solid #dc2626; border-radius: 8px;">
+                        <div class="d-flex align-items-start justify-content-between">
+                            <div>
+                                <strong id="courierDispatchAlertTitle" class="d-block mb-1">Courier Dispatch Failed</strong>
+                                <ul id="courierDispatchAlertList" class="mb-0 pl-3" style="font-size: 13px;"></ul>
+                                <div id="courierDispatchReloadWrap" class="mt-2 d-none">
+                                    <button type="button" class="btn btn-xs btn-outline-danger font-weight-bold" onclick="location.reload()">
+                                        <i class="feather icon-refresh-cw mr-1"></i> Reload List
+                                    </button>
+                                </div>
+                            </div>
+                            <button type="button" class="close" onclick="document.getElementById('courierDispatchAlert').classList.add('d-none')" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="table-responsive online-table-responsive mt-2">
                         <table id="datatable-buttons" class="table table-bordered w-100" style="width: 100% !important; min-width: 1350px !important;">
                             <thead class="royal-header">
@@ -847,8 +865,8 @@
                                                 <span class="badge bg-primary text-white px-2 py-1" style="font-size: 11px; font-family: monospace;">{{ $data->consignment_id }}</span>
                                                 <div class="small text-muted mt-1">{{ $data->courier_type ?? 'Steadfast' }}</div>
                                             @else
-                                                <button type="button" class="btn btn-sm text-white" style="background:#f97316; font-size:11px; font-weight:700; border-radius:6px; padding:4px 8px;" onclick="sendSingleToCourier({{ $data->id }})">
-                                                    <i class="feather icon-send mr-1"></i> Send to Stead Fast
+                                                <button type="button" class="btn btn-sm text-white" style="background:#f97316; font-size:11px; font-weight:700; border-radius:6px; padding:4px 8px;" onclick="sendSingleToCourier({{ $data->id }}, this)">
+                                                    <i class="feather icon-send mr-1"></i> Send to {{ str_contains(strtolower($data->courier_type ?? ''), 'pathao') ? 'Pathao' : 'Stead Fast' }}
                                                 </button>
                                             @endif
                                         </td>
@@ -1849,13 +1867,41 @@
         }
 
         // Send single invoice to courier
-        function sendSingleToCourier(invoiceId) {
+        function showCourierDispatchAlert(title, errors, allowReload) {
+            const box = document.getElementById('courierDispatchAlert');
+            const titleEl = document.getElementById('courierDispatchAlertTitle');
+            const listEl = document.getElementById('courierDispatchAlertList');
+            const reloadWrap = document.getElementById('courierDispatchReloadWrap');
+            if (!box || !titleEl || !listEl) return;
+
+            titleEl.textContent = title || 'Courier Dispatch Failed';
+            listEl.innerHTML = '';
+            const items = Array.isArray(errors) && errors.length ? errors : ['Unknown courier API error'];
+            items.forEach(msg => {
+                const li = document.createElement('li');
+                li.textContent = msg;
+                listEl.appendChild(li);
+            });
+            if (reloadWrap) {
+                reloadWrap.classList.toggle('d-none', !allowReload);
+            }
+            box.classList.remove('d-none');
+            box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function hideCourierDispatchAlert() {
+            const box = document.getElementById('courierDispatchAlert');
+            if (box) box.classList.add('d-none');
+        }
+
+        function sendSingleToCourier(invoiceId, triggerBtn) {
             if (!invoiceId) return;
-            if (!confirm("Send this invoice to Steadfast Courier API?")) {
+            if (!confirm("Send this invoice to Courier API?")) {
                 return;
             }
+            hideCourierDispatchAlert();
 
-            var btn = (window.event && window.event.target) ? window.event.target.closest('button') : null;
+            var btn = triggerBtn || ((window.event && window.event.target) ? window.event.target.closest('button') : null);
             var originalHtml = btn ? btn.innerHTML : '';
             if (btn) {
                 btn.disabled = true;
@@ -1880,13 +1926,15 @@
             .then(({ ok, data }) => {
                 if (ok && data.success) {
                     if (typeof toastr !== 'undefined') {
-                        toastr.success(data.message || 'Invoice sent to Steadfast Courier successfully!');
+                        toastr.success(data.message || 'Invoice sent to Courier successfully!');
                     } else {
-                        alert(data.message || 'Invoice sent to Steadfast Courier successfully!');
+                        alert(data.message || 'Invoice sent to Courier successfully!');
                     }
                     setTimeout(() => location.reload(), 1000);
                 } else {
-                    var errMsg = data.message || (data.errors && data.errors.length ? data.errors.join("\n") : 'Failed to send to courier.');
+                    var errList = (Array.isArray(data.errors) && data.errors.length) ? data.errors : [data.message || 'Failed to send to courier.'];
+                    var errMsg = errList.join("\n");
+                    showCourierDispatchAlert('Courier Dispatch Failed', errList, false);
                     if (typeof toastr !== 'undefined') {
                         toastr.error(errMsg);
                     } else {
@@ -1899,6 +1947,7 @@
                 }
             })
             .catch(err => {
+                showCourierDispatchAlert('Network Error While Sending to Courier', [String(err)], false);
                 alert('Network error while sending to courier: ' + err);
                 if (btn) {
                     btn.disabled = false;
@@ -1920,6 +1969,7 @@
             if (!confirm("Send " + totalCount + (isSelectAllPagesActive ? " orders (ALL in '{{ ucwords(str_replace('_', ' ', $curStatus ?? 'All')) }}')" : " selected order(s)") + " to Steadfast Courier?")) {
                 return;
             }
+            hideCourierDispatchAlert();
 
             var btn = document.querySelector('.btn-action-orange');
             var originalHtml = btn ? btn.innerHTML : '';
@@ -1955,15 +2005,28 @@
                 return { ok: res.ok, status: res.status, data: data };
             })
             .then(({ ok, data }) => {
-                if (ok && data.success) {
+                const errList = Array.isArray(data.errors) ? data.errors : [];
+                if (ok && data.success && errList.length === 0) {
                     if (typeof toastr !== 'undefined') {
                         toastr.success(data.message || (totalCount + ' orders dispatched to courier successfully!'));
                     } else {
                         alert(data.message || (totalCount + ' orders dispatched to courier successfully!'));
                     }
                     setTimeout(() => location.reload(), 1200);
+                } else if (ok && data.success && errList.length > 0) {
+                    // Partial success: keep failed order reasons visible instead of auto-reloading over them
+                    showCourierDispatchAlert((data.count || 0) + 'টি অর্ডার গেছে, কিন্তু ' + errList.length + 'টি অর্ডার যায়নি:', errList, true);
+                    if (typeof toastr !== 'undefined') {
+                        toastr.warning((data.count || 0) + ' sent, ' + errList.length + ' failed. নিচের লাল বক্সে কারণ দেখুন।');
+                    }
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = originalHtml;
+                    }
                 } else {
-                    var errMsg = data.message || (data.errors && data.errors.length ? data.errors.join("\n") : 'Courier placement failed.');
+                    var finalErrs = errList.length ? errList : [data.message || 'Courier placement failed.'];
+                    showCourierDispatchAlert('Courier Dispatch Failed', finalErrs, false);
+                    var errMsg = finalErrs.join("\n");
                     if (typeof toastr !== 'undefined') {
                         toastr.error(errMsg);
                     } else {
@@ -1976,6 +2039,7 @@
                 }
             })
             .catch(err => {
+                showCourierDispatchAlert('Network Error While Sending to Courier', [String(err)], false);
                 alert('Network error while sending to courier: ' + err);
                 if (btn) {
                     btn.disabled = false;
