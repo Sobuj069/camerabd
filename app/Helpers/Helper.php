@@ -2384,6 +2384,61 @@ function getSteadfastApiConfig()
     ];
 }
 
+function sanitizeSteadfastText($text, int $maxLen): string
+{
+    $str = (string) ($text ?? '');
+    if ($str === '') {
+        return '';
+    }
+
+    // Repair any broken/truncated UTF-8 byte sequences first
+    $str = mb_convert_encoding($str, 'UTF-8', 'UTF-8');
+
+    // Strip 4-byte UTF-8 emojis/symbols, variation selectors, and zero-width characters
+    $cleaned = preg_replace('/[\x{10000}-\x{10FFFF}\x{200B}-\x{200D}\x{FE00}-\x{FE0F}\x{FEFF}]/u', '', $str);
+    if ($cleaned !== null) {
+        $str = $cleaned;
+    }
+
+    // Collapse control chars and newlines/tabs into single spaces
+    $collapsed = preg_replace('/[\x00-\x1F\x7F\s]+/u', ' ', $str);
+    if ($collapsed !== null) {
+        $str = $collapsed;
+    }
+
+    return mb_substr(trim($str), 0, $maxLen, 'UTF-8');
+}
+
+function sendSteadfastCreateOrderRequest(array $cfg, array $payload): array
+{
+    $response = Http::withoutVerifying()
+        ->timeout(15)
+        ->connectTimeout(5)
+        ->withHeaders([
+            'Api-Key' => $cfg['api_key'],
+            'Secret-Key' => $cfg['secret_key'],
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+        ])->post($cfg['base_url'] . '/create_order', $payload);
+
+    $json = $response->json();
+    if (!is_array($json)) {
+        $rawSnippet = mb_substr(trim(strip_tags((string) $response->body())), 0, 180);
+        return [
+            'http_status' => $response->status(),
+            'data' => [
+                'status' => $response->status() ?: 500,
+                'message' => 'Steadfast HTTP ' . $response->status() . (!empty($rawSnippet) ? ": {$rawSnippet}" : ' (Empty response)'),
+            ],
+        ];
+    }
+
+    return [
+        'http_status' => $response->status(),
+        'data' => $json,
+    ];
+}
+
 function placeOrder($invoice, $recipient_name, $recipient_phone, $recipient_address, $cod_amount, $note)
 {
     try {
@@ -2395,46 +2450,54 @@ function placeOrder($invoice, $recipient_name, $recipient_phone, $recipient_addr
             ];
         }
 
-        // Normalize whitespace & enforce Steadfast field length limits so long notes/addresses never trigger silent API rejections
-        $cleanName = mb_substr(trim((string) preg_replace('/\s+/u', ' ', (string) $recipient_name)), 0, 100);
-        $cleanAddress = mb_substr(trim((string) preg_replace('/\s+/u', ' ', (string) $recipient_address)), 0, 250);
-        $cleanNote = mb_substr(trim((string) preg_replace('/\s+/u', ' ', (string) ($note ?? ''))), 0, 250);
+        // Sanitize UTF-8, strip 4-byte emojis, and enforce Steadfast field length limits
+        $cleanName = sanitizeSteadfastText($recipient_name, 100) ?: 'Customer';
+        $cleanAddress = sanitizeSteadfastText($recipient_address, 250);
+        $cleanNote = sanitizeSteadfastText($note, 250);
 
-        $response = Http::withoutVerifying()
-            ->timeout(15)
-            ->connectTimeout(5)
-            ->withHeaders([
-                'Api-Key' => $cfg['api_key'],
-                'Secret-Key' => $cfg['secret_key'],
-                'Content-Type' => 'application/json',
-                'Accept' => 'application/json',
-            ])->post($cfg['base_url'] . '/create_order', [
-                'invoice' => (string) $invoice,
-                'recipient_name' => $cleanName,
-                'recipient_phone' => (string) $recipient_phone,
-                'recipient_address' => $cleanAddress,
-                'cod_amount' => (float) $cod_amount,
-                'note' => $cleanNote,
-            ]);
+        $payload = [
+            'invoice' => trim((string) $invoice),
+            'recipient_name' => $cleanName,
+            'recipient_phone' => trim((string) $recipient_phone),
+            'recipient_address' => $cleanAddress,
+            'cod_amount' => (float) $cod_amount,
+            'note' => $cleanNote,
+        ];
 
-        $json = $response->json();
-        if (!is_array($json)) {
-            $rawSnippet = mb_substr(trim(strip_tags((string) $response->body())), 0, 180);
-            \Log::error("Steadfast create_order non-JSON response for {$invoice}", [
-                'http_status' => $response->status(),
-                'body' => $rawSnippet,
-            ]);
-            return [
-                'status' => $response->status() ?: 500,
-                'message' => 'Steadfast API HTTP ' . $response->status() . (!empty($rawSnippet) ? ": {$rawSnippet}" : ' (Empty response)'),
-            ];
+        $attempt = sendSteadfastCreateOrderRequest($cfg, $payload);
+        $json = $attempt['data'];
+        $httpStatus = $attempt['http_status'];
+
+        $isServerErr = ($httpStatus >= 500)
+            || (($json['status'] ?? null) == 500)
+            || str_contains(strtolower((string) ($json['message'] ?? '')), 'server error');
+
+        // Retry once without note if Steadfast threw 500 Server Error and a note was present
+        if ($isServerErr && $cleanNote !== '') {
+            $retryPayload = $payload;
+            $retryPayload['note'] = '';
+            $retryAttempt = sendSteadfastCreateOrderRequest($cfg, $retryPayload);
+            if (($retryAttempt['data']['status'] ?? null) == 200) {
+                return $retryAttempt['data'];
+            }
+            $json = $retryAttempt['data'];
+            $httpStatus = $retryAttempt['http_status'];
         }
 
         if (($json['status'] ?? null) != 200) {
             \Log::warning("Steadfast create_order rejected {$invoice}", [
-                'http_status' => $response->status(),
+                'http_status' => $httpStatus,
+                'payload' => $payload,
                 'response' => $json,
             ]);
+            $json['debug_summary'] = sprintf(
+                'Inv: %s | Name: %s | Phone: %s | Addr: %s | COD: %s',
+                $payload['invoice'],
+                mb_substr($payload['recipient_name'], 0, 30),
+                $payload['recipient_phone'],
+                mb_substr($payload['recipient_address'], 0, 60),
+                $payload['cod_amount']
+            );
         }
 
         return $json;

@@ -2500,7 +2500,9 @@ class InvoiceController extends Controller
             ];
         }
 
-        $custAddress = trim((string) preg_replace('/\s+/u', ' ', $custAddress));
+        $custAddress = function_exists('sanitizeSteadfastText')
+            ? sanitizeSteadfastText($custAddress, 250)
+            : trim((string) preg_replace('/\s+/u', ' ', $custAddress));
         if (empty($custAddress)) {
             return [
                 'success' => false,
@@ -2555,8 +2557,9 @@ class InvoiceController extends Controller
                     $errMsg = $res['message'] ?? 'Steadfast API placement failed';
                 }
 
-                // If Steadfast says this invoice already exists, try recovering via /status_by_invoice
-                if (str_contains(strtolower($errMsg), 'already') || str_contains(strtolower($errMsg), 'taken')) {
+                // If Steadfast says this invoice already exists or threw a 500 after saving, check /status_by_invoice
+                $errLower = strtolower($errMsg);
+                if (str_contains($errLower, 'already') || str_contains($errLower, 'taken') || str_contains($errLower, 'server error')) {
                     $lookup = function_exists('steadfastStatusByInvoice') ? steadfastStatusByInvoice($inv->invoice_no) : [];
                     if (!empty($lookup['consignment_id'])) {
                         $inv->consignment_id = $lookup['consignment_id'];
@@ -2579,9 +2582,11 @@ class InvoiceController extends Controller
                     }
                 }
 
+                $debugSuffix = !empty($res['debug_summary']) ? " [{$res['debug_summary']}]" : '';
+
                 return [
                     'success' => false,
-                    'message' => "Invoice #{$inv->invoice_no} (Steadfast): {$errMsg}"
+                    'message' => "Invoice #{$inv->invoice_no} (Steadfast): {$errMsg}{$debugSuffix}"
                 ];
             }
         } elseif ($courierType == 'pathao') {
