@@ -295,6 +295,27 @@
                 display: none !important;
             }
 
+            .toast-container,
+            .toast-item,
+            #toast-container,
+            .toastr,
+            .toast,
+            [class*="toast-"],
+            .flasher-container,
+            .flasher,
+            .alert,
+            .swal2-container {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                height: 0 !important;
+                width: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                position: absolute !important;
+                left: -9999px !important;
+            }
+
             .sales-table th {
                 background-color: #0088cc !important;
                 color: #ffffff !important;
@@ -632,14 +653,23 @@
     <script>
         localStorage.removeItem('pos-items');
 
+        function purgeToastElements() {
+            document.querySelectorAll('.toast-container, .toast-item, #toast-container, .toast, .flasher-container, .swal2-container').forEach(el => el.remove());
+        }
+
         function print_receipt(divName) {
+            purgeToastElements();
             window.print();
         }
 
         @if(env('APP_AUTO_PRINT') == 'yes')
         $(document).ready(function() {
-            window.print();
-            window.location.href = "{{ route('invoice.create') }}";
+            purgeToastElements();
+            setTimeout(function() {
+                purgeToastElements();
+                window.print();
+                window.location.href = "{{ route('invoice.create') }}";
+            }, 100);
         });
         @endif
     </script>

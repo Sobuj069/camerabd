@@ -896,9 +896,8 @@
 
             <div class="dispatch-field">
                 <label><i class="feather icon-package text-info"></i> Stock Transfer Mode:</label>
-                <select id="stockTransferModeSelect" class="dispatch-select">
-                    <option value="without_manage" selected>Without Manage Stock (Direct Transfer)</option>
-                    <option value="with_manage">Manage Stock (FIFO Deduction)</option>
+                <select id="stockTransferModeSelect" class="dispatch-select" style="font-weight: 600; color: #047857;">
+                    <option value="with_manage" selected>Always Check Stock (FIFO Deduction)</option>
                 </select>
             </div>
 
@@ -1020,6 +1019,19 @@
                                             </div>
                                         </div>
                                     </div>
+                                    @if(isset($order->can_approve))
+                                        <div class="mt-1">
+                                            @if($order->can_approve)
+                                                <span class="badge" style="background:#ecfdf5; color:#059669; font-size:10px; font-weight:700; padding:2px 7px; border-radius:4px; border:1px solid #a7f3d0;" title="{{ __('All items in this order are in stock') }}">
+                                                    <i class="feather icon-check-circle mr-1"></i> {{ __('In Stock') }}
+                                                </span>
+                                            @else
+                                                <span class="badge" style="background:#fef2f2; color:#dc2626; font-size:10px; font-weight:700; padding:2px 7px; border-radius:4px; border:1px solid #fecaca;" title="{{ __('Stock insufficient! Cannot be approved until items are purchased into stock.') }}">
+                                                    <i class="feather icon-alert-triangle mr-1"></i> {{ __('Stock Out') }}
+                                                </span>
+                                            @endif
+                                        </div>
+                                    @endif
                                 @else
                                     <span class="text-muted small">No items</span>
                                 @endif
@@ -1075,13 +1087,15 @@
                                             <option value="cancelled" style="color: #ef4444; font-weight: 600;">❌ Cancel Order</option>
                                         </select>
                                     @else
-                                        <select class="btn-quick-status" onchange="changeOrderStatus({{ $order->id }}, this.value)">
+                                        <select class="btn-quick-status" onchange="changeOrderStatus({{ $order->id }}, this.value, {{ $order->can_approve ? 'true' : 'false' }})">
                                             <option value="processing" {{ in_array($order->status, ['processing', 'pending']) ? 'selected' : '' }}>Processing</option>
                                             <option value="good_no_response" {{ $order->status === 'good_no_response' ? 'selected' : '' }}>Good But No Response</option>
                                             <option value="no_response" {{ $order->status === 'no_response' ? 'selected' : '' }}>No Response</option>
                                             <option value="advance_payment" {{ $order->status === 'advance_payment' ? 'selected' : '' }}>Advance Payment</option>
                                             <option value="on_hold" {{ $order->status === 'on_hold' ? 'selected' : '' }}>On Hold</option>
-                                            <option value="approved" {{ $order->status === 'approved' ? 'selected' : '' }}>Approved</option>
+                                            <option value="approved" {{ $order->status === 'approved' ? 'selected' : '' }} {{ !$order->can_approve ? 'disabled' : '' }} style="{{ !$order->can_approve ? 'color:#94a3b8;' : '' }}">
+                                                {{ $order->can_approve ? 'Approved' : 'Approved (Stock Out)' }}
+                                            </option>
                                             <option value="delivered" {{ $order->status === 'delivered' ? 'selected' : '' }}>Delivered</option>
                                             <option value="cancelled" {{ $order->status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                                         </select>
@@ -1263,7 +1277,7 @@
     }
 
     // Change status with stock validation
-    function changeOrderStatus(orderId, newStatus) {
+    function changeOrderStatus(orderId, newStatus, canApprove = true) {
         const currentOrder = ordersData.find(o => o.id == orderId);
         if (currentOrder && currentOrder.status === 'approved') {
             if (newStatus === 'cancelled') {
@@ -1277,20 +1291,19 @@
                 return;
             }
         } else if (newStatus === 'approved') {
-            const stockModeSelect = document.getElementById('stockTransferModeSelect');
-            const stockModeVal = stockModeSelect ? stockModeSelect.value : 'without_manage';
-            const isWithManage = stockModeVal === 'with_manage';
-            const confirmMsg = isWithManage
-                ? 'Are you sure you want to approve this order with MANAGE STOCK? Stock will be checked and deducted via FIFO. (If insufficient, approval will halt).'
-                : 'Are you sure you want to approve this order WITHOUT MANAGE STOCK? The order will transfer directly to Online Sale List.';
+            if (canApprove === false) {
+                alert('এই অর্ডারের পণ্যগুলো বর্তমানে স্টক আউট! পর্যাপ্ত স্টক ছাড়া অর্ডার অনুমোদন করে অনলাইন সেল লিস্টে নেওয়া যাবে না। দয়া করে প্রথমে পণ্যটি পারচেজ (Purchase) করুন।');
+                location.reload();
+                return;
+            }
 
-            if (!confirm(confirmMsg)) {
+            if (!confirm('Are you sure you want to approve this order? Stock will be verified and deducted via FIFO. (If stock is insufficient, the order will NOT be moved to Online Sale List).')) {
                 location.reload();
                 return;
             }
         }
 
-        const currentStockMode = document.getElementById('stockTransferModeSelect') ? document.getElementById('stockTransferModeSelect').value : 'without_manage';
+        const currentStockMode = 'with_manage';
 
         fetch(`{{ url('/website-orders') }}/${orderId}/status`, {
             method: 'POST',
@@ -1591,8 +1604,7 @@
             }
         }
 
-        const stockModeSelect = document.getElementById('stockTransferModeSelect');
-        const stockMode = stockModeSelect ? stockModeSelect.value : 'without_manage';
+        const stockMode = 'with_manage';
 
         fetch(`{{ route('website-orders.bulk-action') }}`, {
             method: 'POST',
@@ -1632,8 +1644,7 @@
 
         const courier = document.getElementById('courierServiceSelect').value;
         const sendApi = document.getElementById('sendToCourierApiCheckbox').checked;
-        const stockModeSelect = document.getElementById('stockTransferModeSelect');
-        const stockMode = stockModeSelect ? stockModeSelect.value : 'without_manage';
+        const stockMode = 'with_manage';
 
         if (!confirm(`Send ${orderIds.length} selected orders to ${courier}?`)) {
             return;

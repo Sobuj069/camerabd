@@ -14,6 +14,30 @@
 
     /* Global Print Layout Optimization Styles */
     @media print {
+        .toast-container,
+        .toast-item,
+        #toast-container,
+        .toastr,
+        .toast,
+        [class*="toast-"],
+        .flasher-container,
+        .flasher,
+        .alert,
+        .swal2-container,
+        div[class*="toast"] {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            height: 0 !important;
+            width: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            position: absolute !important;
+            left: -9999px !important;
+            top: -9999px !important;
+        }
+
         .modern-sidebar,
         .sidebar-overlay,
         header,

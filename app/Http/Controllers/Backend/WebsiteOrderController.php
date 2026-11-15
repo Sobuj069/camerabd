@@ -490,42 +490,37 @@ class WebsiteOrderController extends Controller
             $order->total_amount = max(0, $currentSubtotal + $orderShipping - $orderDiscount);
             $order->save();
 
-            // Determine stock mode: 'with_manage' vs 'without_manage'
-            $rawStockMode = strtolower(trim($request->input('stock_mode', 'without_manage')));
-            $isWithManage = in_array($rawStockMode, ['with_manage', 'manage_stock', 'manage stock (fifo)']) 
-                || (str_contains($rawStockMode, 'manage') && !str_contains($rawStockMode, 'without'));
+            // 1. Mandatory Stock Check: ALWAYS check positive inventory before approval!
+            // An order can ONLY be approved and moved to Online Sale List if all items are in stock!
+            $rawStockMode = 'with_manage';
+            $insufficientItems = [];
+            foreach ($order->items as $item) {
+                $prod = $item->product;
+                if ($prod && $prod->is_service == 0) {
+                    $stockQuery = PurchaseItem::where('product_id', $item->product_id)
+                        ->where('stock_qty', '>', 0);
+                    if ($item->product_variation_id) {
+                        $stockQuery->where('product_variation_id', $item->product_variation_id);
+                    }
+                    $available = (float) $stockQuery->sum('stock_qty');
+                    $required = (float) $item->quantity;
 
-            // 1. Stock check: ONLY if Manage Stock mode is selected!
-            if ($isWithManage) {
-                $insufficientItems = [];
-                foreach ($order->items as $item) {
-                    $prod = $item->product;
-                    if ($prod && $prod->is_service == 0) {
-                        $stockQuery = PurchaseItem::where('product_id', $item->product_id)
-                            ->where('stock_qty', '>', 0);
-                        if ($item->product_variation_id) {
-                            $stockQuery->where('product_variation_id', $item->product_variation_id);
-                        }
-                        $available = (float) $stockQuery->sum('stock_qty');
-                        $required = (float) $item->quantity;
-
-                        if ($available < $required) {
-                            $insufficientItems[] = "{$item->product_name} (প্রয়োজন: {$required}, মজুদ: {$available})";
-                        }
+                    if ($available < $required) {
+                        $insufficientItems[] = "{$item->product_name} (প্রয়োজন: {$required}, বর্তমান মজুদ: {$available})";
                     }
                 }
+            }
 
-                if (!empty($insufficientItems)) {
-                    $msg = "স্টক পর্যাপ্ত নেই! নিম্নের পণ্যগুলো প্রথমে পারচেজ (Purchase) করুন:\n- " . implode("\n- ", $insufficientItems);
-                    if ($request->ajax() || $request->wantsJson()) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => $msg,
-                            'insufficient_items' => $insufficientItems,
-                        ], 422);
-                    }
-                    return redirect()->back()->with('error', $msg);
+            if (!empty($insufficientItems)) {
+                $msg = "স্টক পর্যাপ্ত নেই! নিম্নের পণ্যগুলো প্রথমে পারচেজ (Purchase) করুন:\n- " . implode("\n- ", $insufficientItems);
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $msg,
+                        'insufficient_items' => $insufficientItems,
+                    ], 422);
                 }
+                return redirect()->back()->with('error', $msg);
             }
 
             // 2. Perform DB Transaction: Deduct FIFO stock, create/find Customer, create Invoice & InvoiceItems
@@ -735,7 +730,7 @@ class WebsiteOrderController extends Controller
         $approvedCount = 0;
         $failedCount = 0;
         $errorMessages = [];
-        $stockMode = $request->input('stock_mode', 'without_manage');
+        $stockMode = 'with_manage';
 
         foreach ($orders as $order) {
             if ($action === 'approve') {
@@ -793,7 +788,7 @@ class WebsiteOrderController extends Controller
         // First approve them if they are still processing
         $approved = 0;
         $errors = [];
-        $stockMode = $request->input('stock_mode', 'without_manage');
+        $stockMode = 'with_manage';
 
         foreach ($orderIds as $oid) {
             $order = WebsiteOrder::find($oid);

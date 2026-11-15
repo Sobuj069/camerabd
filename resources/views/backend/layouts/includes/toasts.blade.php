@@ -1,5 +1,10 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        @if(request()->routeIs('*.print*') || request()->routeIs('invoice.print*') || request()->routeIs('due.invoice.print*') || str_contains(request()->path(), 'print'))
+            // Suppress on-screen toasts on invoice print pages so toasts never interfere with printing
+            return;
+        @endif
+
         // Use the global ToastMagic instance provided by the package
         if (typeof ToastMagic !== 'undefined') {
             window.toastMagic = new ToastMagic();

@@ -174,6 +174,21 @@
         }
 
         @media print {
+            .toast-container,
+            .toast-item,
+            #toast-container,
+            .toastr,
+            .toast,
+            [class*="toast-"],
+            .flasher-container,
+            .flasher,
+            .alert,
+            .swal2-container {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+            }
+
             body * {
                 visibility: visible;
                 color: #000 !important;
@@ -465,7 +480,12 @@
         // clear localstore
         localStorage.removeItem('pos-items');
 
+        function purgeToastElements() {
+            document.querySelectorAll('.toast-container, .toast-item, #toast-container, .toast, .flasher-container, .swal2-container').forEach(el => el.remove());
+        }
+
         function print_receipt(divName) {
+            purgeToastElements();
             let printDoc = $('#' + divName).html();
             let originalContents = $('body').html();
             $("body").html(printDoc);
@@ -475,7 +495,11 @@
 
         @if(env('APP_AUTO_PRINT') == 'yes')
         $(document).ready(function() {
-            print_receipt('print-area');
+            purgeToastElements();
+            setTimeout(function() {
+                purgeToastElements();
+                print_receipt('print-area');
+            }, 100);
         });
         @endif
     </script>

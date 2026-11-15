@@ -1160,9 +1160,8 @@ body.dark-theme .badge-web-pill, html.dark-theme .badge-web-pill {
                                 <label class="wc-label mb-1" style="font-size: 12.5px; font-weight: 700;">
                                     <i class="fa fa-cubes text-primary me-1"></i> Stock Mode:
                                 </label>
-                                <select name="stock_mode" id="approveStockMode" class="wc-select" style="height: 44px; font-weight: 500;">
-                                    <option value="without_manage" selected>Without Manage Stock (Direct Transfer)</option>
-                                    <option value="with_manage">With Manage Stock (Check & Deduct POS Stock)</option>
+                                <select name="stock_mode" id="approveStockMode" class="wc-select" style="height: 44px; font-weight: 600; color: #047857;">
+                                    <option value="with_manage" selected>With Manage Stock (Always Check & Deduct POS Stock)</option>
                                 </select>
                             </div>
 
