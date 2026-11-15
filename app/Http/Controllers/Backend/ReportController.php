@@ -114,6 +114,35 @@ class ReportController extends Controller
             }
         }
 
+        $stockFilter = $request->input('stock_filter', 'all');
+        $data['stock_filter'] = $stockFilter;
+
+        if ($stockFilter === 'within_stock' || $stockFilter === 'in_stock') {
+            $effectiveBranchId = ($userBranchId == 1) ? $filterBranchId : $userBranchId;
+            $purStockQuery = PurchaseItem::select('product_id');
+            if ($effectiveBranchId && $effectiveBranchId != 1) {
+                $purStockQuery->where('branch_id', $effectiveBranchId);
+            }
+            $withStockProductIds = $purStockQuery->groupBy('product_id')
+                ->havingRaw('SUM(stock_qty) > 0')
+                ->pluck('product_id')
+                ->toArray();
+
+            $query->whereIn('id', $withStockProductIds);
+        } elseif ($stockFilter === 'out_of_stock') {
+            $effectiveBranchId = ($userBranchId == 1) ? $filterBranchId : $userBranchId;
+            $purStockQuery = PurchaseItem::select('product_id');
+            if ($effectiveBranchId && $effectiveBranchId != 1) {
+                $purStockQuery->where('branch_id', $effectiveBranchId);
+            }
+            $withStockProductIds = $purStockQuery->groupBy('product_id')
+                ->havingRaw('SUM(stock_qty) > 0')
+                ->pluck('product_id')
+                ->toArray();
+
+            $query->whereNotIn('id', $withStockProductIds);
+        }
+
         $allProductsQuery = clone $query;
         $allProducts = $allProductsQuery->with('product_variations')->get();
 

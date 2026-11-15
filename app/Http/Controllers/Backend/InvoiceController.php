@@ -26,6 +26,9 @@ use Carbon\Carbon as CarbonCarbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Client\Pool;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
 
 class InvoiceController extends Controller
@@ -291,7 +294,14 @@ class InvoiceController extends Controller
         } elseif ($activeStatus === 'delivered') {
             $query->whereIn('order_status', ['Delivered', 'delivered', 'completed']);
         } elseif ($activeStatus === 'partial') {
-            $query->whereIn('order_status', ['Partial', 'partial', 'partial_delivery', 'partially_delivered', 'partial_delivered', 'partial_delivered_approval_pending']);
+            $query->where(function($q) {
+                $q->where('order_status', 'like', '%partial%')
+                  ->orWhereIn('order_status', [
+                      'Partial', 'partial', 
+                      'Partial Delivered', 'partial delivered', 'Partially Delivered', 'partially delivered',
+                      'partial_delivery', 'partially_delivered', 'partial_delivered', 'partial_delivered_approval_pending'
+                  ]);
+            });
         } elseif ($activeStatus === 'pending_return') {
             $query->whereIn('order_status', [
                 'Pending Return', 'pending_return', 'return_pending',
@@ -328,6 +338,77 @@ class InvoiceController extends Controller
         }
 
         $baseStatusQuery = $this->buildOnlineSaleBaseQuery($request);
+
+        // Auto-check candidate Steadfast orders for live partial/return/delivery status changes (throttled by Cache)
+        $cacheKey = 'online_sale_live_sf_sync_' . md5($request->fullUrl() . '_' . (auth()->id() ?? 'guest'));
+        if (!Cache::has($cacheKey)) {
+            Cache::put($cacheKey, true, 45); // 45s throttle to keep page fast
+            try {
+                $sfApi = getSteadfastApi();
+                $apiKey = $sfApi['api_key'] ?? '';
+                $secretKey = $sfApi['secret_key'] ?? '';
+                $baseUrl = rtrim($sfApi['base_url'] ?? 'https://portal.steadfast.com.bd/api/v1', '/');
+
+                if (!empty($apiKey) && !empty($secretKey)) {
+                    $candidates = (clone $baseStatusQuery)
+                        ->whereNotNull('consignment_id')
+                        ->where('consignment_id', '!=', '')
+                        ->where(function($q) {
+                            $q->where('courier_type', 'like', '%stead%')
+                              ->orWhereNull('courier_type')
+                              ->orWhere('courier_type', '');
+                        })
+                        ->orderBy('id', 'desc')
+                        ->take(50)
+                        ->get();
+
+                    if ($candidates->isNotEmpty()) {
+                        $responses = Http::pool(function (Pool $pool) use ($candidates, $apiKey, $secretKey, $baseUrl) {
+                            $reqs = [];
+                            foreach ($candidates as $cInv) {
+                                $reqs[$cInv->id] = $pool->as((string)$cInv->id)
+                                    ->withoutVerifying()
+                                    ->timeout(3)
+                                    ->withHeaders([
+                                        'Api-Key'      => $apiKey,
+                                        'Secret-Key'   => $secretKey,
+                                        'Content-Type' => 'application/json',
+                                        'Accept'       => 'application/json',
+                                    ])->get("{$baseUrl}/status_by_cid/{$cInv->consignment_id}");
+                            }
+                            return $reqs;
+                        });
+
+                        foreach ($candidates as $cInv) {
+                            $res = $responses[(string)$cInv->id] ?? null;
+                            if ($res instanceof \Illuminate\Http\Client\Response && $res->successful()) {
+                                $resData = $res->json();
+                                $stDeliveryStatus = strtolower(trim($resData['delivery_status'] ?? ''));
+                                if (!empty($stDeliveryStatus)) {
+                                    $mapped = mapCourierStatus($stDeliveryStatus);
+                                    if ($mapped && $mapped !== $cInv->order_status) {
+                                        $curStatusNorm = strtolower(trim(str_replace(['_', '-'], ' ', $cInv->order_status ?? '')));
+                                        if ($curStatusNorm !== 'rts') {
+                                            $oldStatus = $cInv->order_status;
+                                            syncInvoiceStockForStatusChange($cInv, $mapped, $oldStatus);
+                                            $cInv->order_status = $mapped;
+                                            $cInv->save();
+                                            if (in_array(strtolower(trim($mapped)), ['delivered'])) {
+                                                if ($cInv->total_due > 0 && $cInv->status != 2) {
+                                                    autoPayInvoiceDue($cInv);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Silently continue
+            }
+        }
 
         // Calculate Status Tab Badge Counts matching smart.ecomdrivebd.com
         $statusCounts = [
@@ -368,7 +449,14 @@ class InvoiceController extends Controller
             })->whereNotIn('order_status', ['RTS', 'rts', 'Approved', 'approved', 'Processing', 'processing'])->count(),
             'on_hold' => (clone $baseStatusQuery)->whereIn('order_status', ['On Hold', 'on_hold', 'on-hold', 'Hold', 'hold'])->count(),
             'delivered' => (clone $baseStatusQuery)->whereIn('order_status', ['Delivered', 'delivered', 'completed'])->count(),
-            'partial' => (clone $baseStatusQuery)->whereIn('order_status', ['Partial', 'partial', 'partial_delivery', 'partially_delivered', 'partial_delivered', 'partial_delivered_approval_pending'])->count(),
+            'partial' => (clone $baseStatusQuery)->where(function($q) {
+                $q->where('order_status', 'like', '%partial%')
+                  ->orWhereIn('order_status', [
+                      'Partial', 'partial', 
+                      'Partial Delivered', 'partial delivered', 'Partially Delivered', 'partially delivered',
+                      'partial_delivery', 'partially_delivered', 'partial_delivered', 'partial_delivered_approval_pending'
+                  ]);
+            })->count(),
             'pending_return' => (clone $baseStatusQuery)->whereIn('order_status', [
                 'Pending Return', 'pending_return', 'return_pending',
                 'Cancelled', 'cancelled', 'failed', 'pickup_cancel', 'pickup_cancelled', 'canceled'
@@ -2814,7 +2902,9 @@ class InvoiceController extends Controller
                     'Shipping', 'shipping',
                     'Picked Up', 'picked_up',
                     'On Hold', 'on_hold',
-                    'Delivered Approval Pending', 'delivered_approval_pending'
+                    'Delivered Approval Pending', 'delivered_approval_pending',
+                    'Delivered', 'delivered',
+                    'Partial', 'partial'
                 ])->orderBy('id', 'desc')->take(100);
             }
         }
@@ -2825,11 +2915,6 @@ class InvoiceController extends Controller
         $lastSyncedStatus = null;
 
         foreach ($invoices as $inv) {
-            if (in_array(strtolower(trim($inv->order_status ?? '')), ['delivered'])) {
-                $lastSyncedStatus = $inv->order_status;
-                continue;
-            }
-
             $cType = strtolower(trim($inv->courier_type ?? ''));
             $newStatus = null;
 

@@ -134,7 +134,15 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-4 col-12 mb-3">
+                            <div class="col-md-2 col-12 mb-3">
+                                <label class="font-weight-bold text-muted small uppercase mb-1">{{ __('Stock Filter') }}</label>
+                                <select name="stock_filter" id="stock_filter" class="form-control" style="height: 38px !important; border-radius: 4px; font-weight: 600;">
+                                    <option value="all" {{ ($stock_filter ?? 'all') == 'all' ? 'selected' : '' }}>{{ __('Without (A-Z All Products)') }}</option>
+                                    <option value="within_stock" {{ ($stock_filter ?? '') == 'within_stock' ? 'selected' : '' }}>{{ __('Within Stock (In Stock > 0)') }}</option>
+                                    <option value="out_of_stock" {{ ($stock_filter ?? '') == 'out_of_stock' ? 'selected' : '' }}>{{ __('Out of Stock (Zero Stock = 0)') }}</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 col-12 mb-3">
                                 <div class="d-flex align-items-center" style="gap: 5px;">
                                     <button type="submit" class="btn add_list_btn flex-grow-1" style="height: 38px !important; display: flex; align-items: center; justify-content: center;">
                                         <i class="fa fa-sliders mr-1"></i> {{ __('Filter') }}

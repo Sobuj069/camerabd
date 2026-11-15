@@ -48,12 +48,37 @@ class PDFController extends Controller
             });
         }
 
-        $products = $query->get();
-        $data['products'] = $products;
-
+        $stockFilter = $request->input('stock_filter', 'all');
         $userBranchId = auth()->user()->branch_id;
         $filterBranchId = session('branch_filter_id', auth()->user()->branch_id);
         $branchId = ($userBranchId == 1) ? $filterBranchId : $userBranchId;
+
+        if ($stockFilter === 'within_stock' || $stockFilter === 'in_stock') {
+            $purStockQuery = PurchaseItem::select('product_id');
+            if ($branchId && $branchId != 1) {
+                $purStockQuery->where('branch_id', $branchId);
+            }
+            $withStockProductIds = $purStockQuery->groupBy('product_id')
+                ->havingRaw('SUM(stock_qty) > 0')
+                ->pluck('product_id')
+                ->toArray();
+
+            $query->whereIn('id', $withStockProductIds);
+        } elseif ($stockFilter === 'out_of_stock') {
+            $purStockQuery = PurchaseItem::select('product_id');
+            if ($branchId && $branchId != 1) {
+                $purStockQuery->where('branch_id', $branchId);
+            }
+            $withStockProductIds = $purStockQuery->groupBy('product_id')
+                ->havingRaw('SUM(stock_qty) > 0')
+                ->pluck('product_id')
+                ->toArray();
+
+            $query->whereNotIn('id', $withStockProductIds);
+        }
+
+        $products = $query->get();
+        $data['products'] = $products;
 
         $data['totalPrice'] = $products->sum(function ($product) use ($branchId) {
             if ($product->is_service == 1) {
