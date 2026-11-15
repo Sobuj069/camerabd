@@ -290,16 +290,15 @@ class InvoiceController extends Controller
             $query->whereIn('order_status', ['On Hold', 'on_hold', 'on-hold', 'Hold', 'hold']);
         } elseif ($activeStatus === 'delivered') {
             $query->whereIn('order_status', ['Delivered', 'delivered', 'completed']);
+        } elseif ($activeStatus === 'partial') {
+            $query->whereIn('order_status', ['Partial', 'partial', 'partial_delivery', 'partially_delivered', 'partial_delivered', 'partial_delivered_approval_pending']);
         } elseif ($activeStatus === 'pending_return') {
             $query->whereIn('order_status', [
                 'Pending Return', 'pending_return', 'return_pending',
-                'Cancelled', 'cancelled', 'failed', 'pickup_cancel', 'pickup_cancelled', 'canceled',
-                'Partial', 'partial_delivery', 'partially_delivered', 'partial_delivered'
+                'Cancelled', 'cancelled', 'failed', 'pickup_cancel', 'pickup_cancelled', 'canceled'
             ]);
         } elseif ($activeStatus === 'returned') {
             $query->whereIn('order_status', ['Returned', 'returned', 'Return', 'return', 'returned_by_merchant', 'returned_approval']);
-        } elseif ($activeStatus === 'partial') {
-            $query->whereIn('order_status', ['Partial', 'partial_delivery', 'partially_delivered', 'partial_delivered']);
         } elseif ($activeStatus === 'cancelled') {
             $query->whereIn('order_status', ['Cancelled', 'cancelled', 'failed', 'pickup_cancel', 'pickup_cancelled', 'canceled']);
         }
@@ -369,13 +368,12 @@ class InvoiceController extends Controller
             })->whereNotIn('order_status', ['RTS', 'rts', 'Approved', 'approved', 'Processing', 'processing'])->count(),
             'on_hold' => (clone $baseStatusQuery)->whereIn('order_status', ['On Hold', 'on_hold', 'on-hold', 'Hold', 'hold'])->count(),
             'delivered' => (clone $baseStatusQuery)->whereIn('order_status', ['Delivered', 'delivered', 'completed'])->count(),
+            'partial' => (clone $baseStatusQuery)->whereIn('order_status', ['Partial', 'partial', 'partial_delivery', 'partially_delivered', 'partial_delivered', 'partial_delivered_approval_pending'])->count(),
             'pending_return' => (clone $baseStatusQuery)->whereIn('order_status', [
                 'Pending Return', 'pending_return', 'return_pending',
-                'Cancelled', 'cancelled', 'failed', 'pickup_cancel', 'pickup_cancelled', 'canceled',
-                'Partial', 'partial_delivery', 'partially_delivered', 'partial_delivered'
+                'Cancelled', 'cancelled', 'failed', 'pickup_cancel', 'pickup_cancelled', 'canceled'
             ])->count(),
             'returned' => (clone $baseStatusQuery)->whereIn('order_status', ['Returned', 'returned', 'Return', 'return', 'returned_by_merchant', 'returned_approval'])->count(),
-            'partial' => (clone $baseStatusQuery)->whereIn('order_status', ['Partial', 'partial_delivery', 'partially_delivered', 'partial_delivered'])->count(),
             'cancelled' => (clone $baseStatusQuery)->whereIn('order_status', ['Cancelled', 'cancelled', 'failed', 'pickup_cancel', 'pickup_cancelled', 'canceled'])->count(),
         ];
 

@@ -194,6 +194,7 @@
         gap: 3px;
     }
     .status-delivered { background: #dcfce7; color: #15803d; }
+    .status-partial   { background: #ccfbf1; color: #0f766e; }
     .status-transit   { background: #e0f2fe; color: #0369a1; }
     .status-pending   { background: #f3e8ff; color: #7e22ce; }
     .status-cancelled { background: #fee2e2; color: #b91c1c; }
@@ -420,6 +421,25 @@
                     </div>
                 </a>
             </div>
+
+            <!-- 6. Partial Delivered -->
+            @if(!empty($steadfastLivePipeline['partial_delivered']) && $steadfastLivePipeline['partial_delivered'] > 0)
+            <div class="col-6 col-md">
+                <a href="{{ route('report.courier-delivery', ['date_preset' => 'all_active', 'delivery_status' => 'Partial']) }}" class="text-decoration-none">
+                    <div class="p-2.5 rounded-lg border bg-white d-flex align-items-center justify-content-between hover-shadow transition" style="border-radius: 8px; border-color: #cbd5e1;">
+                        <div>
+                            <span class="text-muted d-block" style="font-size: 11px; font-weight: 600;">
+                                <i class="feather icon-pie-chart mr-1" style="color: #0891b2;"></i> {{ __('Partial delivered') }}
+                            </span>
+                            <h4 class="mb-0 font-weight-bold" style="font-size: 18px; color: #0891b2;" id="sf-stat-partial">
+                                {{ $steadfastLivePipeline['partial_delivered'] ?? 0 }}
+                            </h4>
+                        </div>
+                        <i class="feather icon-chevron-right text-muted" style="font-size: 14px;"></i>
+                    </div>
+                </a>
+            </div>
+            @endif
         </div>
     </div>
 
@@ -505,10 +525,10 @@
                     <select name="delivery_status" class="filter-select">
                         <option value="all" {{ $deliveryStatus === 'all' ? 'selected' : '' }}>{{ __('All') }}</option>
                         <option value="Delivered" {{ $deliveryStatus === 'Delivered' ? 'selected' : '' }}>{{ __('Delivered') }}</option>
+                        <option value="Partial" {{ $deliveryStatus === 'Partial' ? 'selected' : '' }}>{{ __('Partial Delivered') }}</option>
                         <option value="In Review" {{ $deliveryStatus === 'In Review' ? 'selected' : '' }}>{{ __('In Review') }}</option>
                         <option value="In Transit" {{ $deliveryStatus === 'In Transit' ? 'selected' : '' }}>{{ __('In Transit') }}</option>
                         <option value="Cancelled" {{ $deliveryStatus === 'Cancelled' ? 'selected' : '' }}>{{ __('Cancelled') }}</option>
-                        <option value="Partial" {{ $deliveryStatus === 'Partial' ? 'selected' : '' }}>{{ __('Partial') }}</option>
                         <option value="Returned" {{ $deliveryStatus === 'Returned' ? 'selected' : '' }}>{{ __('Returned') }}</option>
                         <option value="Pending" {{ $deliveryStatus === 'Pending' ? 'selected' : '' }}>{{ __('Pending') }}</option>
                     </select>
@@ -555,7 +575,7 @@
             <div class="d-flex align-items-center mb-1 mb-md-0">
                 <i class="feather icon-zap mr-2" style="font-size: 17px; color: #2563eb;"></i>
                 <span>
-                    <strong>কুরিয়ার লাইভ পাইপলাইন মোড (All Active):</strong> Steadfast মার্চেন্ট ড্যাশবোর্ড থেকে রিয়েল-টাইম API ফেচ করা সর্বমোট <strong>{{ $totalOrdersCount }}টি পার্সেল</strong> প্রদর্শিত হচ্ছে (ডেলিভারি প্রসেসিং: {{ $steadfastLivePipeline['delivery_processing'] }}, সিওডি প্রসেসিং: {{ $steadfastLivePipeline['cod_processing'] }}, রিটার্ন রিকোয়েস্ট: {{ $steadfastLivePipeline['return_requests'] }}, রি-শিডিউল: {{ $steadfastLivePipeline['rescheduled'] }})।
+                    <strong>কুরিয়ার লাইভ পাইপলাইন মোড (All Active):</strong> Steadfast মার্চেন্ট ড্যাশবোর্ড থেকে রিয়েল-টাইম API ফেচ করা সর্বমোট <strong>{{ $totalOrdersCount }}টি পার্সেল</strong> প্রদর্শিত হচ্ছে (ডেলিভারি প্রসেসিং: {{ $steadfastLivePipeline['delivery_processing'] }}, সিওডি প্রসেসিং: {{ $steadfastLivePipeline['cod_processing'] }}@if(!empty($steadfastLivePipeline['partial_delivered'])), পার্শিয়াল ডেলিভারি: {{ $steadfastLivePipeline['partial_delivered'] }}@endif, রিটার্ন রিকোয়েস্ট: {{ $steadfastLivePipeline['return_requests'] }}, রি-শিডিউল: {{ $steadfastLivePipeline['rescheduled'] }})।
                 </span>
             </div>
             <button type="button" onclick="setDatePreset('today')" class="btn btn-sm btn-outline-primary bg-white px-3 font-weight-bold" style="font-size: 11.5px; border-radius: 6px; white-space: nowrap;">
@@ -564,7 +584,7 @@
         </div>
     @endif
 
-    <div class="row row-cols-2 row-cols-sm-4 row-cols-xl-7 g-2 mb-3 px-1">
+    <div class="row row-cols-2 row-cols-sm-2 row-cols-md-4 row-cols-xl-4 g-2 mb-3 px-1">
         <!-- 1. Total Orders -->
         <div class="col px-1 mb-2">
             <div class="cd-stat-card">
@@ -697,6 +717,25 @@
                 </div>
             </div>
         </div>
+
+        <!-- 8. Partial Delivered Orders -->
+        <div class="col px-1 mb-2">
+            <div class="cd-stat-card">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                    <div class="cd-icon-box" style="background: #f0fdfa; color: #0891b2;">
+                        <i class="feather icon-pie-chart" style="font-size: 16px;"></i>
+                    </div>
+                    <span class="badge-pill-soft" style="background: #ecfeff; color: #0891b2; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px;"><i class="feather icon-check" style="font-size: 9px;"></i> Live</span>
+                </div>
+                <div>
+                    <span class="text-muted d-block" style="font-size: 11px; font-weight: 600;">{{ __('Partial Delivered Orders') }}</span>
+                    <h4 class="mb-0 font-weight-bold" style="font-size: 20px; color: #0891b2;">{{ $partialOrdersCount }}</h4>
+                </div>
+                <div class="text-muted mt-1" style="font-size: 10px; border-top: 1px solid #f1f5f9; padding-top: 3px;">
+                    Qty: {{ $partialQty }}
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- ========================================== -->
@@ -756,6 +795,7 @@
                                 <th class="font-weight-bold py-2 border-top-0">{{ __('Courier Name') }}</th>
                                 <th class="font-weight-bold text-center py-2 border-top-0">{{ __('Total Orders') }}</th>
                                 <th class="font-weight-bold text-center py-2 border-top-0">{{ __('Delivered') }}</th>
+                                <th class="font-weight-bold text-center py-2 border-top-0" style="color: #0891b2;">{{ __('Partial') }}</th>
                                 <th class="font-weight-bold text-center py-2 border-top-0">{{ __('Pending') }}</th>
                                 <th class="font-weight-bold text-center py-2 border-top-0">{{ __('Returned') }}</th>
                                 <th class="font-weight-bold text-right py-2 border-top-0">{{ __('Courier Charge') }}</th>
@@ -767,6 +807,7 @@
                                 <td class="font-weight-semibold py-2" style="color: #1e293b;">{{ $c->name }}</td>
                                 <td class="text-center py-2 font-weight-bold">{{ $c->total }}</td>
                                 <td class="text-center py-2 text-success font-weight-bold">{{ $c->delivered }}</td>
+                                <td class="text-center py-2 font-weight-bold" style="color: #0891b2;">{{ $c->partial ?? 0 }}</td>
                                 <td class="text-center py-2 text-primary font-weight-bold">{{ $c->pending }}</td>
                                 <td class="text-center py-2 text-danger font-weight-bold">{{ $c->returned }}</td>
                                 <td class="text-right py-2 font-weight-semibold">৳ {{ number_format($c->charge) }}</td>
@@ -777,6 +818,7 @@
                                 <td class="py-2 text-dark">{{ __('Total') }}</td>
                                 <td class="text-center py-2 text-dark">{{ $totalOrdersCount }}</td>
                                 <td class="text-center py-2 text-success">{{ $deliveredOrdersCount }}</td>
+                                <td class="text-center py-2 font-weight-bold" style="color: #0891b2;">{{ $partialOrdersCount }}</td>
                                 <td class="text-center py-2 text-primary">{{ $pendingOrdersCount }}</td>
                                 <td class="text-center py-2 text-danger">{{ $returnedOrdersCount }}</td>
                                 <td class="text-right py-2 text-dark">৳ {{ number_format($totalDeliveryCharge) }}</td>
@@ -902,9 +944,9 @@
                 <div class="d-flex flex-wrap align-items-center gap-1">
                     <a href="{{ request()->fullUrlWithQuery(['status_tab' => 'all']) }}" class="status-tab-btn {{ $statusTab === 'all' ? 'active' : '' }}">{{ __('All') }}</a>
                     <a href="{{ request()->fullUrlWithQuery(['status_tab' => 'delivered']) }}" class="status-tab-btn {{ $statusTab === 'delivered' ? 'active' : '' }}">{{ __('Delivered') }}</a>
+                    <a href="{{ request()->fullUrlWithQuery(['status_tab' => 'partial']) }}" class="status-tab-btn {{ $statusTab === 'partial' ? 'active' : '' }}">{{ __('Partial') }}</a>
                     <a href="{{ request()->fullUrlWithQuery(['status_tab' => 'in review']) }}" class="status-tab-btn {{ $statusTab === 'in review' ? 'active' : '' }}">{{ __('In Review') }}</a>
                     <a href="{{ request()->fullUrlWithQuery(['status_tab' => 'cancelled']) }}" class="status-tab-btn {{ $statusTab === 'cancelled' ? 'active' : '' }}">{{ __('Cancelled') }}</a>
-                    <a href="{{ request()->fullUrlWithQuery(['status_tab' => 'partial']) }}" class="status-tab-btn {{ $statusTab === 'partial' ? 'active' : '' }}">{{ __('Partial') }}</a>
                     <a href="{{ request()->fullUrlWithQuery(['status_tab' => 'returned']) }}" class="status-tab-btn {{ $statusTab === 'returned' ? 'active' : '' }}">{{ __('Returned') }}</a>
                     <a href="{{ request()->fullUrlWithQuery(['status_tab' => 'pending']) }}" class="status-tab-btn {{ $statusTab === 'pending' ? 'active' : '' }}">{{ __('Pending') }}</a>
                 </div>
@@ -965,7 +1007,8 @@
                         @php
                             $statusClean = strtolower($item->status);
                             $badgeClass = 'status-pending';
-                            if (str_contains($statusClean, 'delivered')) $badgeClass = 'status-delivered';
+                            if (str_contains($statusClean, 'partial')) $badgeClass = 'status-partial';
+                            elseif (str_contains($statusClean, 'delivered')) $badgeClass = 'status-delivered';
                             elseif (str_contains($statusClean, 'transit') || str_contains($statusClean, 'ship')) $badgeClass = 'status-transit';
                             elseif (str_contains($statusClean, 'cancel')) $badgeClass = 'status-cancelled';
                             elseif (str_contains($statusClean, 'return')) $badgeClass = 'status-returned';

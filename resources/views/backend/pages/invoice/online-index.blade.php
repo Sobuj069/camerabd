@@ -488,6 +488,12 @@
                                 <span>Delivered</span>
                                 <span class="online-pill-badge badge-green">{{ $counts['delivered'] ?? 0 }}</span>
                             </a>
+                            <a href="{{ route('invoice.online.sale', ['status' => 'partial']) }}"
+                               class="online-pill {{ $curStatus === 'partial' ? 'active' : '' }}">
+                                <i class="feather icon-pie-chart text-teal"></i>
+                                <span>Partial Delivered</span>
+                                <span class="online-pill-badge badge-cyan">{{ $counts['partial'] ?? 0 }}</span>
+                            </a>
                             <a href="{{ route('invoice.online.sale', ['status' => 'pending_return']) }}"
                                class="online-pill {{ $curStatus === 'pending_return' ? 'active' : '' }}">
                                 <i class="feather icon-clock text-warning"></i>
@@ -499,12 +505,6 @@
                                 <i class="feather icon-rotate-ccw text-danger"></i>
                                 <span>Returned</span>
                                 <span class="online-pill-badge badge-red">{{ $counts['returned'] ?? 0 }}</span>
-                            </a>
-                            <a href="{{ route('invoice.online.sale', ['status' => 'partial']) }}"
-                               class="online-pill {{ $curStatus === 'partial' ? 'active' : '' }}">
-                                <i class="feather icon-pie-chart text-teal"></i>
-                                <span>Partial</span>
-                                <span class="online-pill-badge badge-cyan">{{ $counts['partial'] ?? 0 }}</span>
                             </a>
                             <a href="{{ route('invoice.online.sale', ['status' => 'cancelled']) }}"
                                class="online-pill {{ $curStatus === 'cancelled' ? 'active' : '' }}">
@@ -629,6 +629,9 @@
                                     </a>
                                     <a class="dropdown-item" href="javascript:void(0);" onclick="performBulkStatusChange('delivered')">
                                         <i class="feather icon-check-circle text-success mr-2"></i> Delivered
+                                    </a>
+                                    <a class="dropdown-item" href="javascript:void(0);" onclick="performBulkStatusChange('partial')">
+                                        <i class="feather icon-pie-chart text-teal mr-2"></i> Partial Delivered
                                     </a>
                                     <div class="dropdown-divider"></div>
                                     <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="performBulkStatusChange('returned')">
@@ -873,9 +876,29 @@
                                         <td>
                                             @php
                                                 $cStatus = strtolower(trim($data->order_status ?? 'pending'));
+                                                $badgeBg = '#ffedd5';
+                                                $badgeColor = '#c2410c';
+                                                $badgeIcon = 'feather icon-clock';
+                                                if (str_contains($cStatus, 'partial')) {
+                                                    $badgeBg = '#ccfbf1';
+                                                    $badgeColor = '#0f766e';
+                                                    $badgeIcon = 'feather icon-pie-chart';
+                                                } elseif (str_contains($cStatus, 'deliver')) {
+                                                    $badgeBg = '#dcfce7';
+                                                    $badgeColor = '#16a34a';
+                                                    $badgeIcon = 'feather icon-check-circle';
+                                                } elseif (str_contains($cStatus, 'return')) {
+                                                    $badgeBg = '#fee2e2';
+                                                    $badgeColor = '#dc2626';
+                                                    $badgeIcon = 'feather icon-rotate-ccw';
+                                                } elseif (str_contains($cStatus, 'transit') || str_contains($cStatus, 'ship')) {
+                                                    $badgeBg = '#e0f2fe';
+                                                    $badgeColor = '#0284c7';
+                                                    $badgeIcon = 'feather icon-truck';
+                                                }
                                             @endphp
-                                            <span class="badge" style="background:#ffedd5; color:#c2410c; font-size:11px; font-weight:700; padding:4px 8px; border-radius:6px;" id="courierStatusBadge-{{ $data->id }}">
-                                                <i class="feather icon-clock mr-1"></i> {{ ucfirst(str_replace('_', ' ', $cStatus)) }}
+                                            <span class="badge" style="background:{{ $badgeBg }}; color:{{ $badgeColor }}; font-size:11px; font-weight:700; padding:4px 8px; border-radius:6px;" id="courierStatusBadge-{{ $data->id }}">
+                                                <i class="{{ $badgeIcon }} mr-1"></i> {{ ucfirst(str_replace('_', ' ', $data->order_status ?? 'Pending')) }}
                                             </span>
                                             @if(!empty($data->consignment_id))
                                                 <button type="button" class="btn btn-xs btn-outline-info ml-1" style="font-size: 10px; padding: 2px 6px; border-radius: 4px;" onclick="syncSingleInvoice({{ $data->id }})" title="Sync Live Status from Steadfast">
@@ -914,6 +937,9 @@
                                                         </a>
                                                         <a class="dropdown-item" href="javascript:void(0);" onclick="changeSingleOrderStatus({{ $data->id }}, 'delivered')">
                                                             <i class="feather icon-check-circle text-success mr-2"></i> Mark as Delivered
+                                                        </a>
+                                                        <a class="dropdown-item" href="javascript:void(0);" onclick="changeSingleOrderStatus({{ $data->id }}, 'partial')">
+                                                            <i class="feather icon-pie-chart text-teal mr-2"></i> Mark as Partial Delivered
                                                         </a>
                                                         <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="changeSingleOrderStatus({{ $data->id }}, 'returned')">
                                                             <i class="feather icon-rotate-ccw mr-2"></i> Mark as Returned (Restores Stock)
@@ -2151,6 +2177,9 @@
                             if (newSt.toLowerCase() === 'delivered') {
                                 badge.style.background = '#dcfce7';
                                 badge.style.color = '#16a34a';
+                            } else if (newSt.toLowerCase().includes('partial')) {
+                                badge.style.background = '#ccfbf1';
+                                badge.style.color = '#0f766e';
                             } else if (newSt.toLowerCase().includes('return')) {
                                 badge.style.background = '#fee2e2';
                                 badge.style.color = '#dc2626';

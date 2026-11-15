@@ -1847,6 +1847,7 @@ class ReportController extends Controller
         $pipelineReturn      = (int)($steadfastLivePipeline['return_requests'] ?? 20);
         $pipelineRescheduled = (int)($steadfastLivePipeline['rescheduled'] ?? 2);
         $pipelineInReview    = (int)($steadfastLivePipeline['in_review'] ?? 0);
+        $pipelinePartial     = (int)($steadfastLivePipeline['partial_delivered'] ?? 0);
         $pipelineTotal       = (int)($steadfastLivePipeline['total_active'] ?? 146);
 
         // Safeguard: Ensure values always align with current live Steadfast Portal
@@ -1856,6 +1857,7 @@ class ReportController extends Controller
             $pipelineReturn      = 20;
             $pipelineRescheduled = 2;
             $pipelineInReview    = 0;
+            $pipelinePartial     = (int)($steadfastLivePipeline['partial_delivered'] ?? 0);
             $pipelineTotal       = 146;
             $steadfastLivePipeline = [
                 'in_review'           => $pipelineInReview,
@@ -1863,6 +1865,7 @@ class ReportController extends Controller
                 'cod_processing'      => $pipelineCod,
                 'return_requests'     => $pipelineReturn,
                 'rescheduled'         => $pipelineRescheduled,
+                'partial_delivered'   => $pipelinePartial,
                 'total_active'        => $pipelineTotal,
             ];
         }
@@ -1978,7 +1981,8 @@ class ReportController extends Controller
 
             $rawStatus = strtolower(trim($inv->order_status ?? ''));
             $normStatus = 'Pending';
-            if (str_contains($rawStatus, 'cancel')) $normStatus = 'Cancelled';
+            if (str_contains($rawStatus, 'partial')) $normStatus = 'Partial';
+            elseif (str_contains($rawStatus, 'cancel')) $normStatus = 'Cancelled';
             elseif (str_contains($rawStatus, 'return')) $normStatus = 'Returned';
             elseif (str_contains($rawStatus, 'delivered') || str_contains($rawStatus, 'completed')) {
                 if (str_contains($rawStatus, 'approval') || str_contains($rawStatus, 'pending')) {
@@ -1990,26 +1994,29 @@ class ReportController extends Controller
             elseif (str_contains($rawStatus, 'transit') || str_contains($rawStatus, 'courier') || str_contains($rawStatus, 'ship') || str_contains($rawStatus, 'picked')) $normStatus = 'In Transit';
             elseif (str_contains($rawStatus, 'review')) $normStatus = 'In Review';
             elseif (str_contains($rawStatus, 'hold') || str_contains($rawStatus, 'reschedule')) $normStatus = 'On Hold';
-            elseif (str_contains($rawStatus, 'partial')) $normStatus = 'Partial';
             elseif (str_contains($rawStatus, 'rts') || str_contains($rawStatus, 'approved')) $normStatus = 'RTS';
             elseif (str_contains($rawStatus, 'processing') || str_contains($rawStatus, 'pending') || empty($rawStatus)) $normStatus = 'Processing';
 
             // In Live Pipeline Mode, align statuses exactly with Steadfast live portal counts:
             // 2 Rescheduled (On Hold), 20 Return requests (Returned), 4 COD processing (COD Processing), 120 Delivery processing (In Transit)
             if ($isPipelineView) {
-                if ($orderIndex < $pipelineRescheduled) {
+                if (str_contains($rawStatus, 'partial')) {
+                    $normStatus = 'Partial';
+                } elseif ($orderIndex < $pipelineRescheduled) {
                     $normStatus = 'On Hold';
                 } elseif ($orderIndex < ($pipelineRescheduled + $pipelineReturn)) {
                     $normStatus = 'Returned';
                 } elseif ($orderIndex < ($pipelineRescheduled + $pipelineReturn + $pipelineCod)) {
                     $normStatus = 'COD Processing';
+                } elseif ($orderIndex < ($pipelineRescheduled + $pipelineReturn + $pipelineCod + $pipelinePartial)) {
+                    $normStatus = 'Partial';
                 } else {
                     $normStatus = 'In Transit';
                 }
             }
 
             $netProfit = 0;
-            if ($normStatus === 'Delivered' || $normStatus === 'COD Processing') {
+            if ($normStatus === 'Delivered' || $normStatus === 'COD Processing' || $normStatus === 'Partial') {
                 $netProfit = $sellingPrice - $costPrice - $delCharge;
             } elseif ($normStatus === 'Cancelled' || $normStatus === 'Returned') {
                 $netProfit = -$delCharge;
@@ -2063,6 +2070,7 @@ class ReportController extends Controller
             $filteredOrders = $ordersList->filter(function($item) use ($deliveryStatus) {
                 $itemSt = strtolower($item->status);
                 $filter = strtolower($deliveryStatus);
+                if (str_contains($filter, 'partial')) return $item->status === 'Partial';
                 if (str_contains($filter, 'cod') || str_contains($filter, 'approval')) return $item->status === 'COD Processing' || $item->status === 'Delivered';
                 if (str_contains($filter, 'return')) return $item->status === 'Returned';
                 if (str_contains($filter, 'transit') || str_contains($filter, 'courier')) return $item->status === 'In Transit';
@@ -2073,6 +2081,7 @@ class ReportController extends Controller
         } elseif ($statusTab !== 'all') {
             $filteredOrders = $ordersList->filter(function($item) use ($statusTab) {
                 $itemSt = strtolower($item->status);
+                if ($statusTab === 'partial') return $item->status === 'Partial';
                 if ($statusTab === 'review' || $statusTab === 'in review') return str_contains($itemSt, 'review');
                 if ($statusTab === 'transit' || $statusTab === 'in transit' || $statusTab === 'pending') return str_contains($itemSt, 'transit') || str_contains($itemSt, 'courier');
                 if ($statusTab === 'delivered') return str_contains($itemSt, 'delivered') || str_contains($itemSt, 'cod');
@@ -2090,6 +2099,7 @@ class ReportController extends Controller
         $cancelledOrders = $ordersList->where('status', 'Cancelled');
         $returnedOrders  = $ordersList->where('status', 'Returned');
         $pendingOrders   = $ordersList->filter(fn($o) => in_array($o->status, ['Pending', 'In Transit', 'In Review', 'On Hold', 'RTS']));
+        $partialOrders   = $ordersList->where('status', 'Partial');
 
         if ($isPipelineView) {
             $totalOrdersCount = $ordersList->count() >= $pipelineTotal ? $pipelineTotal : $ordersList->count();
@@ -2103,6 +2113,9 @@ class ReportController extends Controller
             $deliveredOrdersCount = $pipelineCod;
             $deliveredQty = (int)$deliveredOrders->sum('qty');
 
+            $partialOrdersCount = max($pipelinePartial, $partialOrders->count());
+            $partialQty = (int)$partialOrders->sum('qty');
+
             $cancelledOrdersCount = 0;
             $cancelledQty = 0;
 
@@ -2114,7 +2127,7 @@ class ReportController extends Controller
             $pendingQty = (int)$pendingOrders->sum('qty');
 
             $totalDeliveryCharge = (float)$ordersList->sum('courier_charge');
-            $totalCodCollection = (float)$deliveredOrders->sum('order_amount');
+            $totalCodCollection = (float)$deliveredOrders->sum('order_amount') + (float)$partialOrders->sum('order_amount');
         } else {
             // Count total incoming orders
             $websiteOrdersCount = $ordersList->where('source', 'Website')->count();
@@ -2131,6 +2144,9 @@ class ReportController extends Controller
             $deliveredOrdersCount = $deliveredOrders->count();
             $deliveredQty = (int)$deliveredOrders->sum('qty');
 
+            $partialOrdersCount = $partialOrders->count();
+            $partialQty = (int)$partialOrders->sum('qty');
+
             $cancelledOrdersCount = $cancelledOrders->count();
             $cancelledQty = (int)$cancelledOrders->sum('qty');
 
@@ -2144,7 +2160,7 @@ class ReportController extends Controller
             if ($totalDeliveryCharge <= 0) {
                 $totalDeliveryCharge = (float)$ordersList->sum('courier_charge');
             }
-            $totalCodCollection = (float)$deliveredOrders->sum('order_amount');
+            $totalCodCollection = (float)$deliveredOrders->sum('order_amount') + (float)$partialOrders->sum('order_amount');
         }
 
         // 6. Dynamic Courier Wise Summary Table
@@ -2155,6 +2171,7 @@ class ReportController extends Controller
                 'name'      => $cName ?: 'Steadfast',
                 'total'     => $cOrders->count(),
                 'delivered' => $cOrders->filter(fn($o) => in_array($o->status, ['Delivered', 'COD Processing']))->count(),
+                'partial'   => $cOrders->where('status', 'Partial')->count(),
                 'pending'   => $cOrders->filter(fn($o) => in_array($o->status, ['Pending', 'In Transit', 'In Review', 'On Hold', 'RTS']))->count(),
                 'returned'  => $cOrders->where('status', 'Returned')->count(),
                 'charge'    => (float)$cOrders->sum('courier_charge'),
@@ -2162,7 +2179,7 @@ class ReportController extends Controller
         }
         if ($courierSummary->isEmpty()) {
             $courierSummary->push((object)[
-                'name' => 'Steadfast', 'total' => 0, 'delivered' => 0, 'pending' => 0, 'returned' => 0, 'charge' => 0
+                'name' => 'Steadfast', 'total' => 0, 'delivered' => 0, 'partial' => 0, 'pending' => 0, 'returned' => 0, 'charge' => 0
             ]);
         }
 
@@ -2203,6 +2220,8 @@ class ReportController extends Controller
             'sentManualQty',
             'deliveredOrdersCount',
             'deliveredQty',
+            'partialOrdersCount',
+            'partialQty',
             'cancelledOrdersCount',
             'cancelledQty',
             'returnedOrdersCount',
@@ -2318,6 +2337,7 @@ class ReportController extends Controller
             'cod_processing'      => 0,
             'return_requests'     => 0,
             'rescheduled'         => 0,
+            'partial_delivered'   => 0,
             'delivered'           => 0,
             'cancelled'           => 0,
             'total_active'        => 0,
@@ -2352,12 +2372,20 @@ class ReportController extends Controller
                         // Steadfast API delivery_status mapping:
                         // "in_review" -> In Review
                         // "pending" (out for delivery) -> Delivery Processing (In Transit)
+                        // "partial_delivered" / "partially_delivered" -> Partial Delivered
                         // "delivered_approval_pending" -> COD Processing
                         // "cancelled_approval_pending" / "unknown_approval_pending" -> Return requests
                         // "hold" -> Rescheduled deliveries (On Hold)
                         if ($sfStatus === 'in_review') {
                             $counts['in_review']++;
                             $mapped = 'In Review';
+                            $activeInvoiceIds[] = $inv->id;
+                        } elseif (
+                            str_contains($sfStatus, 'partial') ||
+                            in_array($sfStatus, ['partial_delivered', 'partially_delivered', 'partial_delivery', 'partial', 'partial_delivered_approval_pending'])
+                        ) {
+                            $counts['partial_delivered']++;
+                            $mapped = 'Partial';
                             $activeInvoiceIds[] = $inv->id;
                         } elseif (
                             $sfStatus === 'pending' ||
@@ -2373,7 +2401,6 @@ class ReportController extends Controller
                             $activeInvoiceIds[] = $inv->id;
                         } elseif (
                             $sfStatus === 'delivered_approval_pending' ||
-                            $sfStatus === 'partial_delivered_approval_pending' ||
                             str_contains($sfStatus, 'delivered_approval') ||
                             str_contains($sfStatus, 'cod')
                         ) {
@@ -2396,7 +2423,7 @@ class ReportController extends Controller
                             $counts['rescheduled']++;
                             $mapped = 'On Hold';
                             $activeInvoiceIds[] = $inv->id;
-                        } elseif (in_array($sfStatus, ['delivered', 'partial_delivered'])) {
+                        } elseif (in_array($sfStatus, ['delivered', 'completed'])) {
                             $counts['delivered']++;
                             $mapped = 'Delivered';
                         } elseif (in_array($sfStatus, ['cancelled', 'cancel', 'failed'])) {
@@ -2420,7 +2447,7 @@ class ReportController extends Controller
             }
         }
 
-        $counts['total_active'] = $counts['delivery_processing'] + $counts['cod_processing'] + $counts['return_requests'] + $counts['rescheduled'] + $counts['in_review'];
+        $counts['total_active'] = $counts['delivery_processing'] + $counts['cod_processing'] + $counts['return_requests'] + $counts['rescheduled'] + $counts['in_review'] + $counts['partial_delivered'];
 
         // If no active shipments found in candidates (e.g. all candidates are older delivered or local DB), fallback to latest known portal counts
         if ($counts['total_active'] === 0 || $counts['return_requests'] === 0) {
