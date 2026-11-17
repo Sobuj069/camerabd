@@ -144,7 +144,11 @@ class ReportController extends Controller
         }
 
         $allProductsQuery = clone $query;
-        $allProducts = $allProductsQuery->with('product_variations')->get();
+        $allProducts = $allProductsQuery->with(['product_variations', 'category', 'subCategory'])->get();
+
+        if ($request->input('export') === 'excel' || $request->input('export') === 'csv') {
+            return $this->exportProductStock($allProducts);
+        }
 
         $data['products'] = $query
             ->orderBy('created_at', 'DESC')
@@ -2258,6 +2262,8 @@ class ReportController extends Controller
     {
         $filename = "courier-delivery-report-{$startDate}-to-{$endDate}.csv";
         $handle = fopen('php://memory', 'r+');
+        // Prepend UTF-8 BOM for proper Bengali and symbol display in Microsoft Excel
+        fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
         fputcsv($handle, [
             '#',
@@ -2305,6 +2311,79 @@ class ReportController extends Controller
             'Content-Type' => 'text/csv; charset=utf-8',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
             'Cache-Control' => 'no-cache, no-store, must-revalidate'
+        ]);
+    }
+
+    public function exportProductStock($products)
+    {
+        $filename = "product-stock-report-" . date('Y-m-d-His') . ".csv";
+        $handle = fopen('php://memory', 'r+');
+        // Prepend UTF-8 BOM for proper Bengali and symbol display in Microsoft Excel
+        fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+        $headers = ['#SL', 'Product Name', 'Barcode', 'Category'];
+        if (env('APP_SUB_CATEGORY') == 'yes') {
+            $headers[] = 'Sub Category';
+        }
+        $headers = array_merge($headers, [
+            'Stock In',
+            'Stock Transfer',
+            'Stock Receive',
+            'Stock Out',
+            'Sale Return',
+            'Purchase Return',
+            'Damage',
+            'Adjust In',
+            'Adjust Out',
+            'Available Stock'
+        ]);
+        fputcsv($handle, $headers);
+
+        foreach ($products as $idx => $p) {
+            $row = [
+                $idx + 1,
+                $p->name,
+                $p->barcode,
+                $p->category?->name ?? 'N/A',
+            ];
+            if (env('APP_SUB_CATEGORY') == 'yes') {
+                $row[] = $p->subCategory?->name ?? 'N/A';
+            }
+
+            if ($p->product_variations && $p->product_variations->count() > 0) {
+                $availStock = 0;
+                foreach ($p->product_variations as $variation) {
+                    $availStock += variation_stock($variation->id);
+                }
+            } else {
+                $availStock = (float) product_fake_stock_val($p);
+            }
+
+            $row = array_merge($row, [
+                (float) purchased_qty($p),
+                (float) stock_transfer_qty($p),
+                (float) stock_receive_qty($p),
+                (float) invoiced_qty($p),
+                (float) returned_qty($p),
+                (float) return_pur_qty($p),
+                (float) damaged_qty($p),
+                (float) adjust_in($p),
+                (float) adjust_out($p),
+                $availStock
+            ]);
+            fputcsv($handle, $row);
+        }
+
+        rewind($handle);
+        $csv = stream_get_contents($handle);
+        fclose($handle);
+
+        return response($csv, 200, [
+            'Content-Type' => 'text/csv; charset=utf-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0'
         ]);
     }
 

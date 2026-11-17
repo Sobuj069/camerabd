@@ -522,6 +522,10 @@ class InvoiceController extends Controller
         $statusCounts['all_in_courier'] = $statusCounts['in_courier'];
         $query = $this->buildOnlineSaleFilteredQuery($request);
 
+        if ($request->input('export') === 'excel' || $request->input('export') === 'csv') {
+            return $this->exportOnlineSalesExcel($request);
+        }
+
         // Pre-calculate total due and count for all matching records across all pages
         $totalDueAllMatching = (float) (clone $query)->where('total_due', '>', 0)->where('status', '!=', 2)->sum('total_due');
         $totalDueMatchingCount = (clone $query)->where('total_due', '>', 0)->where('status', '!=', 2)->count();
@@ -537,6 +541,113 @@ class InvoiceController extends Controller
         $data['activeStatus'] = $data['status'];
 
         return view('backend.pages.invoice.online-index', $data, compact('invoices', 'statusCounts'));
+    }
+
+    public function exportOnlineSalesExcel(Request $request)
+    {
+        $rawIds = $request->input('invoice_ids');
+        $ids = [];
+        if (is_array($rawIds)) {
+            $ids = $rawIds;
+        } elseif (is_string($rawIds) && !empty($rawIds)) {
+            $ids = json_decode($rawIds, true) ?? array_filter(explode(',', $rawIds));
+        }
+
+        if (!empty($ids) && empty($request->input('select_all_pages'))) {
+            $query = Invoice::whereIn('id', $ids);
+        } else {
+            $query = $this->buildOnlineSaleFilteredQuery($request);
+        }
+
+        $invoices = $query->with([
+            'customer',
+            'user',
+            'invoiceItems.product',
+            'invoiceItems.product_variation.size',
+            'invoiceItems.product_variation.color',
+            'websiteOrder',
+            'platform'
+        ])->orderBy('created_at', 'DESC')->get();
+
+        $filename = "online-sales-" . date('Y-m-d-His') . ".csv";
+        $handle = fopen('php://memory', 'r+');
+        // Prepend UTF-8 BOM for Microsoft Excel
+        fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+        $headers = [
+            '#SL',
+            'Invoice No',
+            'Date',
+            'Customer Name',
+            'Customer Phone',
+            'Customer Address',
+            'Order Source',
+            'Product Items',
+            'Total Amount',
+            'Total Paid',
+            'Total Due',
+            'Return Amount',
+            'Courier',
+            'Consignment ID',
+            'Courier Status',
+            'Created By'
+        ];
+        fputcsv($handle, $headers);
+
+        foreach ($invoices as $idx => $inv) {
+            $itemsList = [];
+            foreach ($inv->invoiceItems as $it) {
+                $itemName = $it->product?->name ?? 'Item';
+                if ($it->product_variation) {
+                    $size = $it->product_variation?->size?->size ?? '';
+                    $color = $it->product_variation?->color?->color ?? '';
+                    if ($size || $color) {
+                        $itemName .= " ({$size}-{$color})";
+                    }
+                }
+                $qty = (float) ($it->quantity ?? 1);
+                if ($it->is_return == 1) {
+                    $itemName .= " [Return]";
+                }
+                $itemsList[] = "{$itemName} x {$qty}";
+            }
+
+            $orderSource = $inv->isWebsiteOrder() ? 'Website Order' : 'Manual Order (Online POS)';
+            $formattedPhone = $inv->customer?->phone ? '="' . $inv->customer->phone . '"' : '';
+            $formattedConsignment = $inv->consignment_id ? '="' . $inv->consignment_id . '"' : '';
+
+            $row = [
+                $idx + 1,
+                $inv->invoice_no,
+                $inv->created_at ? $inv->created_at->format('Y-m-d h:i A') : $inv->date,
+                $inv->customer?->name ?? 'N/A',
+                $formattedPhone,
+                $inv->customer?->address ?? '',
+                $orderSource,
+                implode('; ', $itemsList),
+                (float) $inv->total_amount,
+                (float) $inv->total_paid,
+                (float) $inv->total_due,
+                (float) ($inv->return_amount ?? 0),
+                $inv->courier_type ?? 'Steadfast',
+                $formattedConsignment,
+                $inv->order_status ?? 'Pending',
+                $inv->user?->name ?? 'N/A'
+            ];
+            fputcsv($handle, $row);
+        }
+
+        rewind($handle);
+        $csv = stream_get_contents($handle);
+        fclose($handle);
+
+        return response($csv, 200, [
+            'Content-Type' => 'text/csv; charset=utf-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0'
+        ]);
     }
 
     public function updateOrderStatus(Request $request, $id = null)

@@ -393,6 +393,22 @@
             gap: 6px;
         }
         .btn-action-indigo:hover { background: #4338ca; color: #ffffff; }
+        .btn-action-excel {
+            background: #10b981;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 12.5px;
+            padding: 8px 14px;
+            border-radius: 6px;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-action-excel:hover { background: #059669; color: #ffffff; }
 
         /* Royal Blue Table Header */
         .table thead.royal-header th {
@@ -666,6 +682,11 @@
                             <a href="" class="btn-action-indigo" onclick="window.print()">
                                 <i class="feather icon-printer"></i>
                                 <span>Print</span>
+                            </a>
+
+                            <a href="javascript:void(0);" class="btn-action-excel" onclick="downloadOnlineSaleExcel()" title="{{ __('Download Excel for Filtered / Selected Invoices') }}">
+                                <i class="feather icon-download"></i>
+                                <span>Excel</span>
                             </a>
                         </div>
                     </form>
@@ -1718,6 +1739,36 @@
             window.print();
             document.body.innerHTML = originalContent;
             window.location.reload();
+        }
+
+        function downloadOnlineSaleExcel() {
+            let selectedInvoices = document.querySelectorAll(".invoiceCheckbox:checked");
+            let currentUrl = new URL(window.location.href);
+            let params = new URLSearchParams(currentUrl.search);
+
+            params.set('export', 'excel');
+            params.delete('page'); // Export all records rather than just current page pagination
+
+            if (typeof isSelectAllPagesActive !== 'undefined' && isSelectAllPagesActive) {
+                params.set('select_all_pages', '1');
+                params.delete('invoice_ids');
+            } else if (selectedInvoices.length > 0) {
+                let ids = [];
+                selectedInvoices.forEach(cb => ids.push(cb.value));
+                params.set('invoice_ids', ids.join(','));
+                params.delete('select_all_pages');
+            } else {
+                params.delete('invoice_ids');
+                params.delete('select_all_pages');
+            }
+
+            // Keep active tab status if not present in query string
+            let curStatusVal = "{{ $curStatus ?? ($activeStatus ?? 'all') }}";
+            if (curStatusVal && !params.has('status')) {
+                params.set('status', curStatusVal);
+            }
+
+            window.location.href = "{{ route('invoice.online.sale') }}?" + params.toString();
         }
 
         // Online Carousel Scroll

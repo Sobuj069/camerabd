@@ -2,6 +2,7 @@
 @section('section-title', __('Stock'))
 @section('page-title', __('Product Stock'))
 @section('action-button')
+    <a href="{{ request()->fullUrlWithQuery(['export' => 'excel']) }}" class="btn add_list_btn mr-1" style="background: #10b981; border-color: #10b981;"><i class="feather icon-download mr-1"></i>{{ __('Excel') }}</a>
     <a href="" class="btn add_list_btn " onclick="window.print()">{{ __('Print') }}</a>
 @endsection
 @push('css')
@@ -143,14 +144,17 @@
                                 </select>
                             </div>
                             <div class="col-md-2 col-12 mb-3">
-                                <div class="d-flex align-items-center" style="gap: 5px;">
-                                    <button type="submit" class="btn add_list_btn flex-grow-1" style="height: 38px !important; display: flex; align-items: center; justify-content: center;">
+                                <div class="d-flex align-items-center flex-wrap" style="gap: 4px;">
+                                    <button type="submit" class="btn add_list_btn flex-grow-1" style="height: 38px !important; display: flex; align-items: center; justify-content: center; padding: 0 6px; font-size: 12px;">
                                         <i class="fa fa-sliders mr-1"></i> {{ __('Filter') }}
                                     </button>
-                                    <a href="{{ route('report.stock') }}" class="btn add_list_btn_reset flex-grow-1" style="height: 38px !important; display: flex; align-items: center; justify-content: center;">
+                                    <a href="{{ route('report.stock') }}" class="btn add_list_btn_reset flex-grow-1" style="height: 38px !important; display: flex; align-items: center; justify-content: center; padding: 0 6px; font-size: 12px;">
                                         <i class="feather icon-refresh-cw mr-1"></i> {{ __('Reset') }}
                                     </a>
-                                    <a href="#" class="btn add_list_btn flex-grow-1" style="height: 38px !important; display: flex; align-items: center; justify-content: center;" onclick="window.print()">
+                                    <a href="{{ request()->fullUrlWithQuery(['export' => 'excel']) }}" class="btn text-white flex-grow-1" style="height: 38px !important; display: flex; align-items: center; justify-content: center; background: #10b981; border-color: #10b981; padding: 0 6px; font-size: 12px;" title="{{ __('Download Excel') }}">
+                                        <i class="feather icon-download mr-1"></i> {{ __('Excel') }}
+                                    </a>
+                                    <a href="#" class="btn add_list_btn flex-grow-1" style="height: 38px !important; display: flex; align-items: center; justify-content: center; padding: 0 6px; font-size: 12px;" onclick="window.print()">
                                         <i class="feather icon-printer mr-1"></i> {{ __('Print') }}
                                     </a>
                                 </div>
