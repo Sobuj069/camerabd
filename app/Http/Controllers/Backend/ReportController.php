@@ -1920,36 +1920,6 @@ class ReportController extends Controller
             });
         }
 
-        if ($orderSource === 'website') {
-            $invQuery->where(function($q) use ($webOrderLinkedInvIds, $webOrderNos) {
-                $q->where(function($sq) {
-                    $sq->whereNotNull('woocommerce_order_id')->where('woocommerce_order_id', '!=', '');
-                })
-                ->orWhereHas('websiteOrder')
-                ->orWhereIn('id', $webOrderLinkedInvIds)
-                ->orWhereIn('sale_type', ['Website', 'WooCommerce'])
-                ->orWhere('source_link', 'Website');
-                if (!empty($webOrderNos)) {
-                    $q->orWhereIn('source_link', $webOrderNos);
-                }
-            });
-        } elseif ($orderSource === 'manual') {
-            $invQuery->where(function($q) use ($webOrderLinkedInvIds, $webOrderNos) {
-                $q->where(function($sq) {
-                    $sq->whereNull('woocommerce_order_id')->orWhere('woocommerce_order_id', '');
-                })
-                ->whereDoesntHave('websiteOrder')
-                ->whereNotIn('id', $webOrderLinkedInvIds)
-                ->whereNotIn('sale_type', ['Website', 'WooCommerce'])
-                ->where(function($sq) {
-                    $sq->whereNull('source_link')->orWhere('source_link', '!=', 'Website');
-                });
-                if (!empty($webOrderNos)) {
-                    $q->whereNotIn('source_link', $webOrderNos);
-                }
-            });
-        }
-
         if ($courier !== 'all' && !empty($courier)) {
             if (strcasecmp($courier, 'Steadfast') === 0 || strcasecmp($courier, 'Stead Fast') === 0) {
                 $invQuery->where(function($q) {
@@ -2093,7 +2063,14 @@ class ReportController extends Controller
             ]);
         }
 
-        // 4. Apply Tab Filter or Pipeline Delivery Status Filter
+        // 4. Apply Order Source Filter (Website vs Manual Orders)
+        if ($orderSource === 'website') {
+            $ordersList = $ordersList->where('source', 'Website')->values();
+        } elseif ($orderSource === 'manual') {
+            $ordersList = $ordersList->where('source', 'Manual')->values();
+        }
+
+        // 5. Apply Tab Filter or Pipeline Delivery Status Filter
         $filteredOrders = $ordersList;
         if (!empty($deliveryStatus) && $deliveryStatus !== 'all') {
             $filteredOrders = $ordersList->filter(function($item) use ($deliveryStatus) {
@@ -2131,7 +2108,9 @@ class ReportController extends Controller
         $partialOrders   = $ordersList->where('status', 'Partial');
 
         if ($isPipelineView) {
-            $totalOrdersCount = $ordersList->count() >= $pipelineTotal ? $pipelineTotal : $ordersList->count();
+            $totalOrdersCount = ($orderSource === 'all')
+                ? ($ordersList->count() >= $pipelineTotal ? $pipelineTotal : $ordersList->count())
+                : $ordersList->count();
             $websiteOrdersCount = $ordersList->where('source', 'Website')->count();
             $manualOrdersCount = $ordersList->where('source', 'Manual')->count();
 
