@@ -25,6 +25,35 @@ class Invoice extends Model
         return $this->hasOne(WebsiteOrder::class, 'invoice_id');
     }
 
+    public function isWebsiteOrder(): bool
+    {
+        if (!empty($this->woocommerce_order_id)) {
+            return true;
+        }
+        if ($this->relationLoaded('websiteOrder') ? ($this->websiteOrder !== null) : $this->websiteOrder()->exists()) {
+            return true;
+        }
+        if (in_array($this->sale_type, ['Website', 'WooCommerce'])) {
+            return true;
+        }
+        if (!empty($this->source_link)) {
+            $src = (string)$this->source_link;
+            if ($src === 'Website' || str_starts_with($src, 'CB-') || str_starts_with($src, 'WC-')) {
+                return true;
+            }
+        }
+        if (!empty($this->unique_id) && str_starts_with((string)$this->unique_id, 'WC-')) {
+            return true;
+        }
+        if (!empty($this->platform?->name)) {
+            $pName = strtolower($this->platform->name);
+            if (str_contains($pName, 'web') || str_contains($pName, 'woo')) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static function syncWebsiteOrderStatus($invoice)
     {
         if (empty($invoice->id)) {

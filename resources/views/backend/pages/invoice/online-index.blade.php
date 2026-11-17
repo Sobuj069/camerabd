@@ -440,85 +440,85 @@
                         </button>
 
                         <div class="online-pills-track" id="onlinePillsTrack">
-                            <a href="{{ route('invoice.online.sale', ['status' => 'processing']) }}"
+                            <a href="{{ request()->fullUrlWithQuery(['status' => 'processing']) }}"
                                class="online-pill {{ $curStatus === 'processing' ? 'active' : '' }}">
                                 <i class="feather icon-clock text-warning"></i>
                                 <span>Processing</span>
                                 <span class="online-pill-badge badge-orange">{{ $counts['processing'] ?? 0 }}</span>
                             </a>
-                            <a href="{{ route('invoice.online.sale', ['status' => 'rts']) }}"
+                            <a href="{{ request()->fullUrlWithQuery(['status' => 'rts']) }}"
                                class="online-pill {{ $curStatus === 'rts' ? 'active' : '' }}">
                                 <i class="feather icon-box text-cyan"></i>
                                 <span>RTS</span>
                                 <span class="online-pill-badge badge-cyan">{{ $counts['rts'] ?? 0 }}</span>
                             </a>
-                            <a href="{{ route('invoice.online.sale', ['status' => 'in_review']) }}"
+                            <a href="{{ request()->fullUrlWithQuery(['status' => 'in_review']) }}"
                                class="online-pill {{ $curStatus === 'in_review' ? 'active' : '' }}">
                                 <i class="feather icon-eye text-primary"></i>
                                 <span>In Review</span>
                                 <span class="online-pill-badge badge-blue">{{ $counts['in_review'] ?? 0 }}</span>
                             </a>
-                            <a href="{{ route('invoice.online.sale', ['status' => 'pending_courier']) }}"
+                            <a href="{{ request()->fullUrlWithQuery(['status' => 'pending_courier']) }}"
                                class="online-pill {{ in_array($curStatus, ['pending_courier', 'pending']) ? 'active' : '' }}">
                                 <i class="feather icon-clock text-warning"></i>
                                 <span>Pending (Courier)</span>
                                 <span class="online-pill-badge badge-orange">{{ $counts['pending_courier'] ?? $counts['pending'] ?? 0 }}</span>
                             </a>
-                            <a href="{{ route('invoice.online.sale', ['status' => 'in_transit']) }}"
+                            <a href="{{ request()->fullUrlWithQuery(['status' => 'in_transit']) }}"
                                class="online-pill {{ $curStatus === 'in_transit' ? 'active' : '' }}">
                                 <i class="feather icon-truck text-info"></i>
                                 <span>In Transit</span>
                                 <span class="online-pill-badge badge-cyan">{{ $counts['in_transit'] ?? 0 }}</span>
                             </a>
-                            <a href="{{ route('invoice.online.sale', ['status' => 'all_in_courier']) }}"
+                            <a href="{{ request()->fullUrlWithQuery(['status' => 'all_in_courier']) }}"
                                class="online-pill {{ in_array($curStatus, ['all_in_courier', 'in_courier']) ? 'active' : '' }}">
                                 <i class="feather icon-send text-info"></i>
                                 <span>All in Courier</span>
                                 <span class="online-pill-badge badge-cyan">{{ $counts['all_in_courier'] ?? $counts['in_courier'] ?? 0 }}</span>
                             </a>
-                            <a href="{{ route('invoice.online.sale', ['status' => 'on_hold']) }}"
+                            <a href="{{ request()->fullUrlWithQuery(['status' => 'on_hold']) }}"
                                class="online-pill {{ $curStatus === 'on_hold' ? 'active' : '' }}">
                                 <i class="feather icon-pause text-secondary"></i>
                                 <span>On Hold</span>
                                 <span class="online-pill-badge badge-dark">{{ $counts['on_hold'] ?? 0 }}</span>
                             </a>
-                            <a href="{{ route('invoice.online.sale', ['status' => 'delivered']) }}"
+                            <a href="{{ request()->fullUrlWithQuery(['status' => 'delivered']) }}"
                                class="online-pill {{ $curStatus === 'delivered' ? 'active' : '' }}">
                                 <i class="feather icon-check-circle text-success"></i>
                                 <span>Delivered</span>
                                 <span class="online-pill-badge badge-green">{{ $counts['delivered'] ?? 0 }}</span>
                             </a>
-                            <a href="{{ route('invoice.online.sale', ['status' => 'partial']) }}"
+                            <a href="{{ request()->fullUrlWithQuery(['status' => 'partial']) }}"
                                class="online-pill {{ $curStatus === 'partial' ? 'active' : '' }}">
                                 <i class="feather icon-pie-chart text-teal"></i>
                                 <span>Partial Delivered</span>
                                 <span class="online-pill-badge badge-cyan">{{ $counts['partial'] ?? 0 }}</span>
                             </a>
-                            <a href="{{ route('invoice.online.sale', ['status' => 'pending_return']) }}"
+                            <a href="{{ request()->fullUrlWithQuery(['status' => 'pending_return']) }}"
                                class="online-pill {{ $curStatus === 'pending_return' ? 'active' : '' }}">
                                 <i class="feather icon-clock text-warning"></i>
                                 <span>Pending Return</span>
                                 <span class="online-pill-badge badge-orange">{{ $counts['pending_return'] ?? 0 }}</span>
                             </a>
-                            <a href="{{ route('invoice.online.sale', ['status' => 'returned']) }}"
+                            <a href="{{ request()->fullUrlWithQuery(['status' => 'returned']) }}"
                                class="online-pill {{ $curStatus === 'returned' ? 'active' : '' }}">
                                 <i class="feather icon-rotate-ccw text-danger"></i>
                                 <span>Returned</span>
                                 <span class="online-pill-badge badge-red">{{ $counts['returned'] ?? 0 }}</span>
                             </a>
-                            <a href="{{ route('invoice.online.sale', ['status' => 'cancelled']) }}"
+                            <a href="{{ request()->fullUrlWithQuery(['status' => 'cancelled']) }}"
                                class="online-pill {{ $curStatus === 'cancelled' ? 'active' : '' }}">
                                 <i class="feather icon-x-circle text-dark"></i>
                                 <span>Cancelled</span>
                                 <span class="online-pill-badge badge-dark">{{ $counts['cancelled'] ?? 0 }}</span>
                             </a>
-                            <a href="{{ route('invoice.online.sale', ['status' => 'all']) }}"
+                            <a href="{{ request()->fullUrlWithQuery(['status' => 'all']) }}"
                                class="online-pill {{ $curStatus === 'all' ? 'active' : '' }}">
                                 <i class="feather icon-layers"></i>
                                 <span>All Orders</span>
                                 <span class="online-pill-badge badge-blue">{{ $counts['all'] ?? 0 }}</span>
                             </a>
-                            <a href="{{ route('invoice.online.sale', ['status' => 'woocommerce']) }}"
+                            <a href="{{ request()->fullUrlWithQuery(['status' => 'woocommerce']) }}"
                                class="online-pill {{ $curStatus === 'woocommerce' ? 'active' : '' }}">
                                 <i class="feather icon-globe text-info"></i>
                                 <span>WooCommerce Orders</span>
@@ -561,7 +561,7 @@
                             <div class="col-xl-2 col-lg-2 col-md-3 col-sm-6 mb-2">
                                 <input type="date" class="form-control" name="endDate" value="{{ $endDate }}" placeholder="mm/dd/yyyy" style="height: 38px;" />
                             </div>
-                            <div class="col-xl-2 col-lg-2 col-md-3 col-sm-6 mb-2">
+                            <div class="col-xl-1 col-lg-2 col-md-3 col-sm-6 mb-2">
                                 <input type="text" class="form-control" name="invoice_no" value="{{ $invoice_no ?? '' }}" placeholder="Invoice No" style="height: 38px;" />
                             </div>
                             <div class="col-xl-2 col-lg-2 col-md-3 col-sm-6 mb-2">
@@ -584,11 +584,11 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-xl-1 col-lg-1 col-md-3 col-sm-6 mb-2">
-                                <select name="platform" class="form-control" style="height: 38px; font-size: 12px;">
-                                    <option value="">All Platforms</option>
-                                    <option value="Website">Website</option>
-                                    <option value="WooCommerce">WooCommerce</option>
+                            <div class="col-xl-2 col-lg-2 col-md-3 col-sm-6 mb-2">
+                                <select name="order_source" class="form-control" style="height: 38px; font-weight: 600; border-radius: 4px;">
+                                    <option value="all" {{ ($order_source ?? 'all') == 'all' ? 'selected' : '' }}>All (Website + Manual)</option>
+                                    <option value="website" {{ ($order_source ?? '') == 'website' ? 'selected' : '' }}>Website Orders</option>
+                                    <option value="manual" {{ ($order_source ?? '') == 'manual' ? 'selected' : '' }}>Manual Orders (Online POS)</option>
                                 </select>
                             </div>
                             <div class="col-xl-1 col-lg-1 col-md-3 col-sm-6 mb-2">
@@ -692,6 +692,7 @@
                                     <input type="hidden" name="customer_id" value="{{ $customer_id }}">
                                     <input type="hidden" name="product_id" value="{{ $product_id }}">
                                     <input type="hidden" name="platform_id" value="{{ $platform_id }}">
+                                    <input type="hidden" name="order_source" value="{{ $order_source ?? 'all' }}">
                                     <input type="hidden" name="invoice_no" value="{{ $invoice_no ?? '' }}">
                                     <input type="hidden" name="barcode" value="{{ $barcode ?? ($invoice_no ?? '') }}">
                                     <div class="modal-body text-left">
@@ -829,7 +830,14 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <div class="font-weight-bold text-dark">{{ $data->customer->name }}</div>
+                                            <div class="font-weight-bold text-dark d-flex align-items-center justify-content-center flex-wrap" style="gap: 4px;">
+                                                @if($data->isWebsiteOrder())
+                                                    <span class="badge" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; box-shadow: 0 1px 2px rgba(37,99,235,0.2);" title="{{ __('Website Customer') }}">
+                                                        <i class="feather icon-globe mr-1" style="font-size: 9px;"></i>Web
+                                                    </span>
+                                                @endif
+                                                <span>{{ $data->customer->name }}</span>
+                                            </div>
                                             @if(!empty($data->customer->phone))
                                                 @php
                                                     $cPhone = preg_replace('/[^\d]/', '', $data->customer->phone);
@@ -1089,7 +1097,14 @@
                                                         </div>
                                                         <div class="col-6 mb-2">
                                                             <div class="text-muted small modal-detail-label">{{ __('Customer') }}</div>
-                                                            <div class="font-weight-bold modal-detail-value">{{ $data->customer->name }} ({{ $data->customer->phone }})</div>
+                                                            <div class="font-weight-bold modal-detail-value d-flex align-items-center flex-wrap" style="gap: 4px;">
+                                                                @if($data->isWebsiteOrder())
+                                                                    <span class="badge" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;" title="{{ __('Website Customer') }}">
+                                                                        <i class="feather icon-globe mr-1" style="font-size: 9px;"></i>Web
+                                                                    </span>
+                                                                @endif
+                                                                <span>{{ $data->customer->name }} ({{ $data->customer->phone }})</span>
+                                                            </div>
                                                             <button type="button" class="btn btn-xs mt-1" style="font-size:10px; border-radius:12px; padding:1px 8px; border:1px solid #06b6d4; color:#0891b2; background:#f0fdfa; cursor: pointer;" onclick="openCustomerFraudModal('{{ $data->customer->phone }}', '{{ addslashes($data->customer->name) }}')">
                                                                 <i class="feather icon-shield mr-1"></i> Check Courier Rating
                                                             </button>
@@ -1585,7 +1600,7 @@
             }
 
             if (isSelectAllPagesActive) {
-                var printUrl = `{{ route('invoice.bulk-print') }}?select_all_pages=1&filter_status={{ urlencode($curStatus) }}&startDate={{ urlencode($startDate ?? '') }}&endDate={{ urlencode($endDate ?? '') }}&customer_id={{ urlencode($customer_id ?? '') }}&product_id={{ urlencode($product_id ?? '') }}&platform_id={{ urlencode($platform_id ?? '') }}&invoice_no={{ urlencode($invoice_no ?? '') }}&barcode={{ urlencode($barcode ?? ($invoice_no ?? '')) }}`;
+                var printUrl = `{{ route('invoice.bulk-print') }}?select_all_pages=1&filter_status={{ urlencode($curStatus) }}&startDate={{ urlencode($startDate ?? '') }}&endDate={{ urlencode($endDate ?? '') }}&customer_id={{ urlencode($customer_id ?? '') }}&product_id={{ urlencode($product_id ?? '') }}&order_source={{ urlencode($order_source ?? 'all') }}&platform_id={{ urlencode($platform_id ?? '') }}&invoice_no={{ urlencode($invoice_no ?? '') }}&barcode={{ urlencode($barcode ?? ($invoice_no ?? '')) }}`;
                 window.open(printUrl, '_blank');
                 return;
             }
@@ -1801,6 +1816,7 @@
                 customer_id: '{{ $customer_id }}',
                 product_id: '{{ $product_id }}',
                 platform_id: '{{ $platform_id }}',
+                order_source: '{{ $order_source ?? "all" }}',
                 barcode: '{{ $barcode ?? ($invoice_no ?? '') }}',
                 invoice_no: '{{ $invoice_no ?? '' }}',
                 order_status: newStatus,
@@ -2013,6 +2029,7 @@
                 customer_id: '{{ $customer_id }}',
                 product_id: '{{ $product_id }}',
                 platform_id: '{{ $platform_id }}',
+                order_source: '{{ $order_source ?? "all" }}',
                 barcode: '{{ $barcode ?? ($invoice_no ?? '') }}',
                 invoice_no: '{{ $invoice_no ?? '' }}'
             };
@@ -2104,6 +2121,7 @@
                 customer_id: '{{ $customer_id }}',
                 product_id: '{{ $product_id }}',
                 platform_id: '{{ $platform_id }}',
+                order_source: '{{ $order_source ?? "all" }}',
                 barcode: '{{ $barcode ?? ($invoice_no ?? '') }}',
                 invoice_no: '{{ $invoice_no ?? '' }}'
             };

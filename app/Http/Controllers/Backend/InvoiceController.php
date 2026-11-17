@@ -168,7 +168,7 @@ class InvoiceController extends Controller
      */
     protected function buildOnlineSaleBaseQuery(Request $request)
     {
-        $query = Invoice::with(['customer', 'user', 'returns', 'platform', 'bankTransactions'])
+        $query = Invoice::with(['customer', 'user', 'returns', 'platform', 'bankTransactions', 'websiteOrder'])
             ->where('sale_type', 'Online');
 
         // Date range filter
@@ -234,6 +234,58 @@ class InvoiceController extends Controller
                 });
             } else {
                 $query->where('platform_id', $request->platform_id);
+            }
+        }
+
+        // Order Source filter (All / Website Orders / Manual Orders)
+        $orderSource = $request->input('order_source', 'all');
+        if ($orderSource === 'website') {
+            $webOrderInvIds = \App\Models\WebsiteOrder::whereNotNull('invoice_id')->where('invoice_id', '!=', 0)->pluck('invoice_id')->toArray();
+            $query->where(function($q) use ($webOrderInvIds) {
+                $q->whereNotNull('woocommerce_order_id')->where('woocommerce_order_id', '!=', '')
+                  ->orWhereHas('websiteOrder')
+                  ->orWhere('source_link', 'Website')
+                  ->orWhere('source_link', 'like', 'CB-%')
+                  ->orWhere('source_link', 'like', 'WC-%')
+                  ->orWhere('unique_id', 'like', 'WC-%')
+                  ->orWhereIn('sale_type', ['Website', 'WooCommerce'])
+                  ->orWhereHas('platform', function($pq) {
+                      $pq->where('name', 'like', '%woocommerce%')
+                         ->orWhere('name', 'like', '%website%')
+                         ->orWhere('slug', 'like', '%woocommerce%')
+                         ->orWhere('slug', 'like', '%website%');
+                  });
+                if (!empty($webOrderInvIds)) {
+                    $q->orWhereIn('id', $webOrderInvIds);
+                }
+            });
+        } elseif ($orderSource === 'manual') {
+            $webOrderInvIds = \App\Models\WebsiteOrder::whereNotNull('invoice_id')->where('invoice_id', '!=', 0)->pluck('invoice_id')->toArray();
+            $query->where(function($q) {
+                $q->whereNull('woocommerce_order_id')->orWhere('woocommerce_order_id', '');
+            })
+            ->whereDoesntHave('websiteOrder')
+            ->where(function($q) {
+                $q->whereNull('source_link')
+                  ->orWhere(function($sq) {
+                      $sq->where('source_link', '!=', 'Website')
+                         ->where('source_link', 'not like', 'CB-%')
+                         ->where('source_link', 'not like', 'WC-%');
+                  });
+            })
+            ->where(function($q) {
+                $q->whereNull('unique_id')->orWhere('unique_id', 'not like', 'WC-%');
+            })
+            ->whereNotIn('sale_type', ['Website', 'WooCommerce'])
+            ->where(function($q) {
+                $q->whereDoesntHave('platform', function($pq) {
+                    $pq->where('name', 'like', '%woocommerce%')
+                       ->orWhere('name', 'like', '%website%');
+                });
+            });
+
+            if (!empty($webOrderInvIds)) {
+                $query->whereNotIn('id', $webOrderInvIds);
             }
         }
 
@@ -325,6 +377,7 @@ class InvoiceController extends Controller
         $data['product_id'] = $request->product_id;
         $data['status'] = $request->query('status', 'all');
         $data['platform_id'] = $request->platform_id;
+        $data['order_source'] = $request->input('order_source', 'all');
 
         // Auto clear due for any Online invoices that are Delivered but still have pending due
         $deliveredDueInvoices = Invoice::where('sale_type', 'Online')
