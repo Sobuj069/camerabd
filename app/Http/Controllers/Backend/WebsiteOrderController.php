@@ -111,39 +111,26 @@ class WebsiteOrderController extends Controller
             // Also check stock availability for each item in the order
             $canApprove = true;
             $stockDetails = [];
+            $outOfStockNames = [];
             foreach ($order->items as $item) {
-                $prod = $item->product;
-                if ($prod && $prod->is_service == 0) {
-                    $stockQ = PurchaseItem::where('product_id', $item->product_id)
-                        ->where('stock_qty', '>', 0);
-                    if ($item->product_variation_id) {
-                        $stockQ->where('product_variation_id', $item->product_variation_id);
-                    }
-                    $available = (float) $stockQ->sum('stock_qty');
-                    $required = (float) $item->quantity;
-                    $itemInStock = $available >= $required;
-                    if (!$itemInStock) {
-                        $canApprove = false;
-                    }
-                    $stockDetails[] = [
-                        'item_id' => $item->id,
-                        'product_name' => $item->product_name,
-                        'available' => $available,
-                        'required' => $required,
-                        'in_stock' => $itemInStock,
-                    ];
-                } else {
-                    $stockDetails[] = [
-                        'item_id' => $item->id,
-                        'product_name' => $item->product_name,
-                        'available' => 9999,
-                        'required' => (float) $item->quantity,
-                        'in_stock' => true,
-                    ];
+                $stockInfo = $this->resolveItemAvailableStock($item);
+                if (!$stockInfo['in_stock']) {
+                    $canApprove = false;
+                    $outLabel = trim((string) ($item->product_code ?: ($item->product_barcode ?: ($item->product_name ?: 'Item'))));
+                    $outOfStockNames[] = $outLabel . ' (' . (int) $stockInfo['available'] . '/' . (int) $stockInfo['required'] . ')';
                 }
+                $stockDetails[] = [
+                    'item_id' => $item->id,
+                    'product_name' => $item->product_name,
+                    'product_code' => $item->product_code ?: ($item->product_barcode ?: ($item->product?->barcode ?? '')),
+                    'available' => $stockInfo['available'],
+                    'required' => $stockInfo['required'],
+                    'in_stock' => $stockInfo['in_stock'],
+                ];
             }
             $order->can_approve = $canApprove;
             $order->stock_details = $stockDetails;
+            $order->out_of_stock_summary = implode(', ', $outOfStockNames);
 
             return $order;
         });
@@ -348,6 +335,102 @@ class WebsiteOrderController extends Controller
     }
 
     /**
+     * Resolve real available stock for an order item (with variation fallback and duplicate barcode/name product healing).
+     */
+    protected function resolveItemAvailableStock(WebsiteOrderItem $item): array
+    {
+        $required = max(1, (float) ($item->quantity ?: 1));
+        $prod = $item->product;
+
+        if ($prod && (int) $prod->is_service === 1) {
+            return [
+                'available' => 9999.0,
+                'required' => $required,
+                'in_stock' => true,
+                'product_id' => $prod->id,
+            ];
+        }
+
+        $calcStockForProduct = function ($productId, $variationId = null) {
+            if (!$productId) {
+                return 0.0;
+            }
+            if ($variationId) {
+                $varStock = (float) PurchaseItem::where('product_id', $productId)
+                    ->where('product_variation_id', $variationId)
+                    ->where('stock_qty', '>', 0)
+                    ->sum('stock_qty');
+                if ($varStock > 0) {
+                    return $varStock;
+                }
+            }
+            return (float) PurchaseItem::where('product_id', $productId)
+                ->where('stock_qty', '>', 0)
+                ->sum('stock_qty');
+        };
+
+        $available = $prod ? $calcStockForProduct($prod->id, $item->product_variation_id) : 0.0;
+
+        // If primary product_id has insufficient stock or is unlinked, check matching Product rows by barcode or exact name
+        if ($available < $required) {
+            $barcode = trim((string) ($item->product_barcode ?: ($item->product_code ?: ($prod?->barcode ?? ''))));
+            $name = trim((string) ($item->product_name ?: ($prod?->name ?? '')));
+
+            $candidateIds = collect();
+            if ($barcode !== '' && strtoupper($barcode) !== 'N/A') {
+                $candidateIds = $candidateIds->merge(
+                    Product::where('barcode', $barcode)->pluck('id')
+                );
+            }
+            if ($name !== '') {
+                $candidateIds = $candidateIds->merge(
+                    Product::whereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower($name)])->pluck('id')
+                );
+            }
+
+            $candidateIds = $candidateIds->unique()->filter(fn($cid) => (int) $cid !== (int) ($item->product_id ?? 0));
+
+            foreach ($candidateIds as $cid) {
+                $candStock = $calcStockForProduct($cid, null);
+                if ($candStock > $available || (!$prod && $candStock >= 0)) {
+                    $available = $candStock;
+                    $newProd = Product::find($cid);
+                    if ($newProd) {
+                        $prod = $newProd;
+                        $item->product_id = $cid;
+                        $item->product_variation_id = null;
+                        try {
+                            $item->saveQuietly();
+                            $item->setRelation('product', $newProd);
+                        } catch (\Throwable $e) {
+                            // Non-blocking
+                        }
+                    }
+                    if ($available >= $required) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!$prod) {
+            return [
+                'available' => 9999.0,
+                'required' => $required,
+                'in_stock' => true,
+                'product_id' => null,
+            ];
+        }
+
+        return [
+            'available' => $available,
+            'required' => $required,
+            'in_stock' => $available >= $required,
+            'product_id' => $prod->id,
+        ];
+    }
+
+    /**
      * Check real-time stock for an order's items.
      */
     public function checkStock($id)
@@ -357,35 +440,17 @@ class WebsiteOrderController extends Controller
         $allInStock = true;
 
         foreach ($order->items as $item) {
-            $product = $item->product;
-            if ($product && $product->is_service == 0) {
-                $stockQ = PurchaseItem::where('product_id', $item->product_id)
-                    ->where('stock_qty', '>', 0);
-                if ($item->product_variation_id) {
-                    $stockQ->where('product_variation_id', $item->product_variation_id);
-                }
-                $available = (float) $stockQ->sum('stock_qty');
-                $required = (float) $item->quantity;
-                $inStock = $available >= $required;
-                if (!$inStock) {
-                    $allInStock = false;
-                }
-                $itemsStock[] = [
-                    'product_id' => $item->product_id,
-                    'product_name' => $item->product_name,
-                    'required' => $required,
-                    'available' => $available,
-                    'in_stock' => $inStock,
-                ];
-            } else {
-                $itemsStock[] = [
-                    'product_id' => $item->product_id,
-                    'product_name' => $item->product_name,
-                    'required' => (float) $item->quantity,
-                    'available' => 9999,
-                    'in_stock' => true,
-                ];
+            $stockInfo = $this->resolveItemAvailableStock($item);
+            if (!$stockInfo['in_stock']) {
+                $allInStock = false;
             }
+            $itemsStock[] = [
+                'product_id' => $item->product_id,
+                'product_name' => $item->product_name,
+                'required' => $stockInfo['required'],
+                'available' => $stockInfo['available'],
+                'in_stock' => $stockInfo['in_stock'],
+            ];
         }
 
         return response()->json([
@@ -512,19 +577,9 @@ class WebsiteOrderController extends Controller
             $rawStockMode = 'with_manage';
             $insufficientItems = [];
             foreach ($order->items as $item) {
-                $prod = $item->product;
-                if ($prod && $prod->is_service == 0) {
-                    $stockQuery = PurchaseItem::where('product_id', $item->product_id)
-                        ->where('stock_qty', '>', 0);
-                    if ($item->product_variation_id) {
-                        $stockQuery->where('product_variation_id', $item->product_variation_id);
-                    }
-                    $available = (float) $stockQuery->sum('stock_qty');
-                    $required = (float) $item->quantity;
-
-                    if ($available < $required) {
-                        $insufficientItems[] = "{$item->product_name} (প্রয়োজন: {$required}, বর্তমান মজুদ: {$available})";
-                    }
+                $stockInfo = $this->resolveItemAvailableStock($item);
+                if (!$stockInfo['in_stock']) {
+                    $insufficientItems[] = "{$item->product_name} (প্রয়োজন: {$stockInfo['required']}, বর্তমান মজুদ: {$stockInfo['available']})";
                 }
             }
 
@@ -862,6 +917,12 @@ class WebsiteOrderController extends Controller
     public function orderDetails($id)
     {
         $order = WebsiteOrder::with(['items.product.unit', 'items.variation', 'customer', 'branch', 'invoice'])->findOrFail($id);
+
+        foreach ($order->items as $item) {
+            $stockInfo = $this->resolveItemAvailableStock($item);
+            $item->resolved_stock = $stockInfo['available'];
+            $item->is_in_stock = $stockInfo['in_stock'];
+        }
 
         // Ensure subtotal and total_amount are synchronized accurately
         $itemsSubtotal = (float)$order->items->sum('total_price');
@@ -1225,10 +1286,15 @@ class WebsiteOrderController extends Controller
             ->get();
 
         $results = $products->map(function ($p) {
+            $realStock = (int) $p->is_service === 1
+                ? 9999
+                : (float) PurchaseItem::where('product_id', $p->id)->where('stock_qty', '>', 0)->sum('stock_qty');
             return [
                 'id' => $p->id,
                 'name' => $p->name,
                 'barcode' => $p->barcode,
+                'sku' => $p->barcode ?: ('ID-' . $p->id),
+                'stock' => $realStock,
                 'price' => (float)$p->selling_price,
                 'image' => $p->thumbnail_url ?: asset('backend/images/no_images.png'),
             ];

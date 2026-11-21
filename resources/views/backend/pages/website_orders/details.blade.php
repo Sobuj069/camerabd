@@ -998,9 +998,14 @@ body.dark-theme .badge-web-pill, html.dark-theme .badge-web-pill {
                                 $prodImg = asset('backend/images/no_images.png');
                             }
                             $prodSku = $item->product_barcode ?: ($prod?->barcode ?: ($prod?->sku ?: 'SKU-' . ($item->product_id ?: $item->id)));
-                            $prodStock = $prod?->main_qty ?? 405;
-                            $rate = (float)$item->unit_price;
                             $qty = (int)($item->quantity > 0 ? $item->quantity : 1);
+                            $prodStock = isset($item->resolved_stock)
+                                ? (float)$item->resolved_stock
+                                : ($prod && (int)$prod->is_service === 1
+                                    ? 9999
+                                    : ($prod ? (float)\App\Models\PurchaseItem::where('product_id', $prod->id)->where('stock_qty', '>', 0)->sum('stock_qty') : 0));
+                            $isItemInStock = isset($item->is_in_stock) ? (bool)$item->is_in_stock : ($prodStock >= $qty);
+                            $rate = (float)$item->unit_price;
                             $subtotal = (float)$item->total_price;
                         @endphp
                         <div class="ordered-product-card position-relative" id="order-item-row-{{ $item->id }}">
@@ -1014,9 +1019,17 @@ body.dark-theme .badge-web-pill, html.dark-theme .badge-web-pill {
                                         <div>
                                             <span class="sku-pill">{{ $prodSku }}</span>
                                             <h6 class="product-title mt-1 mb-1">{{ $item->product_name ?: ($prod->name ?? 'Product Item') }}</h6>
-                                            <div class="small mb-1">
+                                            <div class="small mb-1 d-flex align-items-center flex-wrap gap-2">
                                                 <span class="text-purple fw-bold">৳{{ number_format($rate) }}</span>
-                                                <span class="text-muted ms-2">Stock: <strong style="color: var(--wc-text-heading);">{{ (int)$prodStock }}</strong></span>
+                                                @if($isItemInStock)
+                                                    <span class="badge" style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-size:11px; font-weight:700; padding:2px 8px; border-radius:4px;">
+                                                        ✔ In Stock: {{ (int)$prodStock }}
+                                                    </span>
+                                                @else
+                                                    <span class="badge" style="background:#fef2f2; color:#dc2626; border:1px solid #fecaca; font-size:11px; font-weight:700; padding:2px 8px; border-radius:4px;">
+                                                        ⚠️ Stock Out (Available: {{ (int)$prodStock }}, Need: {{ $qty }})
+                                                    </span>
+                                                @endif
                                             </div>
                                         </div>
                                         @if(!$isApproved)

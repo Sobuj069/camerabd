@@ -1020,14 +1020,14 @@
                                         </div>
                                     </div>
                                     @if(isset($order->can_approve))
-                                        <div class="mt-1">
+                                        <div class="mt-1" onclick="openOrderModal({{ $order->id }})" style="cursor: pointer;">
                                             @if($order->can_approve)
                                                 <span class="badge" style="background:#ecfdf5; color:#059669; font-size:10px; font-weight:700; padding:2px 7px; border-radius:4px; border:1px solid #a7f3d0;" title="{{ __('All items in this order are in stock') }}">
                                                     <i class="feather icon-check-circle mr-1"></i> {{ __('In Stock') }}
                                                 </span>
                                             @else
-                                                <span class="badge" style="background:#fef2f2; color:#dc2626; font-size:10px; font-weight:700; padding:2px 7px; border-radius:4px; border:1px solid #fecaca;" title="{{ __('Stock insufficient! Cannot be approved until items are purchased into stock.') }}">
-                                                    <i class="feather icon-alert-triangle mr-1"></i> {{ __('Stock Out') }}
+                                                <span class="badge" style="background:#fef2f2; color:#dc2626; font-size:10px; font-weight:700; padding:2px 7px; border-radius:4px; border:1px solid #fecaca; white-space:normal; text-align:left; max-width:190px; display:inline-block;" title="Out of Stock: {{ $order->out_of_stock_summary ?: 'Click to inspect items' }}">
+                                                    <i class="feather icon-alert-triangle mr-1"></i> {{ __('Stock Out') }}@if(!empty($order->out_of_stock_summary)): {{ \Illuminate\Support\Str::limit($order->out_of_stock_summary, 32) }}@endif
                                                 </span>
                                             @endif
                                         </div>
@@ -1513,6 +1513,8 @@
             success: function(res) {
                 if (res.success) {
                     order.items = order.items.filter(i => i.id != itemId);
+                    order.stock_details = (order.stock_details || []).filter(s => s.item_id != itemId);
+                    order.can_approve = order.stock_details.every(s => s.in_stock);
                     order.subtotal = res.subtotal;
                     order.total_amount = res.grand_total;
                     if (res.shipping_fee !== undefined) {
@@ -1567,6 +1569,9 @@
         if (order.items && order.items.length > 0) {
             var first = order.items[0];
             var moreBadge = order.items.length > 1 ? `<span class="badge badge-light ml-1" style="font-size: 10px;">+${order.items.length - 1} more</span>` : '';
+            var stockBadgeHtml = order.can_approve
+                ? `<div class="mt-1" onclick="openOrderModal(${order.id})" style="cursor: pointer;"><span class="badge" style="background:#ecfdf5; color:#059669; font-size:10px; font-weight:700; padding:2px 7px; border-radius:4px; border:1px solid #a7f3d0;"><i class="feather icon-check-circle mr-1"></i> In Stock</span></div>`
+                : `<div class="mt-1" onclick="openOrderModal(${order.id})" style="cursor: pointer;"><span class="badge" style="background:#fef2f2; color:#dc2626; font-size:10px; font-weight:700; padding:2px 7px; border-radius:4px; border:1px solid #fecaca;"><i class="feather icon-alert-triangle mr-1"></i> Stock Out</span></div>`;
             var html = `
                 <div class="item-preview-box" onclick="openOrderModal(${order.id})" style="cursor: pointer;" title="Click to view & manage ordered items">
                     <img src="${first.image_url}" alt="${first.product_name}" class="item-thumbnail">
@@ -1581,8 +1586,13 @@
                         </div>
                     </div>
                 </div>
+                ${stockBadgeHtml}
             `;
-            $row.find('td:nth-child(4)').html(html);
+            $row.find('td:nth-child(5)').html(html);
+            if (order.can_approve) {
+                var $appOpt = $row.find('select.btn-quick-status option[value="approved"]');
+                $appOpt.prop('disabled', false).css('color', '').text('Approved');
+            }
         }
     }
 
