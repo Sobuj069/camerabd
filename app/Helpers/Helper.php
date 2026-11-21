@@ -1867,22 +1867,6 @@ function calculateUnitPriceUsingFIFO($productId, $requiredQty, $variationId = nu
 
 //         $purchaseItems = $query->get();
 
-        // Fallback: if no rows matched the strict variation filter, use any positive-stock purchase batch for this product
-        if ($purchaseItems->isEmpty()) {
-            $fallbackQuery = PurchaseItem::where('product_id', $productId)
-                ->where('stock_qty', '>', 0)
-                ->orderBy('date', 'asc')
-                ->orderBy('id', 'asc');
-            if ($branchId) {
-                $fallbackQuery->where('branch_id', $branchId);
-            } elseif ($userBranchId != 1) {
-                $fallbackQuery->where('branch_id', $userBranchId);
-            } elseif ($filterBranchId) {
-                $fallbackQuery->where('branch_id', $filterBranchId);
-            }
-            $purchaseItems = $fallbackQuery->get();
-        }
-
 //         $remainingQty = $requiredQty;
 //         $totalCost = 0;
 //         $totalQtyConsidered = 0;
