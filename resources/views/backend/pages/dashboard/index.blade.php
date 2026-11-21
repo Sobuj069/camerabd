@@ -658,6 +658,14 @@
             border-color: #6366f1 !important;
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.16);
         }
+        .prod-status-table-wrap th.prod-col-active,
+        .prod-status-table-wrap td.prod-col-active {
+            background-color: rgba(99, 102, 241, 0.08) !important;
+        }
+        .dark .prod-status-table-wrap th.prod-col-active,
+        .dark .prod-status-table-wrap td.prod-col-active {
+            background-color: rgba(99, 102, 241, 0.18) !important;
+        }
         .prod-status-table-wrap {
             max-height: 360px;
             overflow-y: auto;
@@ -2277,20 +2285,26 @@
                         <!-- 3-Column Layout: Left Badges | Center Donut Chart | Right Badges -->
                         @php
                             $webBreakdown = $website_orders_chart['breakdown'] ?? ($web_order_report_chart['breakdown'] ?? []);
+                            $webTotalQtyVal = $website_orders_chart['total_qty'] ?? ($web_order_report_chart['total_qty'] ?? null);
                             $webMid = ceil(count($webBreakdown) / 2);
                             $webLeftItems = array_slice($webBreakdown, 0, $webMid);
                             $webRightItems = array_slice($webBreakdown, $webMid);
                         @endphp
                         <div class="flex flex-row items-center justify-between gap-1.5 sm:gap-3 w-full my-auto py-2">
                             <!-- Left Side Status Badges -->
-                            <div class="flex flex-col gap-1.5 sm:gap-2 w-[98px] xs:w-[115px] sm:w-[135px] xl:w-[145px] shrink-0" id="webOrdersLegendLeft">
+                            <div class="flex flex-col gap-1.5 sm:gap-2 w-[105px] xs:w-[125px] sm:w-[155px] xl:w-[170px] shrink-0" id="webOrdersLegendLeft">
                                 @foreach($webLeftItems as $bItem)
-                                    <a href="{{ route('website-orders.index', ['status' => $bItem['label']]) }}" class="flex items-center justify-between p-1 sm:p-1.5 px-1.5 sm:px-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200/80 dark:border-slate-700 shadow-sm hover:border-blue-400 transition-all">
+                                    <a href="{{ route('website-orders.index', ['status' => $bItem['label']]) }}" title="{{ $bItem['label'] }}: {{ $bItem['count'] }} Orders{{ isset($bItem['qty']) ? ' (' . $bItem['qty'] . ' Pcs Qty)' : '' }}" class="flex items-center justify-between gap-1 p-1 sm:p-1.5 px-1.5 sm:px-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200/80 dark:border-slate-700 shadow-sm hover:border-blue-400 transition-all">
                                         <div class="flex items-center gap-1 sm:gap-1.5 min-w-0">
                                             <span class="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full shrink-0" style="background-color: {{ $bItem['color'] }};"></span>
-                                            <span class="text-[9.5px] sm:text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate" title="{{ $bItem['label'] }}">{{ $bItem['label'] }}</span>
+                                            <span class="text-[9.5px] sm:text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate">{{ $bItem['label'] }}</span>
                                         </div>
-                                        <span class="px-1 sm:px-1.5 py-0.5 bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-[9.5px] sm:text-[11px] font-black rounded shrink-0">{{ $bItem['count'] }}</span>
+                                        <div class="flex items-center gap-1 shrink-0">
+                                            <span class="px-1 sm:px-1.5 py-0.5 bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-[9.5px] sm:text-[11px] font-black rounded">{{ $bItem['count'] }}</span>
+                                            @if(isset($bItem['qty']) && (int)$bItem['qty'] > (int)$bItem['count'])
+                                                <span class="px-1 py-0.5 bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-300 text-[8.5px] sm:text-[9.5px] font-extrabold rounded" title="{{ __('Total Product Qty') }}">{{ $bItem['qty'] }}p</span>
+                                            @endif
+                                        </div>
                                     </a>
                                 @endforeach
                             </div>
@@ -2305,18 +2319,26 @@
                                     <span id="webOrdersTotalCount" class="text-lg sm:text-xl font-black text-slate-800 dark:text-white mt-0.5 block">
                                         {{ number_format($website_orders_chart['total_orders'] ?? ($web_order_report_chart['total_orders'] ?? 0)) }}
                                     </span>
+                                    <span id="webOrdersTotalQtyWrap" class="inline-block mt-1 px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 text-[10px] font-extrabold" @if($webTotalQtyVal === null) style="display:none;" @endif>
+                                        {{ __('Total Qty') }}: <span id="webOrdersTotalQty">{{ number_format($webTotalQtyVal ?? 0) }}</span> {{ __('Pcs') }}
+                                    </span>
                                 </div>
                             </div>
 
                             <!-- Right Side Status Badges -->
-                            <div class="flex flex-col gap-1.5 sm:gap-2 w-[98px] xs:w-[115px] sm:w-[135px] xl:w-[145px] shrink-0" id="webOrdersLegendRight">
+                            <div class="flex flex-col gap-1.5 sm:gap-2 w-[105px] xs:w-[125px] sm:w-[155px] xl:w-[170px] shrink-0" id="webOrdersLegendRight">
                                 @foreach($webRightItems as $bItem)
-                                    <a href="{{ route('website-orders.index', ['status' => $bItem['label']]) }}" class="flex items-center justify-between p-1 sm:p-1.5 px-1.5 sm:px-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200/80 dark:border-slate-700 shadow-sm hover:border-blue-400 transition-all">
+                                    <a href="{{ route('website-orders.index', ['status' => $bItem['label']]) }}" title="{{ $bItem['label'] }}: {{ $bItem['count'] }} Orders{{ isset($bItem['qty']) ? ' (' . $bItem['qty'] . ' Pcs Qty)' : '' }}" class="flex items-center justify-between gap-1 p-1 sm:p-1.5 px-1.5 sm:px-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200/80 dark:border-slate-700 shadow-sm hover:border-blue-400 transition-all">
                                         <div class="flex items-center gap-1 sm:gap-1.5 min-w-0">
                                             <span class="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full shrink-0" style="background-color: {{ $bItem['color'] }};"></span>
-                                            <span class="text-[9.5px] sm:text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate" title="{{ $bItem['label'] }}">{{ $bItem['label'] }}</span>
+                                            <span class="text-[9.5px] sm:text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate">{{ $bItem['label'] }}</span>
                                         </div>
-                                        <span class="px-1 sm:px-1.5 py-0.5 bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-[9.5px] sm:text-[11px] font-black rounded shrink-0">{{ $bItem['count'] }}</span>
+                                        <div class="flex items-center gap-1 shrink-0">
+                                            <span class="px-1 sm:px-1.5 py-0.5 bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-[9.5px] sm:text-[11px] font-black rounded">{{ $bItem['count'] }}</span>
+                                            @if(isset($bItem['qty']) && (int)$bItem['qty'] > (int)$bItem['count'])
+                                                <span class="px-1 py-0.5 bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-300 text-[8.5px] sm:text-[9.5px] font-extrabold rounded" title="{{ __('Total Product Qty') }}">{{ $bItem['qty'] }}p</span>
+                                            @endif
+                                        </div>
                                     </a>
                                 @endforeach
                             </div>
@@ -2466,9 +2488,20 @@
 
         <!-- Product-Wise Website Order Status Breakdown Section -->
         @php
-            $psSummary = $product_status_summary ?? ['grand_total_qty' => 0, 'grand_total_orders' => 0, 'statuses' => [], 'products' => []];
+            $psSummary = $product_status_summary ?? ['grand_total_qty' => 0, 'grand_total_orders' => 0, 'statuses' => [], 'products' => [], 'active_status' => 'all'];
             $psStatuses = $psSummary['statuses'] ?? [];
             $psProducts = $psSummary['products'] ?? [];
+            $psActiveStatus = $psSummary['active_status'] ?? 'all';
+            $psStatusMap = collect($psStatuses)->keyBy('key')->all();
+            $psStatusCols = [
+                'processing'       => 'text-pink-600',
+                'good_no_response' => 'text-blue-600',
+                'no_response'      => 'text-orange-600',
+                'advance_payment'  => 'text-indigo-600',
+                'on_hold'          => 'text-lime-600',
+                'approved'         => 'text-purple-600',
+                'cancelled'        => 'text-red-600',
+            ];
         @endphp
         <div id="productOrderStatusSection" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/60 overflow-hidden mb-4">
             <!-- Header -->
@@ -2478,7 +2511,7 @@
                         <i class="fas fa-boxes-stacked text-indigo-500"></i> {{ __('Product-Wise Website Order Status') }}
                     </h3>
                     <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5 m-0">
-                        {{ __('Filter by product & status to view total Qty in Processing, Good But No Response, No Response, Advance Payment, On Hold, Approved & Cancel') }}
+                        {{ __('Orders = total website orders • Qty (Pcs) = total product pieces (may exceed Orders when a customer orders 2+ pcs)') }}
                     </p>
                 </div>
                 <div class="flex items-center gap-2 flex-wrap">
@@ -2538,7 +2571,12 @@
                 <!-- 7 Interactive Status Cards Grid -->
                 <div id="prodStatusCardsGrid" class="prod-status-grid mb-4">
                     @foreach($psStatuses as $st)
-                        <div class="prod-status-card" data-status="{{ $st['key'] }}">
+                        @php
+                            $stTitle = ($st['qty'] > $st['orders'])
+                                ? "{$st['label']}: {$st['orders']} Orders contain {$st['qty']} Pcs (includes multi-qty order) — Click to filter"
+                                : "{$st['label']}: {$st['orders']} Orders / {$st['qty']} Pcs — Click to filter";
+                        @endphp
+                        <div class="prod-status-card{{ $psActiveStatus === $st['key'] ? ' active-status' : '' }}" data-status="{{ $st['key'] }}" title="{{ $stTitle }}">
                             <div class="flex items-center justify-between gap-1.5 mb-2">
                                 <span class="text-[11px] font-extrabold text-slate-700 dark:text-slate-200 truncate" title="{{ $st['label'] }}">
                                     <span class="inline-block w-2 h-2 rounded-full mr-1" style="background-color: {{ $st['color'] }};"></span>
@@ -2548,13 +2586,17 @@
                                     <i class="fas {{ $st['icon'] }}"></i>
                                 </span>
                             </div>
-                            <div class="flex items-baseline justify-between gap-1">
-                                <span class="text-lg font-black text-slate-800 dark:text-white leading-tight">
-                                    {{ number_format($st['qty']) }} <span class="text-[11px] font-bold text-slate-400">Pcs</span>
-                                </span>
-                                <span class="text-[10.5px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 shrink-0">
-                                    {{ number_format($st['orders']) }} Ord
-                                </span>
+                            <div class="flex items-end justify-between gap-2 pt-1.5 border-t border-slate-100 dark:border-slate-800/80">
+                                <div>
+                                    <span class="block text-[9.5px] font-bold uppercase tracking-wider text-slate-400">{{ __('Orders') }}</span>
+                                    <span class="text-base font-black text-slate-800 dark:text-white leading-tight">{{ number_format($st['orders']) }}</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="block text-[9.5px] font-bold uppercase tracking-wider text-slate-400">{{ __('Total Qty') }}</span>
+                                    <span class="text-base font-black leading-tight" style="color: {{ $st['color'] }};">
+                                        {{ number_format($st['qty']) }} <span class="text-[10.5px] font-bold opacity-75">Pcs</span>
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     @endforeach
@@ -2567,13 +2609,13 @@
                             <tr>
                                 <th class="p-2.5 text-center" style="width: 40px;">#</th>
                                 <th class="p-2.5">{{ __('Product') }}</th>
-                                <th class="p-2.5 text-center" style="color: #db2777;">{{ __('Processing') }}</th>
-                                <th class="p-2.5 text-center" style="color: #2563eb;">{{ __('Good No Resp.') }}</th>
-                                <th class="p-2.5 text-center" style="color: #ea580c;">{{ __('No Response') }}</th>
-                                <th class="p-2.5 text-center" style="color: #4f46e5;">{{ __('Advance Pay.') }}</th>
-                                <th class="p-2.5 text-center" style="color: #65a30d;">{{ __('On Hold') }}</th>
-                                <th class="p-2.5 text-center" style="color: #9333ea;">{{ __('Approved') }}</th>
-                                <th class="p-2.5 text-center" style="color: #dc2626;">{{ __('Cancel') }}</th>
+                                <th class="p-2.5 text-center{{ $psActiveStatus === 'processing' ? ' prod-col-active' : '' }}" data-col="processing" style="color: #db2777;">{{ __('Processing') }}</th>
+                                <th class="p-2.5 text-center{{ $psActiveStatus === 'good_no_response' ? ' prod-col-active' : '' }}" data-col="good_no_response" style="color: #2563eb;">{{ __('Good No Resp.') }}</th>
+                                <th class="p-2.5 text-center{{ $psActiveStatus === 'no_response' ? ' prod-col-active' : '' }}" data-col="no_response" style="color: #ea580c;">{{ __('No Response') }}</th>
+                                <th class="p-2.5 text-center{{ $psActiveStatus === 'advance_payment' ? ' prod-col-active' : '' }}" data-col="advance_payment" style="color: #4f46e5;">{{ __('Advance Pay.') }}</th>
+                                <th class="p-2.5 text-center{{ $psActiveStatus === 'on_hold' ? ' prod-col-active' : '' }}" data-col="on_hold" style="color: #65a30d;">{{ __('On Hold') }}</th>
+                                <th class="p-2.5 text-center{{ $psActiveStatus === 'approved' ? ' prod-col-active' : '' }}" data-col="approved" style="color: #9333ea;">{{ __('Approved') }}</th>
+                                <th class="p-2.5 text-center{{ $psActiveStatus === 'cancelled' ? ' prod-col-active' : '' }}" data-col="cancelled" style="color: #dc2626;">{{ __('Cancel') }}</th>
                                 <th class="p-2.5 text-center font-black" style="color: #0f172a;">{{ __('Total Qty') }}</th>
                             </tr>
                         </thead>
@@ -2584,6 +2626,7 @@
                             @forelse($psProducts as $pIdx => $pRow)
                                 @php
                                     $pSt = $pRow['statuses'];
+                                    $pOrd = $pRow['status_orders'] ?? [];
                                     foreach ($colTotals as $ck => $cv) {
                                         if ($ck === 'total_qty') $colTotals['total_qty'] += (int)$pRow['total_qty'];
                                         elseif ($ck === 'orders') $colTotals['orders'] += (int)$pRow['orders_count'];
@@ -2605,13 +2648,18 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="p-2.5 text-center font-bold text-pink-600">{{ number_format($pSt['processing'] ?? 0) }}</td>
-                                    <td class="p-2.5 text-center font-bold text-blue-600">{{ number_format($pSt['good_no_response'] ?? 0) }}</td>
-                                    <td class="p-2.5 text-center font-bold text-orange-600">{{ number_format($pSt['no_response'] ?? 0) }}</td>
-                                    <td class="p-2.5 text-center font-bold text-indigo-600">{{ number_format($pSt['advance_payment'] ?? 0) }}</td>
-                                    <td class="p-2.5 text-center font-bold text-lime-600">{{ number_format($pSt['on_hold'] ?? 0) }}</td>
-                                    <td class="p-2.5 text-center font-bold text-purple-600">{{ number_format($pSt['approved'] ?? 0) }}</td>
-                                    <td class="p-2.5 text-center font-bold text-red-600">{{ number_format($pSt['cancelled'] ?? 0) }}</td>
+                                    @foreach($psStatusCols as $sk => $colorCls)
+                                        @php
+                                            $qVal = (int)($pSt[$sk] ?? 0);
+                                            $oVal = (int)($pOrd[$sk] ?? 0);
+                                        @endphp
+                                        <td class="p-2.5 text-center font-bold {{ $colorCls }}{{ $psActiveStatus === $sk ? ' prod-col-active' : '' }}">
+                                            {{ number_format($qVal) }}
+                                            @if($qVal > 0 && $oVal > 0 && $qVal !== $oVal)
+                                                <span class="block text-[9.5px] text-slate-400 font-semibold leading-tight">({{ number_format($oVal) }} Ord)</span>
+                                            @endif
+                                        </td>
+                                    @endforeach
                                     <td class="p-2.5 text-center">
                                         <span class="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-black">
                                             {{ number_format($pRow['total_qty']) }} Pcs
@@ -2631,13 +2679,18 @@
                             <tr>
                                 <td class="p-2.5 text-center text-slate-500">#</td>
                                 <td class="p-2.5 text-slate-800 dark:text-white font-black uppercase text-[11px]">{{ __('All Total Qty') }}</td>
-                                <td class="p-2.5 text-center text-pink-600">{{ number_format($colTotals['processing']) }}</td>
-                                <td class="p-2.5 text-center text-blue-600">{{ number_format($colTotals['good_no_response']) }}</td>
-                                <td class="p-2.5 text-center text-orange-600">{{ number_format($colTotals['no_response']) }}</td>
-                                <td class="p-2.5 text-center text-indigo-600">{{ number_format($colTotals['advance_payment']) }}</td>
-                                <td class="p-2.5 text-center text-lime-600">{{ number_format($colTotals['on_hold']) }}</td>
-                                <td class="p-2.5 text-center text-purple-600">{{ number_format($colTotals['approved']) }}</td>
-                                <td class="p-2.5 text-center text-red-600">{{ number_format($colTotals['cancelled']) }}</td>
+                                @foreach($psStatusCols as $sk => $colorCls)
+                                    @php
+                                        $totQtyVal = (int)($colTotals[$sk] ?? 0);
+                                        $totOrdVal = (int)($psStatusMap[$sk]['orders'] ?? 0);
+                                    @endphp
+                                    <td class="p-2.5 text-center {{ $colorCls }}{{ $psActiveStatus === $sk ? ' prod-col-active' : '' }}">
+                                        {{ number_format($totQtyVal) }}
+                                        @if(($psActiveStatus === 'all' || $psActiveStatus === $sk) && $totQtyVal > 0 && $totOrdVal > 0 && $totQtyVal !== $totOrdVal)
+                                            <span class="block text-[9.5px] text-slate-400 font-semibold leading-tight">({{ number_format($totOrdVal) }} Ord)</span>
+                                        @endif
+                                    </td>
+                                @endforeach
                                 <td class="p-2.5 text-center text-indigo-700 dark:text-indigo-300 font-black">{{ number_format($colTotals['total_qty']) }} Pcs</td>
                             </tr>
                         </tfoot>
@@ -3350,6 +3403,10 @@
                                         let value = context.raw || 0;
                                         let total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
                                         let percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                        let bItem = (currentWebOrdersData.breakdown && currentWebOrdersData.breakdown[context.dataIndex]) ? currentWebOrdersData.breakdown[context.dataIndex] : null;
+                                        if (bItem && bItem.qty !== null && bItem.qty !== undefined) {
+                                            return `${label}: ${value} Orders / ${bItem.qty} Pcs (${percentage}%)`;
+                                        }
                                         return `${label}: ${value} (${percentage}%)`;
                                     }
                                 }
@@ -3373,6 +3430,12 @@
                     success: function(res) {
                         currentWebOrdersData = res;
                         $('#webOrdersTotalCount').text(Number(res.total_orders || 0).toLocaleString());
+                        if (res.total_qty !== null && res.total_qty !== undefined) {
+                            $('#webOrdersTotalQty').text(Number(res.total_qty).toLocaleString());
+                            $('#webOrdersTotalQtyWrap').show();
+                        } else {
+                            $('#webOrdersTotalQtyWrap').hide();
+                        }
 
                         if (res.breakdown) {
                             let mid = Math.ceil(res.breakdown.length / 2);
@@ -3383,13 +3446,21 @@
                                 let html = '';
                                 items.forEach(function(item) {
                                     const encodedStatus = encodeURIComponent(item.label);
+                                    const hasQty = (item.qty !== null && item.qty !== undefined);
+                                    const qtyHint = hasQty ? ` (${item.qty} Pcs Qty)` : '';
+                                    const qtyPill = (hasQty && Number(item.qty) > Number(item.count))
+                                        ? `<span class="px-1 py-0.5 bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-300 text-[8.5px] sm:text-[9.5px] font-extrabold rounded" title="{{ __('Total Product Qty') }}">${item.qty}p</span>`
+                                        : '';
                                     html += `
-                                        <a href="{{ route('website-orders.index') }}?status=${encodedStatus}" class="flex items-center justify-between p-1 sm:p-1.5 px-1.5 sm:px-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200/80 dark:border-slate-700 shadow-sm hover:border-blue-400 transition-all">
+                                        <a href="{{ route('website-orders.index') }}?status=${encodedStatus}" title="${escapeProdHtml(item.label)}: ${item.count} Orders${qtyHint}" class="flex items-center justify-between gap-1 p-1 sm:p-1.5 px-1.5 sm:px-2 bg-white dark:bg-slate-800 rounded-lg border border-slate-200/80 dark:border-slate-700 shadow-sm hover:border-blue-400 transition-all">
                                             <div class="flex items-center gap-1 sm:gap-1.5 min-w-0">
                                                 <span class="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full shrink-0" style="background-color: ${item.color};"></span>
-                                                <span class="text-[9.5px] sm:text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate" title="${item.label}">${item.label}</span>
+                                                <span class="text-[9.5px] sm:text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate">${escapeProdHtml(item.label)}</span>
                                             </div>
-                                            <span class="px-1 sm:px-1.5 py-0.5 bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-[9.5px] sm:text-[11px] font-black rounded shrink-0">${item.count}</span>
+                                            <div class="flex items-center gap-1 shrink-0">
+                                                <span class="px-1 sm:px-1.5 py-0.5 bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-[9.5px] sm:text-[11px] font-black rounded">${item.count}</span>
+                                                ${qtyPill}
+                                            </div>
                                         </a>
                                     `;
                                 });
@@ -3753,13 +3824,34 @@
                         $('#prodStatusGrandOrders').text(Number(res.grand_total_orders || 0).toLocaleString());
 
                         const activeSt = res.active_status || 'all';
+                        const PROD_STATUS_COLS = [
+                            { key: 'processing',       colorCls: 'text-pink-600' },
+                            { key: 'good_no_response', colorCls: 'text-blue-600' },
+                            { key: 'no_response',      colorCls: 'text-orange-600' },
+                            { key: 'advance_payment',  colorCls: 'text-indigo-600' },
+                            { key: 'on_hold',          colorCls: 'text-lime-600' },
+                            { key: 'approved',         colorCls: 'text-purple-600' },
+                            { key: 'cancelled',        colorCls: 'text-red-600' }
+                        ];
 
+                        $('#prodStatusBreakdownTable thead th[data-col]').removeClass('prod-col-active');
+                        if (activeSt !== 'all') {
+                            $(`#prodStatusBreakdownTable thead th[data-col="${activeSt}"]`).addClass('prod-col-active');
+                        }
+
+                        const statusMap = {};
                         if (res.statuses) {
                             let cardsHtml = '';
                             res.statuses.forEach(function(st) {
+                                statusMap[st.key] = st;
                                 const isActiveCls = (activeSt === st.key) ? ' active-status' : '';
+                                const qtyVal = Number(st.qty || 0);
+                                const ordVal = Number(st.orders || 0);
+                                const cardTitle = (qtyVal > ordVal)
+                                    ? `${st.label}: ${ordVal} Orders contain ${qtyVal} Pcs (includes multi-qty order) — Click to filter`
+                                    : `${st.label}: ${ordVal} Orders / ${qtyVal} Pcs — Click to filter`;
                                 cardsHtml += `
-                                    <div class="prod-status-card${isActiveCls}" data-status="${escapeProdHtml(st.key)}">
+                                    <div class="prod-status-card${isActiveCls}" data-status="${escapeProdHtml(st.key)}" title="${escapeProdHtml(cardTitle)}">
                                         <div class="flex items-center justify-between gap-1.5 mb-2">
                                             <span class="text-[11px] font-extrabold text-slate-700 dark:text-slate-200 truncate" title="${escapeProdHtml(st.label)}">
                                                 <span class="inline-block w-2 h-2 rounded-full mr-1" style="background-color: ${escapeProdHtml(st.color)};"></span>
@@ -3769,18 +3861,31 @@
                                                 <i class="fas ${escapeProdHtml(st.icon)}"></i>
                                             </span>
                                         </div>
-                                        <div class="flex items-baseline justify-between gap-1">
-                                            <span class="text-lg font-black text-slate-800 dark:text-white leading-tight">
-                                                ${Number(st.qty || 0).toLocaleString()} <span class="text-[11px] font-bold text-slate-400">Pcs</span>
-                                            </span>
-                                            <span class="text-[10.5px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 shrink-0">
-                                                ${Number(st.orders || 0).toLocaleString()} Ord
-                                            </span>
+                                        <div class="flex items-end justify-between gap-2 pt-1.5 border-t border-slate-100 dark:border-slate-800/80">
+                                            <div>
+                                                <span class="block text-[9.5px] font-bold uppercase tracking-wider text-slate-400">{{ __('Orders') }}</span>
+                                                <span class="text-base font-black text-slate-800 dark:text-white leading-tight">${ordVal.toLocaleString()}</span>
+                                            </div>
+                                            <div class="text-right">
+                                                <span class="block text-[9.5px] font-bold uppercase tracking-wider text-slate-400">{{ __('Total Qty') }}</span>
+                                                <span class="text-base font-black leading-tight" style="color: ${escapeProdHtml(st.color)};">
+                                                    ${qtyVal.toLocaleString()} <span class="text-[10.5px] font-bold opacity-75">Pcs</span>
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 `;
                             });
                             $('#prodStatusCardsGrid').html(cardsHtml);
+                        }
+
+                        function renderStatusCell(qtyVal, ordVal, colorCls, statusKey, isFooter) {
+                            const activeCls = (activeSt === statusKey) ? ' prod-col-active' : '';
+                            const fontCls = isFooter ? '' : ' font-bold';
+                            const ordSub = (qtyVal > 0 && ordVal > 0 && qtyVal !== ordVal)
+                                ? `<span class="block text-[9.5px] text-slate-400 font-semibold leading-tight">(${ordVal.toLocaleString()} Ord)</span>`
+                                : '';
+                            return `<td class="p-2.5 text-center${fontCls} ${colorCls}${activeCls}">${qtyVal.toLocaleString()}${ordSub}</td>`;
                         }
 
                         const colTotals = {
@@ -3799,23 +3904,17 @@
                         if (products.length > 0) {
                             products.forEach(function(pRow, idx) {
                                 const pSt = pRow.statuses || {};
-                                const qProc = Number(pSt.processing || 0);
-                                const qGood = Number(pSt.good_no_response || 0);
-                                const qNoResp = Number(pSt.no_response || 0);
-                                const qAdv = Number(pSt.advance_payment || 0);
-                                const qHold = Number(pSt.on_hold || 0);
-                                const qApp = Number(pSt.approved || 0);
-                                const qCanc = Number(pSt.cancelled || 0);
+                                const pOrd = pRow.status_orders || {};
                                 const qTot = Number(pRow.total_qty || 0);
-
-                                colTotals.processing += qProc;
-                                colTotals.good_no_response += qGood;
-                                colTotals.no_response += qNoResp;
-                                colTotals.advance_payment += qAdv;
-                                colTotals.on_hold += qHold;
-                                colTotals.approved += qApp;
-                                colTotals.cancelled += qCanc;
                                 colTotals.total_qty += qTot;
+
+                                let statusCellsHtml = '';
+                                PROD_STATUS_COLS.forEach(function(col) {
+                                    const q = Number(pSt[col.key] || 0);
+                                    const o = Number(pOrd[col.key] || 0);
+                                    colTotals[col.key] += q;
+                                    statusCellsHtml += renderStatusCell(q, o, col.colorCls, col.key, false);
+                                });
 
                                 rowsHtml += `
                                     <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors">
@@ -3831,13 +3930,7 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="p-2.5 text-center font-bold text-pink-600">${qProc.toLocaleString()}</td>
-                                        <td class="p-2.5 text-center font-bold text-blue-600">${qGood.toLocaleString()}</td>
-                                        <td class="p-2.5 text-center font-bold text-orange-600">${qNoResp.toLocaleString()}</td>
-                                        <td class="p-2.5 text-center font-bold text-indigo-600">${qAdv.toLocaleString()}</td>
-                                        <td class="p-2.5 text-center font-bold text-lime-600">${qHold.toLocaleString()}</td>
-                                        <td class="p-2.5 text-center font-bold text-purple-600">${qApp.toLocaleString()}</td>
-                                        <td class="p-2.5 text-center font-bold text-red-600">${qCanc.toLocaleString()}</td>
+                                        ${statusCellsHtml}
                                         <td class="p-2.5 text-center">
                                             <span class="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-black">
                                                 ${qTot.toLocaleString()} Pcs
@@ -3859,17 +3952,19 @@
 
                         $('#prodStatusTableBody').html(rowsHtml);
 
+                        let footCellsHtml = '';
+                        PROD_STATUS_COLS.forEach(function(col) {
+                            const totQ = Number(colTotals[col.key] || 0);
+                            const canShowTotOrd = (activeSt === 'all' || activeSt === col.key);
+                            const totO = canShowTotOrd ? Number((statusMap[col.key] && statusMap[col.key].orders) ? statusMap[col.key].orders : 0) : 0;
+                            footCellsHtml += renderStatusCell(totQ, totO, col.colorCls, col.key, true);
+                        });
+
                         const footHtml = `
                             <tr>
                                 <td class="p-2.5 text-center text-slate-500">#</td>
                                 <td class="p-2.5 text-slate-800 dark:text-white font-black uppercase text-[11px]">{{ __('All Total Qty') }}</td>
-                                <td class="p-2.5 text-center text-pink-600">${colTotals.processing.toLocaleString()}</td>
-                                <td class="p-2.5 text-center text-blue-600">${colTotals.good_no_response.toLocaleString()}</td>
-                                <td class="p-2.5 text-center text-orange-600">${colTotals.no_response.toLocaleString()}</td>
-                                <td class="p-2.5 text-center text-indigo-600">${colTotals.advance_payment.toLocaleString()}</td>
-                                <td class="p-2.5 text-center text-lime-600">${colTotals.on_hold.toLocaleString()}</td>
-                                <td class="p-2.5 text-center text-purple-600">${colTotals.approved.toLocaleString()}</td>
-                                <td class="p-2.5 text-center text-red-600">${colTotals.cancelled.toLocaleString()}</td>
+                                ${footCellsHtml}
                                 <td class="p-2.5 text-center text-indigo-700 dark:text-indigo-300 font-black">${colTotals.total_qty.toLocaleString()} Pcs</td>
                             </tr>
                         `;

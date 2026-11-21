@@ -501,6 +501,17 @@ class DashboardController extends Controller
 
         $mergedOrders = collect();
 
+        $computeOrderQty = function ($wo) {
+            $woQty = 0;
+            if ($wo->relationLoaded('items') && $wo->items->isNotEmpty()) {
+                foreach ($wo->items as $it) {
+                    $q = (int) ($it->quantity ?? 0);
+                    $woQty += ($q > 0 ? $q : 1);
+                }
+            }
+            return $woQty;
+        };
+
         // Self-heal corrupted website orders from 2026-11-09 that were mistakenly marked 'cancelled' by courier sync
         try {
             WebsiteOrder::whereDate('created_at', '2026-11-09')
@@ -539,7 +550,7 @@ class DashboardController extends Controller
                     $q->where('branch_id', $activeBranchId)->orWhereNull('branch_id');
                 });
             }
-            $webOrders = $webOrdersQuery->with('invoice')->get();
+            $webOrders = $webOrdersQuery->with(['invoice', 'items'])->get();
 
             $orderNos = $webOrders->pluck('order_no')->filter()->toArray();
             $invIds = $webOrders->pluck('invoice_id')->filter()->toArray();
@@ -581,6 +592,7 @@ class DashboardController extends Controller
                     'id' => 'wo_' . $wo->id,
                     'order_status' => $status,
                     'total_amount' => $wo->total_amount,
+                    'qty' => $computeOrderQty($wo),
                 ]);
             }
         }
@@ -622,6 +634,7 @@ class DashboardController extends Controller
                     'id' => 'inv_' . $inv->id,
                     'order_status' => $status,
                     'total_amount' => $inv->total_amount,
+                    'qty' => null,
                 ]);
             }
         }
@@ -636,7 +649,7 @@ class DashboardController extends Controller
                     $q->where('branch_id', $activeBranchId)->orWhereNull('branch_id');
                 });
             }
-            $webOrders = $webOrdersQuery->with('invoice')->get();
+            $webOrders = $webOrdersQuery->with(['invoice', 'items'])->get();
             $linkedIds = [];
 
             $orderNos = $webOrders->pluck('order_no')->filter()->toArray();
@@ -682,6 +695,7 @@ class DashboardController extends Controller
                     'id' => 'wo_' . $wo->id,
                     'order_status' => $status,
                     'total_amount' => $wo->total_amount,
+                    'qty' => $computeOrderQty($wo),
                 ]);
             }
 
@@ -717,6 +731,7 @@ class DashboardController extends Controller
                         'id' => 'inv_' . $inv->id,
                         'order_status' => $status,
                         'total_amount' => $inv->total_amount,
+                        'qty' => null,
                     ]);
                 }
             }
@@ -730,12 +745,13 @@ class DashboardController extends Controller
             return [
                 'type' => 'incomplete_orders',
                 'total_orders' => $incompleteCount,
+                'total_qty' => ($source === 'website') ? (int) $incompleteInvs->sum('qty') : null,
                 'labels' => ['Incomplete / Pending Checkout', 'Follow Up Required'],
                 'data' => [$incompleteCount, 0],
                 'colors' => ['#f59e0b', '#ec4899'],
                 'breakdown' => [
-                    ['label' => 'Incomplete / Pending Checkout', 'count' => $incompleteCount, 'color' => '#f59e0b'],
-                    ['label' => 'Follow Up Required', 'count' => 0, 'color' => '#ec4899']
+                    ['label' => 'Incomplete / Pending Checkout', 'count' => $incompleteCount, 'qty' => ($source === 'website') ? (int) $incompleteInvs->sum('qty') : null, 'color' => '#f59e0b'],
+                    ['label' => 'Follow Up Required', 'count' => 0, 'qty' => ($source === 'website') ? 0 : null, 'color' => '#ec4899']
                 ],
                 'filter_label' => $filter === 'custom' ? ($sdate->format('M d') . ' - ' . $edate->format('M d, Y')) : str_replace('-', ' ', $filter)
             ];
@@ -765,6 +781,7 @@ class DashboardController extends Controller
         $colors = [];
         $breakdown = [];
         $countedIds = [];
+        $hasQty = ($source === 'website');
 
         foreach ($categories as $catName => $meta) {
             $matching = $mergedOrders->filter(function($ord) use ($meta, $countedIds) {
@@ -775,6 +792,7 @@ class DashboardController extends Controller
             });
 
             $count = $matching->count();
+            $qtySum = $hasQty ? (int) $matching->sum('qty') : null;
             foreach ($matching as $m) {
                 $countedIds[] = $m['id'];
             }
@@ -785,21 +803,28 @@ class DashboardController extends Controller
             $breakdown[] = [
                 'label' => $catName,
                 'count' => $count,
+                'qty' => $qtySum,
                 'color' => $meta['color']
             ];
         }
 
-        $unclassified = $mergedOrders->filter(fn($i) => !in_array($i['id'], $countedIds))->count();
+        $unclassifiedItems = $mergedOrders->filter(fn($i) => !in_array($i['id'], $countedIds));
+        $unclassified = $unclassifiedItems->count();
         if ($unclassified > 0) {
             $data[0] += $unclassified;
             $breakdown[0]['count'] += $unclassified;
+            if ($hasQty) {
+                $breakdown[0]['qty'] = (int) ($breakdown[0]['qty'] ?? 0) + (int) $unclassifiedItems->sum('qty');
+            }
         }
 
         $totalOrders = array_sum($data);
+        $totalQty = $hasQty ? array_sum(array_map(fn($b) => (int) ($b['qty'] ?? 0), $breakdown)) : null;
 
         return [
             'type' => 'web_orders',
             'total_orders' => $totalOrders,
+            'total_qty' => $totalQty,
             'labels' => $labels,
             'data' => $data,
             'colors' => $colors,
@@ -1016,12 +1041,22 @@ class DashboardController extends Controller
                             'approved'         => 0,
                             'cancelled'        => 0,
                         ],
+                        'status_order_ids' => [
+                            'processing'       => [],
+                            'good_no_response' => [],
+                            'no_response'      => [],
+                            'advance_payment'  => [],
+                            'on_hold'          => [],
+                            'approved'         => [],
+                            'cancelled'        => [],
+                        ],
                         'total_qty'  => 0,
                         'order_ids'  => [],
                     ];
                 }
 
                 $productMap[$groupKey]['statuses'][$status] += $qty;
+                $productMap[$groupKey]['status_order_ids'][$status][$wo->id] = true;
                 $productMap[$groupKey]['total_qty'] += $qty;
                 $productMap[$groupKey]['order_ids'][$wo->id] = true;
             }
@@ -1035,7 +1070,12 @@ class DashboardController extends Controller
         $activeStatus = isset($statusDefinitions[$statusFilter]) ? $statusFilter : 'all';
         foreach ($productMap as $pRow) {
             $pRow['orders_count'] = count($pRow['order_ids']);
-            unset($pRow['order_ids']);
+            $statusOrders = [];
+            foreach ($pRow['status_order_ids'] as $sk => $idsMap) {
+                $statusOrders[$sk] = count($idsMap);
+            }
+            $pRow['status_orders'] = $statusOrders;
+            unset($pRow['order_ids'], $pRow['status_order_ids']);
             if ($activeStatus !== 'all' && ($pRow['statuses'][$activeStatus] ?? 0) <= 0) {
                 continue;
             }
