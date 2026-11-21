@@ -65,6 +65,17 @@
             width: 100% !important;
         }
 
+        /* Escape table-responsive overflow clipping so Action dropdown items are never cut off */
+        #datatable-buttons .dropdown-menu {
+            position: fixed !important;
+            z-index: 9999 !important;
+            margin: 0 !important;
+            transform: none !important;
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2), 0 8px 10px -6px rgba(15, 23, 42, 0.1) !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 8px !important;
+        }
+
         /* Visible scrollbar on mobile and desktop so user easily sees they can scroll right */
         .online-table-responsive::-webkit-scrollbar,
         .table-responsive::-webkit-scrollbar {
@@ -969,7 +980,7 @@
                                                 </button>
                                                 <div class="dropdown d-inline-block">
                                                     <button class="btn btn-secondary btn-sm dropdown-toggle" type="button"
-                                                        id="dropdownMenuButton-{{ $data->id }}" data-toggle="dropdown" data-boundary="window" style="font-size:11px; padding:4px 8px;">
+                                                        id="dropdownMenuButton-{{ $data->id }}" data-toggle="dropdown" data-display="static" data-boundary="window" style="font-size:11px; padding:4px 8px;">
                                                         Action
                                                     </button>
                                                     <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton-{{ $data->id }}">
@@ -2293,5 +2304,71 @@
                 alert('Sync error: ' + err);
             });
         }
+
+        // Fixed-position Action dropdown so it is never clipped when table has 1 or few rows
+        function positionTableActionDropdown($dropdown) {
+            var $btn = $dropdown.find('[data-toggle="dropdown"]');
+            var $menu = $dropdown.find('.dropdown-menu');
+            if (!$btn.length || !$menu.length) return;
+
+            var btnRect = $btn[0].getBoundingClientRect();
+            $menu.css({
+                top: '0px',
+                left: '0px',
+                right: 'auto',
+                bottom: 'auto',
+                maxHeight: 'none',
+                overflowY: 'visible',
+                display: 'block',
+                visibility: 'hidden'
+            });
+
+            var menuWidth = $menu.outerWidth() || 240;
+            var menuHeight = $menu.outerHeight() || 320;
+            var vw = window.innerWidth || document.documentElement.clientWidth;
+            var vh = window.innerHeight || document.documentElement.clientHeight;
+
+            var leftPos = btnRect.right - menuWidth;
+            if (leftPos < 10) leftPos = 10;
+            if (leftPos + menuWidth > vw - 10) leftPos = Math.max(10, vw - menuWidth - 10);
+
+            var spaceBelow = vh - btnRect.bottom - 12;
+            var spaceAbove = btnRect.top - 12;
+            var topPos;
+            var maxH = vh - 24;
+
+            if (spaceBelow >= menuHeight || spaceBelow >= spaceAbove) {
+                topPos = btnRect.bottom + 4;
+                maxH = Math.max(150, vh - topPos - 12);
+            } else {
+                maxH = Math.max(150, spaceAbove - 4);
+                var actualH = Math.min(menuHeight, maxH);
+                topPos = Math.max(12, btnRect.top - actualH - 4);
+            }
+
+            $menu.css({
+                top: topPos + 'px',
+                left: leftPos + 'px',
+                maxHeight: maxH + 'px',
+                overflowY: 'auto',
+                display: '',
+                visibility: 'visible'
+            });
+        }
+
+        $(document).on('show.bs.dropdown shown.bs.dropdown', '#datatable-buttons .dropdown', function () {
+            positionTableActionDropdown($(this));
+        });
+
+        $('.online-table-responsive').on('scroll', function () {
+            $('#datatable-buttons .dropdown.show [data-toggle="dropdown"]').dropdown('hide');
+        });
+
+        $(window).on('scroll resize', function () {
+            var $openDropdown = $('#datatable-buttons .dropdown.show');
+            if ($openDropdown.length) {
+                positionTableActionDropdown($openDropdown);
+            }
+        });
     </script>
 @endpush
