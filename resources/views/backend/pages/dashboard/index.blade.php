@@ -615,6 +615,115 @@
                 margin-bottom: 8px;
             }
         }
+
+        /* Product-Wise Website Order Status Breakdown */
+        .prod-status-grid {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 10px;
+        }
+        @media (max-width: 1279px) {
+            .prod-status-grid {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+        }
+        @media (max-width: 639px) {
+            .prod-status-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+        .prod-status-card {
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 11px 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        }
+        .dark .prod-status-card {
+            background: #0f172a;
+            border-color: #334155;
+        }
+        .prod-status-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px rgba(15, 23, 42, 0.07);
+            border-color: #94a3b8;
+        }
+        .prod-status-card.active-status {
+            border-color: #6366f1 !important;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.16);
+        }
+        .prod-status-table-wrap {
+            max-height: 360px;
+            overflow-y: auto;
+            overflow-x: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+        }
+        .dark .prod-status-table-wrap {
+            border-color: #334155;
+        }
+        .prod-status-table-wrap thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: #f8fafc;
+            color: #475569;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            border-bottom: 1.5px solid #e2e8f0;
+            white-space: nowrap;
+        }
+        .dark .prod-status-table-wrap thead th {
+            background: #1e293b;
+            color: #cbd5e1;
+            border-color: #334155;
+        }
+        .prod-status-table-wrap tfoot td {
+            position: sticky;
+            bottom: 0;
+            z-index: 2;
+            background: #f1f5f9;
+            font-weight: 900;
+            border-top: 2px solid #cbd5e1;
+        }
+        .dark .prod-status-table-wrap tfoot td {
+            background: #0f172a;
+            border-color: #475569;
+        }
+        .prod-status-search-box {
+            position: relative;
+            flex: 1;
+            min-width: 220px;
+        }
+        .prod-status-search-input {
+            width: 100%;
+            height: 36px;
+            padding: 6px 32px 6px 32px;
+            font-size: 12.5px;
+            font-weight: 600;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #1e293b;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .dark .prod-status-search-input {
+            background: #0f172a;
+            border-color: #475569;
+            color: #f1f5f9;
+        }
+        .prod-status-search-input:focus {
+            border-color: #6366f1;
+        }
     </style>
 @endpush
 
@@ -2355,6 +2464,188 @@
             </div>
         </div>
 
+        <!-- Product-Wise Website Order Status Breakdown Section -->
+        @php
+            $psSummary = $product_status_summary ?? ['grand_total_qty' => 0, 'grand_total_orders' => 0, 'statuses' => [], 'products' => []];
+            $psStatuses = $psSummary['statuses'] ?? [];
+            $psProducts = $psSummary['products'] ?? [];
+        @endphp
+        <div id="productOrderStatusSection" class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/60 overflow-hidden mb-4">
+            <!-- Header -->
+            <div class="p-4 border-b border-slate-100 dark:border-slate-700/60 flex items-center justify-between flex-wrap gap-3">
+                <div>
+                    <h3 class="text-base font-extrabold text-slate-800 dark:text-white tracking-tight flex items-center gap-2 m-0">
+                        <i class="fas fa-boxes-stacked text-indigo-500"></i> {{ __('Product-Wise Website Order Status') }}
+                    </h3>
+                    <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5 m-0">
+                        {{ __('Filter by product & status to view total Qty in Processing, Good But No Response, No Response, Advance Payment, On Hold, Approved & Cancel') }}
+                    </p>
+                </div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="px-3 py-1 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 text-xs font-extrabold rounded-full border border-indigo-200 dark:border-indigo-800">
+                        <i class="fas fa-cubes mr-1"></i> {{ __('All Total Qty') }}: <span id="prodStatusGrandQty">{{ number_format($psSummary['grand_total_qty'] ?? 0) }}</span> {{ __('Pcs') }}
+                    </span>
+                    <span class="px-2.5 py-1 bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-full border border-slate-200 dark:border-slate-700">
+                        <i class="fas fa-shopping-bag mr-1"></i> <span id="prodStatusGrandOrders">{{ number_format($psSummary['grand_total_orders'] ?? 0) }}</span> {{ __('Orders') }}
+                    </span>
+                    <select id="productStatusRangeSelect" class="graph-ctrl-select">
+                        <option value="Last-30-days" selected>{{ __('30D') }}</option>
+                        <option value="Today">{{ __('Today') }}</option>
+                        <option value="Yesterday">{{ __('Yesterday') }}</option>
+                        <option value="Last-7-days">{{ __('7D') }}</option>
+                        <option value="This-month">{{ __('This Month') }}</option>
+                        <option value="Last-month">{{ __('Last Month') }}</option>
+                        <option value="Lifetime">{{ __('Lifetime') }}</option>
+                        <option value="custom">{{ __('Custom Date') }}</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="px-4 py-3 bg-slate-50/70 dark:bg-slate-900/40 border-b border-slate-100 dark:border-slate-700/60 flex flex-wrap items-center gap-2.5">
+                <div class="prod-status-search-box">
+                    <i class="fas fa-search text-slate-400 text-xs" style="position: absolute; left: 11px; top: 50%; transform: translateY(-50%);"></i>
+                    <input type="text" id="productStatusSearchInput" class="prod-status-search-input" placeholder="{{ __('Search product by name, barcode or SKU...') }}">
+                    <button type="button" id="btnClearProdStatusSearch" title="{{ __('Clear Search') }}" style="display: none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; cursor: pointer; padding: 2px 4px;">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
+                </div>
+
+                <select id="productStatusProductSelect" class="graph-ctrl-select" style="height: 36px; min-width: 190px; max-width: 260px;">
+                    <option value="all">{{ __('All Products') }}</option>
+                    @foreach(($dashboard_products_list ?? []) as $prod)
+                        <option value="{{ $prod->id }}">{{ $prod->name }}@if(!empty($prod->barcode)) ({{ $prod->barcode }})@endif</option>
+                    @endforeach
+                </select>
+
+                <select id="productStatusFilterSelect" class="graph-ctrl-select" style="height: 36px; min-width: 175px;">
+                    <option value="all" selected>{{ __('All Statuses') }}</option>
+                    <option value="processing">{{ __('Processing') }}</option>
+                    <option value="good_no_response">{{ __('Good But No Response') }}</option>
+                    <option value="no_response">{{ __('No Response') }}</option>
+                    <option value="advance_payment">{{ __('Advance Payment') }}</option>
+                    <option value="on_hold">{{ __('On Hold') }}</option>
+                    <option value="approved">{{ __('Approved') }}</option>
+                    <option value="cancelled">{{ __('Cancel') }}</option>
+                </select>
+
+                <button type="button" id="btnResetProdStatus" class="px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5" style="height: 36px;">
+                    <i class="fas fa-rotate-left"></i> {{ __('Reset') }}
+                </button>
+            </div>
+
+            <div class="p-4">
+                <!-- 7 Interactive Status Cards Grid -->
+                <div id="prodStatusCardsGrid" class="prod-status-grid mb-4">
+                    @foreach($psStatuses as $st)
+                        <div class="prod-status-card" data-status="{{ $st['key'] }}">
+                            <div class="flex items-center justify-between gap-1.5 mb-2">
+                                <span class="text-[11px] font-extrabold text-slate-700 dark:text-slate-200 truncate" title="{{ $st['label'] }}">
+                                    <span class="inline-block w-2 h-2 rounded-full mr-1" style="background-color: {{ $st['color'] }};"></span>
+                                    {{ $st['label'] }}
+                                </span>
+                                <span class="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 text-[10px]" style="background-color: {{ $st['bg'] }}; color: {{ $st['color'] }};">
+                                    <i class="fas {{ $st['icon'] }}"></i>
+                                </span>
+                            </div>
+                            <div class="flex items-baseline justify-between gap-1">
+                                <span class="text-lg font-black text-slate-800 dark:text-white leading-tight">
+                                    {{ number_format($st['qty']) }} <span class="text-[11px] font-bold text-slate-400">Pcs</span>
+                                </span>
+                                <span class="text-[10.5px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 shrink-0">
+                                    {{ number_format($st['orders']) }} Ord
+                                </span>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <!-- Product Breakdown Table -->
+                <div class="prod-status-table-wrap">
+                    <table id="prodStatusBreakdownTable" class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr>
+                                <th class="p-2.5 text-center" style="width: 40px;">#</th>
+                                <th class="p-2.5">{{ __('Product') }}</th>
+                                <th class="p-2.5 text-center" style="color: #db2777;">{{ __('Processing') }}</th>
+                                <th class="p-2.5 text-center" style="color: #2563eb;">{{ __('Good No Resp.') }}</th>
+                                <th class="p-2.5 text-center" style="color: #ea580c;">{{ __('No Response') }}</th>
+                                <th class="p-2.5 text-center" style="color: #4f46e5;">{{ __('Advance Pay.') }}</th>
+                                <th class="p-2.5 text-center" style="color: #65a30d;">{{ __('On Hold') }}</th>
+                                <th class="p-2.5 text-center" style="color: #9333ea;">{{ __('Approved') }}</th>
+                                <th class="p-2.5 text-center" style="color: #dc2626;">{{ __('Cancel') }}</th>
+                                <th class="p-2.5 text-center font-black" style="color: #0f172a;">{{ __('Total Qty') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody id="prodStatusTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-800/40">
+                            @php
+                                $colTotals = ['processing' => 0, 'good_no_response' => 0, 'no_response' => 0, 'advance_payment' => 0, 'on_hold' => 0, 'approved' => 0, 'cancelled' => 0, 'total_qty' => 0, 'orders' => 0];
+                            @endphp
+                            @forelse($psProducts as $pIdx => $pRow)
+                                @php
+                                    $pSt = $pRow['statuses'];
+                                    foreach ($colTotals as $ck => $cv) {
+                                        if ($ck === 'total_qty') $colTotals['total_qty'] += (int)$pRow['total_qty'];
+                                        elseif ($ck === 'orders') $colTotals['orders'] += (int)$pRow['orders_count'];
+                                        else $colTotals[$ck] += (int)($pSt[$ck] ?? 0);
+                                    }
+                                @endphp
+                                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors">
+                                    <td class="p-2.5 text-center font-bold text-slate-400">{{ $pIdx + 1 }}</td>
+                                    <td class="p-2.5">
+                                        <div class="flex items-center gap-2 min-w-[180px]">
+                                            <img src="{{ $pRow['image'] }}" alt="" class="w-8 h-8 rounded-lg object-contain border border-slate-200 dark:border-slate-700 bg-white shrink-0">
+                                            <div class="min-w-0">
+                                                <button type="button" class="btn-pick-prod-status text-left font-bold text-slate-800 dark:text-slate-100 hover:text-indigo-600 transition-colors p-0 border-0 bg-transparent cursor-pointer truncate block max-w-[260px]" data-name="{{ $pRow['name'] }}" title="{{ $pRow['name'] }}">
+                                                    {{ $pRow['name'] }}
+                                                </button>
+                                                @if(!empty($pRow['barcode']))
+                                                    <span class="text-[10.5px] text-slate-400 font-mono">SKU: {{ $pRow['barcode'] }}</span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="p-2.5 text-center font-bold text-pink-600">{{ number_format($pSt['processing'] ?? 0) }}</td>
+                                    <td class="p-2.5 text-center font-bold text-blue-600">{{ number_format($pSt['good_no_response'] ?? 0) }}</td>
+                                    <td class="p-2.5 text-center font-bold text-orange-600">{{ number_format($pSt['no_response'] ?? 0) }}</td>
+                                    <td class="p-2.5 text-center font-bold text-indigo-600">{{ number_format($pSt['advance_payment'] ?? 0) }}</td>
+                                    <td class="p-2.5 text-center font-bold text-lime-600">{{ number_format($pSt['on_hold'] ?? 0) }}</td>
+                                    <td class="p-2.5 text-center font-bold text-purple-600">{{ number_format($pSt['approved'] ?? 0) }}</td>
+                                    <td class="p-2.5 text-center font-bold text-red-600">{{ number_format($pSt['cancelled'] ?? 0) }}</td>
+                                    <td class="p-2.5 text-center">
+                                        <span class="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-black">
+                                            {{ number_format($pRow['total_qty']) }} Pcs
+                                        </span>
+                                        <span class="block text-[10px] text-slate-400 font-semibold mt-0.5">{{ number_format($pRow['orders_count']) }} Ord</span>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="10" class="p-6 text-center text-slate-400 font-bold">
+                                        {{ __('No product orders found for the selected filters.') }}
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                        <tfoot id="prodStatusTableFoot">
+                            <tr>
+                                <td class="p-2.5 text-center text-slate-500">#</td>
+                                <td class="p-2.5 text-slate-800 dark:text-white font-black uppercase text-[11px]">{{ __('All Total Qty') }}</td>
+                                <td class="p-2.5 text-center text-pink-600">{{ number_format($colTotals['processing']) }}</td>
+                                <td class="p-2.5 text-center text-blue-600">{{ number_format($colTotals['good_no_response']) }}</td>
+                                <td class="p-2.5 text-center text-orange-600">{{ number_format($colTotals['no_response']) }}</td>
+                                <td class="p-2.5 text-center text-indigo-600">{{ number_format($colTotals['advance_payment']) }}</td>
+                                <td class="p-2.5 text-center text-lime-600">{{ number_format($colTotals['on_hold']) }}</td>
+                                <td class="p-2.5 text-center text-purple-600">{{ number_format($colTotals['approved']) }}</td>
+                                <td class="p-2.5 text-center text-red-600">{{ number_format($colTotals['cancelled']) }}</td>
+                                <td class="p-2.5 text-center text-indigo-700 dark:text-indigo-300 font-black">{{ number_format($colTotals['total_qty']) }} Pcs</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <!-- 3 Modern Analytics Graphs Section (Theme Matched) -->
         <div class="my-6">
             <!-- 1. Order Counts Graph -->
@@ -2719,6 +3010,7 @@
                 else if (target === 'web_orders') title = "{{ __('Website Orders Date Range') }}";
                 else if (target === 'woo_orders') title = "{{ __('WooCommerce Orders Date Range') }}";
                 else if (target === 'orders_by_source') title = "{{ __('Orders by Source Date Range') }}";
+                else if (target === 'product_status') title = "{{ __('Product Order Status Date Range') }}";
 
                 $('#analyticsCustomDateModalLabel').html('<i class="fas fa-calendar-alt text-purple-400 mr-2"></i>' + title);
                 $('#analyticsCustomDateModal').modal('show');
@@ -2809,6 +3101,12 @@
                     $sel.find('option[value="custom"]').text('Custom (' + label + ')');
                     $sel.val('custom');
                     reloadOrdersBySourceChart($('#ordersBySourceStatusSelect').val() || 'all', 'custom', sDate, eDate);
+                } else if (activeAnalyticsTarget === 'product_status') {
+                    let $sel = $('#productStatusRangeSelect');
+                    $sel.data('last-value', 'custom').data('custom-start', sDate).data('custom-end', eDate);
+                    $sel.find('option[value="custom"]').text('Custom (' + label + ')');
+                    $sel.val('custom');
+                    reloadProductStatusSummary();
                 }
             });
 
@@ -2820,6 +3118,7 @@
                     else if (activeAnalyticsTarget === 'web_orders') $sel = $('#webOrdersRangeSelect');
                     else if (activeAnalyticsTarget === 'woo_orders') $sel = $('#wooOrdersRangeSelect');
                     else if (activeAnalyticsTarget === 'orders_by_source') $sel = $('#ordersBySourceRangeSelect');
+                    else if (activeAnalyticsTarget === 'product_status') $sel = $('#productStatusRangeSelect');
 
                     if ($sel && $sel.val() === 'custom' && !$sel.data('custom-start')) {
                         let prev = previousSelectValues[activeAnalyticsTarget] || 'Last-30-days';
@@ -2829,7 +3128,7 @@
             });
 
             // Re-open custom date modal if user clicks on select that is currently set to custom
-            $(document).on('click', '#manualSalesRangeSelect, #onlinePlatformsRangeSelect, #webOrdersRangeSelect, #wooOrdersRangeSelect, #ordersBySourceRangeSelect', function(e) {
+            $(document).on('click', '#manualSalesRangeSelect, #onlinePlatformsRangeSelect, #webOrdersRangeSelect, #wooOrdersRangeSelect, #ordersBySourceRangeSelect, #productStatusRangeSelect', function(e) {
                 if ($(this).val() === 'custom') {
                     let id = $(this).attr('id');
                     let target = 'manual';
@@ -2837,6 +3136,7 @@
                     else if (id === 'webOrdersRangeSelect') target = 'web_orders';
                     else if (id === 'wooOrdersRangeSelect') target = 'woo_orders';
                     else if (id === 'ordersBySourceRangeSelect') target = 'orders_by_source';
+                    else if (id === 'productStatusRangeSelect') target = 'product_status';
                     openCustomDateModal(target, $(this));
                 }
             });
@@ -3409,6 +3709,234 @@
                     $(this).find('option[value="custom"]').text("{{ __('Custom Date') }}");
                     const status = $('#ordersBySourceStatusSelect').val();
                     reloadOrdersBySourceChart(status, val);
+                }
+            });
+
+            // ==========================================
+            // PRODUCT-WISE WEBSITE ORDER STATUS CONTROLLER
+            // ==========================================
+            function escapeProdHtml(str) {
+                return String(str ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            let prodStatusSearchTimer = null;
+
+            function reloadProductStatusSummary() {
+                const $rangeSel = $('#productStatusRangeSelect');
+                const range = $rangeSel.val() || 'Last-30-days';
+                const reqData = {
+                    filter: range,
+                    product_id: $('#productStatusProductSelect').val() || 'all',
+                    search: ($('#productStatusSearchInput').val() || '').trim(),
+                    status: $('#productStatusFilterSelect').val() || 'all'
+                };
+
+                if (range === 'custom') {
+                    reqData.start_date = $rangeSel.data('custom-start');
+                    reqData.end_date = $rangeSel.data('custom-end');
+                }
+
+                $('#prodStatusTableBody').css('opacity', '0.55');
+
+                $.ajax({
+                    url: "{{ route('dashboard.chart.product-status-summary') }}",
+                    type: "GET",
+                    data: reqData,
+                    success: function(res) {
+                        $('#prodStatusTableBody').css('opacity', '1');
+                        $('#prodStatusGrandQty').text(Number(res.grand_total_qty || 0).toLocaleString());
+                        $('#prodStatusGrandOrders').text(Number(res.grand_total_orders || 0).toLocaleString());
+
+                        const activeSt = res.active_status || 'all';
+
+                        if (res.statuses) {
+                            let cardsHtml = '';
+                            res.statuses.forEach(function(st) {
+                                const isActiveCls = (activeSt === st.key) ? ' active-status' : '';
+                                cardsHtml += `
+                                    <div class="prod-status-card${isActiveCls}" data-status="${escapeProdHtml(st.key)}">
+                                        <div class="flex items-center justify-between gap-1.5 mb-2">
+                                            <span class="text-[11px] font-extrabold text-slate-700 dark:text-slate-200 truncate" title="${escapeProdHtml(st.label)}">
+                                                <span class="inline-block w-2 h-2 rounded-full mr-1" style="background-color: ${escapeProdHtml(st.color)};"></span>
+                                                ${escapeProdHtml(st.label)}
+                                            </span>
+                                            <span class="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 text-[10px]" style="background-color: ${escapeProdHtml(st.bg)}; color: ${escapeProdHtml(st.color)};">
+                                                <i class="fas ${escapeProdHtml(st.icon)}"></i>
+                                            </span>
+                                        </div>
+                                        <div class="flex items-baseline justify-between gap-1">
+                                            <span class="text-lg font-black text-slate-800 dark:text-white leading-tight">
+                                                ${Number(st.qty || 0).toLocaleString()} <span class="text-[11px] font-bold text-slate-400">Pcs</span>
+                                            </span>
+                                            <span class="text-[10.5px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 shrink-0">
+                                                ${Number(st.orders || 0).toLocaleString()} Ord
+                                            </span>
+                                        </div>
+                                    </div>
+                                `;
+                            });
+                            $('#prodStatusCardsGrid').html(cardsHtml);
+                        }
+
+                        const colTotals = {
+                            processing: 0,
+                            good_no_response: 0,
+                            no_response: 0,
+                            advance_payment: 0,
+                            on_hold: 0,
+                            approved: 0,
+                            cancelled: 0,
+                            total_qty: 0
+                        };
+
+                        let rowsHtml = '';
+                        const products = res.products || [];
+                        if (products.length > 0) {
+                            products.forEach(function(pRow, idx) {
+                                const pSt = pRow.statuses || {};
+                                const qProc = Number(pSt.processing || 0);
+                                const qGood = Number(pSt.good_no_response || 0);
+                                const qNoResp = Number(pSt.no_response || 0);
+                                const qAdv = Number(pSt.advance_payment || 0);
+                                const qHold = Number(pSt.on_hold || 0);
+                                const qApp = Number(pSt.approved || 0);
+                                const qCanc = Number(pSt.cancelled || 0);
+                                const qTot = Number(pRow.total_qty || 0);
+
+                                colTotals.processing += qProc;
+                                colTotals.good_no_response += qGood;
+                                colTotals.no_response += qNoResp;
+                                colTotals.advance_payment += qAdv;
+                                colTotals.on_hold += qHold;
+                                colTotals.approved += qApp;
+                                colTotals.cancelled += qCanc;
+                                colTotals.total_qty += qTot;
+
+                                rowsHtml += `
+                                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors">
+                                        <td class="p-2.5 text-center font-bold text-slate-400">${idx + 1}</td>
+                                        <td class="p-2.5">
+                                            <div class="flex items-center gap-2 min-w-[180px]">
+                                                <img src="${escapeProdHtml(pRow.image)}" alt="" class="w-8 h-8 rounded-lg object-contain border border-slate-200 dark:border-slate-700 bg-white shrink-0">
+                                                <div class="min-w-0">
+                                                    <button type="button" class="btn-pick-prod-status text-left font-bold text-slate-800 dark:text-slate-100 hover:text-indigo-600 transition-colors p-0 border-0 bg-transparent cursor-pointer truncate block max-w-[260px]" data-name="${escapeProdHtml(pRow.name)}" title="${escapeProdHtml(pRow.name)}">
+                                                        ${escapeProdHtml(pRow.name)}
+                                                    </button>
+                                                    ${pRow.barcode ? `<span class="text-[10.5px] text-slate-400 font-mono">SKU: ${escapeProdHtml(pRow.barcode)}</span>` : ''}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="p-2.5 text-center font-bold text-pink-600">${qProc.toLocaleString()}</td>
+                                        <td class="p-2.5 text-center font-bold text-blue-600">${qGood.toLocaleString()}</td>
+                                        <td class="p-2.5 text-center font-bold text-orange-600">${qNoResp.toLocaleString()}</td>
+                                        <td class="p-2.5 text-center font-bold text-indigo-600">${qAdv.toLocaleString()}</td>
+                                        <td class="p-2.5 text-center font-bold text-lime-600">${qHold.toLocaleString()}</td>
+                                        <td class="p-2.5 text-center font-bold text-purple-600">${qApp.toLocaleString()}</td>
+                                        <td class="p-2.5 text-center font-bold text-red-600">${qCanc.toLocaleString()}</td>
+                                        <td class="p-2.5 text-center">
+                                            <span class="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-black">
+                                                ${qTot.toLocaleString()} Pcs
+                                            </span>
+                                            <span class="block text-[10px] text-slate-400 font-semibold mt-0.5">${Number(pRow.orders_count || 0).toLocaleString()} Ord</span>
+                                        </td>
+                                    </tr>
+                                `;
+                            });
+                        } else {
+                            rowsHtml = `
+                                <tr>
+                                    <td colspan="10" class="p-6 text-center text-slate-400 font-bold">
+                                        {{ __('No product orders found for the selected filters.') }}
+                                    </td>
+                                </tr>
+                            `;
+                        }
+
+                        $('#prodStatusTableBody').html(rowsHtml);
+
+                        const footHtml = `
+                            <tr>
+                                <td class="p-2.5 text-center text-slate-500">#</td>
+                                <td class="p-2.5 text-slate-800 dark:text-white font-black uppercase text-[11px]">{{ __('All Total Qty') }}</td>
+                                <td class="p-2.5 text-center text-pink-600">${colTotals.processing.toLocaleString()}</td>
+                                <td class="p-2.5 text-center text-blue-600">${colTotals.good_no_response.toLocaleString()}</td>
+                                <td class="p-2.5 text-center text-orange-600">${colTotals.no_response.toLocaleString()}</td>
+                                <td class="p-2.5 text-center text-indigo-600">${colTotals.advance_payment.toLocaleString()}</td>
+                                <td class="p-2.5 text-center text-lime-600">${colTotals.on_hold.toLocaleString()}</td>
+                                <td class="p-2.5 text-center text-purple-600">${colTotals.approved.toLocaleString()}</td>
+                                <td class="p-2.5 text-center text-red-600">${colTotals.cancelled.toLocaleString()}</td>
+                                <td class="p-2.5 text-center text-indigo-700 dark:text-indigo-300 font-black">${colTotals.total_qty.toLocaleString()} Pcs</td>
+                            </tr>
+                        `;
+                        $('#prodStatusTableFoot').html(footHtml);
+                    },
+                    error: function(xhr) {
+                        $('#prodStatusTableBody').css('opacity', '1');
+                        console.error('Product status summary error:', xhr);
+                    }
+                });
+            }
+
+            $('#productStatusRangeSelect').on('change', function() {
+                let val = $(this).val();
+                if (val === 'custom') {
+                    openCustomDateModal('product_status', $(this));
+                } else {
+                    $(this).data('last-value', val);
+                    $(this).find('option[value="custom"]').text("{{ __('Custom Date') }}");
+                    reloadProductStatusSummary();
+                }
+            });
+
+            $('#productStatusProductSelect, #productStatusFilterSelect').on('change', function() {
+                reloadProductStatusSummary();
+            });
+
+            $('#productStatusSearchInput').on('input', function() {
+                const val = $(this).val();
+                $('#btnClearProdStatusSearch').toggle(val.length > 0);
+                clearTimeout(prodStatusSearchTimer);
+                prodStatusSearchTimer = setTimeout(function() {
+                    reloadProductStatusSummary();
+                }, 300);
+            });
+
+            $('#btnClearProdStatusSearch').on('click', function() {
+                $('#productStatusSearchInput').val('');
+                $(this).hide();
+                reloadProductStatusSummary();
+            });
+
+            $('#btnResetProdStatus').on('click', function() {
+                $('#productStatusSearchInput').val('');
+                $('#btnClearProdStatusSearch').hide();
+                $('#productStatusProductSelect').val('all');
+                $('#productStatusFilterSelect').val('all');
+                const $range = $('#productStatusRangeSelect');
+                $range.val('Last-30-days').data('last-value', 'Last-30-days').removeData('custom-start').removeData('custom-end');
+                $range.find('option[value="custom"]').text("{{ __('Custom Date') }}");
+                reloadProductStatusSummary();
+            });
+
+            $(document).on('click', '.prod-status-card', function() {
+                const clickedStatus = $(this).data('status');
+                const currentStatus = $('#productStatusFilterSelect').val();
+                const nextStatus = (currentStatus === clickedStatus) ? 'all' : clickedStatus;
+                $('#productStatusFilterSelect').val(nextStatus);
+                reloadProductStatusSummary();
+            });
+
+            $(document).on('click', '.btn-pick-prod-status', function() {
+                const prodName = $(this).data('name') || '';
+                if (prodName) {
+                    $('#productStatusSearchInput').val(prodName);
+                    $('#btnClearProdStatusSearch').show();
+                    reloadProductStatusSummary();
                 }
             });
 

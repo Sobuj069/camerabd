@@ -1868,7 +1868,7 @@ class ReportController extends Controller
         }
 
         // Available Products for dropdown
-        $allProducts = Product::where('status', 1)->select('id', 'name', 'barcode')->take(100)->get();
+        $allProducts = Product::where('status', 1)->select('id', 'name', 'barcode')->orderBy('name', 'asc')->get();
 
         // 1. Live Steadfast Pipeline Counts (Exact 100% match with Steadfast Merchant Dashboard)
         $forceSync = $request->boolean('sync') || $request->input('force_sync') == 1;
@@ -1951,7 +1951,8 @@ class ReportController extends Controller
             $invQuery->where(function($q) use ($search) {
                 $q->where('invoice_no', 'like', "%{$search}%")
                   ->orWhere('consignment_id', 'like', "%{$search}%")
-                  ->orWhereHas('customer', fn($cq) => $cq->where('phone', 'like', "%{$search}%")->orWhere('name', 'like', "%{$search}%"));
+                  ->orWhereHas('customer', fn($cq) => $cq->where('phone', 'like', "%{$search}%")->orWhere('name', 'like', "%{$search}%"))
+                  ->orWhereHas('invoiceItems.product', fn($pq) => $pq->where('name', 'like', "%{$search}%")->orWhere('barcode', 'like', "%{$search}%"));
             });
         }
 
@@ -1972,8 +1973,14 @@ class ReportController extends Controller
                 || (!empty($inv->source_link) && in_array($inv->source_link, $webOrderNos))
             );
             $firstItem = $inv->invoiceItems->first();
-            $itemProduct = $firstItem?->product;
-            $itemsCount = (int)$inv->invoiceItems->sum('main_qty') ?: 1;
+            if ($productId !== 'all' && !empty($productId)) {
+                $targetItem = $inv->invoiceItems->firstWhere('product_id', $productId) ?: $firstItem;
+                $itemsCount = (int)$inv->invoiceItems->where('product_id', $productId)->sum('main_qty') ?: ((int)$inv->invoiceItems->sum('main_qty') ?: 1);
+            } else {
+                $targetItem = $firstItem;
+                $itemsCount = (int)$inv->invoiceItems->sum('main_qty') ?: 1;
+            }
+            $itemProduct = $targetItem?->product;
 
             $sellingPrice = (float)($inv->total_amount ?? 0);
             $costPrice = (float)($inv->invoiceItems->sum('pur_subtotal') ?: 0);
@@ -2051,10 +2058,11 @@ class ReportController extends Controller
                 'source'             => $isWeb ? 'Website' : 'Manual',
                 'date'               => Carbon::parse($inv->date ?: $inv->created_at)->format('d M Y'),
                 'product_image'      => $itemProduct?->thumbnail_url ?: asset('backend/images/no_images.png'),
-                'product_name'       => $itemProduct?->name ?: ($firstItem?->new_details ?: 'General Gear'),
+                'product_name'       => $itemProduct?->name ?: ($targetItem?->new_details ?: 'General Gear'),
+                'all_product_names'  => $inv->invoiceItems->map(fn($it) => $it->product?->name ?: $it->new_details)->filter()->unique()->implode(', '),
                 'qty'                => $itemsCount,
-                'purchase_price'     => $firstItem ? (float)($firstItem->rate * 0.75) : ($costPrice / max(1, $itemsCount)),
-                'selling_price'      => $firstItem ? (float)$firstItem->rate : ($sellingPrice / max(1, $itemsCount)),
+                'purchase_price'     => $targetItem ? (float)($targetItem->rate * 0.75) : ($costPrice / max(1, $itemsCount)),
+                'selling_price'      => $targetItem ? (float)$targetItem->rate : ($sellingPrice / max(1, $itemsCount)),
                 'order_amount'       => $sellingPrice,
                 'courier'            => $courierName,
                 'tracking_id'        => $inv->consignment_id ?: ($inv->websiteOrder?->tracking_code ?: ('#' . $inv->id)),
@@ -2103,6 +2111,33 @@ class ReportController extends Controller
         if ($request->input('export') === 'csv' || $request->input('export') === 'excel') {
             return $this->exportCourierDeliveryReport($filteredOrders, $startDate ?: 'all', $endDate ?: 'pipeline');
         }
+
+        // Pre-compute filtered list totals & product-grouped consolidated Qty summary
+        $filteredTotalOrders = $filteredOrders->count();
+        $filteredTotalQty    = (int)$filteredOrders->sum('qty');
+        $filteredTotalAmount = (float)$filteredOrders->sum('order_amount');
+        $filteredTotalCost   = (float)$filteredOrders->sum('product_cost');
+        $filteredTotalCharge = (float)$filteredOrders->sum('courier_charge');
+        $filteredTotalProfit = (float)$filteredOrders->sum('net_profit');
+
+        $productGroupedOrders = $filteredOrders->groupBy('product_name')->map(function ($group, $pName) {
+            $first = $group->first();
+            return (object)[
+                'product_name'   => $pName,
+                'product_image'  => $first->product_image ?? asset('backend/images/no_images.png'),
+                'orders_count'   => $group->count(),
+                'total_qty'      => (int)$group->sum('qty'),
+                'delivered_qty'  => (int)$group->filter(fn($o) => in_array($o->status, ['Delivered', 'COD Processing']))->sum('qty'),
+                'partial_qty'    => (int)$group->where('status', 'Partial')->sum('qty'),
+                'pending_qty'    => (int)$group->filter(fn($o) => in_array($o->status, ['Pending', 'In Transit', 'In Review', 'On Hold', 'RTS', 'Processing']))->sum('qty'),
+                'returned_qty'   => (int)$group->where('status', 'Returned')->sum('qty'),
+                'cancelled_qty'  => (int)$group->where('status', 'Cancelled')->sum('qty'),
+                'order_amount'   => (float)$group->sum('order_amount'),
+                'product_cost'   => (float)$group->sum('product_cost'),
+                'courier_charge' => (float)$group->sum('courier_charge'),
+                'net_profit'     => (float)$group->sum('net_profit'),
+            ];
+        })->sortByDesc('total_qty')->values();
 
         // 5. Calculate Real KPI Metrics from actual filtered database orders
         $deliveredOrders = $ordersList->filter(fn($o) => in_array($o->status, ['Delivered', 'COD Processing']));
@@ -2254,7 +2289,14 @@ class ReportController extends Controller
             'otherExpenses',
             'netProfit',
             'netMarginPct',
-            'steadfastLivePipeline'
+            'steadfastLivePipeline',
+            'filteredTotalOrders',
+            'filteredTotalQty',
+            'filteredTotalAmount',
+            'filteredTotalCost',
+            'filteredTotalCharge',
+            'filteredTotalProfit',
+            'productGroupedOrders'
         ));
     }
 

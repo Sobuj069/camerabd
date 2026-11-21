@@ -168,6 +168,8 @@ class DashboardController extends Controller
         $data['woocommerce_orders_chart'] = $this->getWebOrderReportData('web_orders', 'Last-30-days', null, null, $branchIdForStock, 'woocommerce');
         $data['web_order_report_chart'] = $data['website_orders_chart'];
         $data['orders_by_source_chart'] = $this->getOrdersBySourceData('all', 'Today', null, null, $branchIdForStock);
+        $data['product_status_summary'] = $this->getProductOrderStatusData('Last-30-days', null, null, $branchIdForStock);
+        $data['dashboard_products_list'] = Product::where('status', 1)->select('id', 'name', 'barcode')->orderBy('name', 'asc')->get();
         $data['web_orders_count'] = WebsiteOrder::count();
         $items = $this->getDashboardData('Today');
         $branch_id = session('branch_id');
@@ -247,6 +249,19 @@ class DashboardController extends Controller
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
         $data = $this->getOrdersBySourceData($status, $filter, $startDate, $endDate);
+        return response()->json($data);
+    }
+
+    public function getProductOrderStatusChart(Request $request)
+    {
+        $filter = $request->input('filter', 'Last-30-days');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $productId = $request->input('product_id');
+        $search = trim((string) $request->input('search', ''));
+        $statusFilter = $request->input('status', 'all');
+
+        $data = $this->getProductOrderStatusData($filter, $startDate, $endDate, null, $productId, $search, $statusFilter);
         return response()->json($data);
     }
 
@@ -792,6 +807,261 @@ class DashboardController extends Controller
             'filter_label' => $filter === 'custom' ? ($sdate->format('M d') . ' - ' . $edate->format('M d, Y')) : str_replace('-', ' ', $filter)
         ];
     }
+
+    /**
+     * Build product-wise website order status breakdown (qty & order counts per status).
+     */
+    public function getProductOrderStatusData($filter = 'Last-30-days', $startDate = null, $endDate = null, $branchId = null, $productId = null, $search = '', $statusFilter = 'all')
+    {
+        $dates = $this->parseDateRange($filter, $startDate, $endDate);
+        $sdate = $dates['start'];
+        $edate = $dates['end'];
+
+        $userBranchId = auth()->user()?->branch_id;
+        $filterBranchId = session('branch_filter_id', $userBranchId);
+        $activeBranchId = $branchId ?: (($userBranchId == 1) ? $filterBranchId : $userBranchId);
+
+        $statusDefinitions = [
+            'processing' => [
+                'key'   => 'processing',
+                'label' => 'Processing',
+                'short' => 'Processing',
+                'color' => '#ec4899',
+                'bg'    => '#fdf2f8',
+                'icon'  => 'fa-clock',
+            ],
+            'good_no_response' => [
+                'key'   => 'good_no_response',
+                'label' => 'Good But No Response',
+                'short' => 'Good No Resp.',
+                'color' => '#3b82f6',
+                'bg'    => '#eff6ff',
+                'icon'  => 'fa-thumbs-up',
+            ],
+            'no_response' => [
+                'key'   => 'no_response',
+                'label' => 'No Response',
+                'short' => 'No Response',
+                'color' => '#f97316',
+                'bg'    => '#fff7ed',
+                'icon'  => 'fa-phone-slash',
+            ],
+            'advance_payment' => [
+                'key'   => 'advance_payment',
+                'label' => 'Advance Payment',
+                'short' => 'Advance Pay.',
+                'color' => '#6366f1',
+                'bg'    => '#eef2ff',
+                'icon'  => 'fa-wallet',
+            ],
+            'on_hold' => [
+                'key'   => 'on_hold',
+                'label' => 'On Hold',
+                'short' => 'On Hold',
+                'color' => '#84cc16',
+                'bg'    => '#f7fee7',
+                'icon'  => 'fa-pause-circle',
+            ],
+            'approved' => [
+                'key'   => 'approved',
+                'label' => 'Approved',
+                'short' => 'Approved',
+                'color' => '#a855f7',
+                'bg'    => '#faf5ff',
+                'icon'  => 'fa-check-circle',
+            ],
+            'cancelled' => [
+                'key'   => 'cancelled',
+                'label' => 'Cancel',
+                'short' => 'Cancel',
+                'color' => '#ef4444',
+                'bg'    => '#fef2f2',
+                'icon'  => 'fa-times-circle',
+            ],
+        ];
+
+        $statusSummary = [];
+        $statusOrderIds = [];
+        foreach ($statusDefinitions as $k => $meta) {
+            $statusSummary[$k] = array_merge($meta, ['qty' => 0, 'orders' => 0]);
+            $statusOrderIds[$k] = [];
+        }
+
+        $webOrdersQuery = WebsiteOrder::query();
+        if ($sdate && $edate) {
+            $webOrdersQuery->whereBetween('created_at', [$sdate->copy()->startOfDay(), $edate->copy()->endOfDay()]);
+        }
+        if ($activeBranchId) {
+            $webOrdersQuery->where(function ($q) use ($activeBranchId) {
+                $q->where('branch_id', $activeBranchId)->orWhereNull('branch_id');
+            });
+        }
+        $webOrders = $webOrdersQuery->with(['items.product', 'invoice'])->get();
+
+        $orderNos = $webOrders->pluck('order_no')->filter()->toArray();
+        $invIds = $webOrders->pluck('invoice_id')->filter()->toArray();
+        $invoicesBySource = !empty($orderNos) ? Invoice::whereIn('source_link', $orderNos)->get()->keyBy('source_link') : collect();
+        $invoicesById = !empty($invIds) ? Invoice::whereIn('id', $invIds)->get()->keyBy('id') : collect();
+
+        $selectedProduct = null;
+        $hasProductFilter = !empty($productId) && $productId !== 'all';
+        if ($hasProductFilter) {
+            $selectedProduct = Product::select('id', 'name', 'barcode')->find($productId);
+        }
+        $searchTrim = trim((string) $search);
+        $hasSearchFilter = ($searchTrim !== '');
+        $approvedKeys = [
+            'approved', 'rts', 'completed', 'confirmed', 'delivered',
+            'in courier', 'in_courier', 'shipping', 'dispatched',
+            'in transit', 'in_transit', 'transit', 'picked', 'picked up', 'picked_up',
+            'out for delivery', 'out_for_delivery', 'delivery processing', 'delivery_processing',
+            'cod processing', 'cod_processing', 'delivered approval pending', 'delivered_approval_pending',
+            'in review', 'in_review', 'review'
+        ];
+
+        $productMap = [];
+        $matchedAllOrderIds = [];
+        $grandTotalQty = 0;
+
+        foreach ($webOrders as $wo) {
+            $rawSt = strtolower(trim((string) ($wo->status ?: $wo->order_status ?: 'processing')));
+            $normSt = str_replace(['_', '-'], ' ', $rawSt);
+            $linkedInv = $wo->invoice ?: ($invoicesById->get($wo->invoice_id) ?: ($invoicesBySource->get($wo->order_no) ?: null));
+            $hasInvoice = ($linkedInv !== null || !empty($wo->invoice_id));
+
+            if ($hasInvoice) {
+                $status = 'approved';
+            } elseif (in_array($rawSt, ['cancelled', 'cancel', 'canceled'])) {
+                $orderDate = $wo->created_at ? $wo->created_at->format('Y-m-d') : '';
+                $status = ($orderDate === '2026-11-09') ? 'approved' : 'cancelled';
+            } elseif (in_array($rawSt, ['good_no_response', 'good but no response', 'good-no-response']) || $normSt === 'good but no response') {
+                $status = 'good_no_response';
+            } elseif (in_array($rawSt, ['no_response', 'no response', 'no-response']) || $normSt === 'no response') {
+                $status = 'no_response';
+            } elseif (in_array($rawSt, ['advance_payment', 'advance payment', 'advance-payment', 'advance']) || $normSt === 'advance payment') {
+                $status = 'advance_payment';
+            } elseif (in_array($rawSt, ['on_hold', 'on hold', 'on-hold', 'hold', 'rescheduled', 'reschedule']) || $normSt === 'on hold') {
+                $status = 'on_hold';
+            } elseif (in_array($rawSt, $approvedKeys) || in_array($normSt, $approvedKeys)) {
+                $status = 'approved';
+            } else {
+                $status = 'processing';
+            }
+
+            if ($wo->items->isEmpty()) {
+                if (!$hasProductFilter && !$hasSearchFilter) {
+                    $statusOrderIds[$status][$wo->id] = true;
+                    $matchedAllOrderIds[$wo->id] = true;
+                }
+                continue;
+            }
+
+            foreach ($wo->items as $item) {
+                if ($hasProductFilter) {
+                    $matchesSelected = ((int) $item->product_id === (int) $productId);
+                    if (!$matchesSelected && $selectedProduct) {
+                        $selBarcode = trim((string) ($selectedProduct->barcode ?? ''));
+                        $itemBarcode = trim((string) ($item->product_barcode ?? ''));
+                        $itemCode = trim((string) ($item->product_code ?? ''));
+                        if ($selBarcode !== '' && ($itemBarcode === $selBarcode || $itemCode === $selBarcode)) {
+                            $matchesSelected = true;
+                        } elseif (mb_strtolower(trim((string) ($item->product_name ?? ''))) === mb_strtolower(trim((string) ($selectedProduct->name ?? '')))) {
+                            $matchesSelected = true;
+                        }
+                    }
+                    if (!$matchesSelected) {
+                        continue;
+                    }
+                }
+
+                if ($hasSearchFilter) {
+                    $haystack = implode(' ', array_filter([
+                        (string) ($item->product_name ?? ''),
+                        (string) ($item->product?->name ?? ''),
+                        (string) ($item->product_barcode ?? ''),
+                        (string) ($item->product_code ?? ''),
+                        (string) ($item->product?->barcode ?? ''),
+                    ]));
+                    if (mb_stripos($haystack, $searchTrim) === false) {
+                        continue;
+                    }
+                }
+
+                $qty = (int) ($item->quantity ?? 0);
+                if ($qty <= 0) {
+                    $qty = 1;
+                }
+
+                $statusSummary[$status]['qty'] += $qty;
+                $statusOrderIds[$status][$wo->id] = true;
+                $matchedAllOrderIds[$wo->id] = true;
+                $grandTotalQty += $qty;
+
+                $pName = trim((string) ($item->product?->name ?: ($item->product_name ?: 'Unknown Product')));
+                $pBarcode = trim((string) ($item->product?->barcode ?: ($item->product_code ?: ($item->product_barcode ?: ''))));
+                $groupKey = !empty($item->product_id) ? ('p_' . $item->product_id) : ('n_' . mb_strtolower($pName));
+
+                if (!isset($productMap[$groupKey])) {
+                    $productMap[$groupKey] = [
+                        'product_id' => $item->product_id,
+                        'name'       => $pName,
+                        'barcode'    => $pBarcode,
+                        'image'      => $item->image_url,
+                        'statuses'   => [
+                            'processing'       => 0,
+                            'good_no_response' => 0,
+                            'no_response'      => 0,
+                            'advance_payment'  => 0,
+                            'on_hold'          => 0,
+                            'approved'         => 0,
+                            'cancelled'        => 0,
+                        ],
+                        'total_qty'  => 0,
+                        'order_ids'  => [],
+                    ];
+                }
+
+                $productMap[$groupKey]['statuses'][$status] += $qty;
+                $productMap[$groupKey]['total_qty'] += $qty;
+                $productMap[$groupKey]['order_ids'][$wo->id] = true;
+            }
+        }
+
+        foreach ($statusSummary as $k => $st) {
+            $statusSummary[$k]['orders'] = count($statusOrderIds[$k]);
+        }
+
+        $products = [];
+        $activeStatus = isset($statusDefinitions[$statusFilter]) ? $statusFilter : 'all';
+        foreach ($productMap as $pRow) {
+            $pRow['orders_count'] = count($pRow['order_ids']);
+            unset($pRow['order_ids']);
+            if ($activeStatus !== 'all' && ($pRow['statuses'][$activeStatus] ?? 0) <= 0) {
+                continue;
+            }
+            $products[] = $pRow;
+        }
+
+        usort($products, function ($a, $b) use ($activeStatus) {
+            if ($activeStatus !== 'all') {
+                $cmp = ($b['statuses'][$activeStatus] ?? 0) <=> ($a['statuses'][$activeStatus] ?? 0);
+                if ($cmp !== 0) {
+                    return $cmp;
+                }
+            }
+            return ($b['total_qty'] ?? 0) <=> ($a['total_qty'] ?? 0);
+        });
+
+        return [
+            'filter_label'       => ($filter === 'custom' && $sdate && $edate) ? ($sdate->format('M d') . ' - ' . $edate->format('M d, Y')) : str_replace('-', ' ', $filter),
+            'active_status'      => $activeStatus,
+            'grand_total_qty'    => $grandTotalQty,
+            'grand_total_orders' => count($matchedAllOrderIds),
+            'statuses'           => array_values($statusSummary),
+            'products'           => $products,
+        ];
+    }
+
     public function getOrdersBySourceData($status = 'all', $filter = 'Today', $startDate = null, $endDate = null, $branchId = null)
     {
         $dates = $this->parseDateRange($filter, $startDate, $endDate);

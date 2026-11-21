@@ -159,6 +159,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified',
         Route::get('/dashboard/chart/online-platforms', 'getOnlinePlatformsChart')->name('dashboard.chart.online-platforms');
         Route::get('/dashboard/chart/web-order-report', 'getWebOrderReportChart')->name('dashboard.chart.web-order-report');
         Route::get('/dashboard/chart/orders-by-source', 'getOrdersBySourceChart')->name('dashboard.chart.orders-by-source');
+        Route::get('/dashboard/chart/product-status-summary', 'getProductOrderStatusChart')->name('dashboard.chart.product-status-summary');
         Route::get('/dashboard/product-sales-summary', 'productSalesSummary')->name('dashboard.product-sales-summary');
         Route::get('/dashboard/product-sales-summary/print', 'printProductSalesSummary')->name('dashboard.product-sales-summary.print');
         Route::get('/dashboard/product-sales-summary/pdf', 'downloadProductSalesSummaryPDF')->name('dashboard.product-sales-summary.pdf');

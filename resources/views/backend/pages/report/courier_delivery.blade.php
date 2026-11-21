@@ -201,6 +201,67 @@
     .status-returned  { background: #ffedd5; color: #c2410c; }
     .status-review    { background: #fef3c7; color: #b45309; }
 
+    /* Consolidated View Switcher & Totals Bar */
+    .view-mode-switcher {
+        display: inline-flex;
+        background: #f1f5f9;
+        padding: 3px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        gap: 2px;
+    }
+    .view-mode-btn {
+        border: none;
+        background: transparent;
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 5px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .view-mode-btn.active {
+        background: #ffffff;
+        color: #2563eb;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    }
+    .cd-totals-strip {
+        background: linear-gradient(90deg, #eff6ff 0%, #f8fafc 100%);
+        border-bottom: 1px solid #e2e8f0;
+        padding: 10px 16px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+    }
+    .cd-total-pill {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 5px 11px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    }
+    .cd-total-pill-primary {
+        background: #2563eb;
+        border-color: #1d4ed8;
+        color: #ffffff;
+    }
+    .order-table tfoot td {
+        background: #f1f5f9;
+        font-weight: 800;
+        color: #0f172a;
+        border-top: 2px solid #cbd5e1;
+        padding: 11px 12px;
+    }
+
     @media print {
         header, .sidebar-left, .topbar, .h-hide, .nav-tab-btn, .quick-date-btn, button, .no-print {
             display: none !important;
@@ -935,11 +996,20 @@
     <div class="cd-card p-0" id="detailed-orders-section">
         <!-- Table Top Filter Header -->
         <div class="p-3 border-bottom d-flex flex-wrap align-items-center justify-content-between gap-2">
-            <!-- Left: Title & Status Filter Pills -->
+            <!-- Left: Title, View Mode Switcher & Status Filter Pills -->
             <div class="d-flex flex-wrap align-items-center gap-2">
-                <h5 class="mb-0 font-weight-bold mr-3" style="font-size: 16px; color: #0f172a;">
+                <h5 class="mb-0 font-weight-bold mr-2" style="font-size: 16px; color: #0f172a;">
                     {{ __('Detailed Order List') }}
                 </h5>
+
+                <div class="view-mode-switcher mr-2">
+                    <button type="button" id="btn-view-grouped" class="view-mode-btn active">
+                        <i class="feather icon-layers"></i> {{ __('Product Total Qty') }}
+                    </button>
+                    <button type="button" id="btn-view-detailed" class="view-mode-btn">
+                        <i class="feather icon-list"></i> {{ __('Order Wise List') }}
+                    </button>
+                </div>
 
                 <div class="d-flex flex-wrap align-items-center gap-1">
                     <a href="{{ request()->fullUrlWithQuery(['status_tab' => 'all']) }}" class="status-tab-btn {{ $statusTab === 'all' ? 'active' : '' }}">{{ __('All') }}</a>
@@ -953,33 +1023,186 @@
             </div>
 
             <!-- Right: Search & Pagination Controls -->
-            <div class="d-flex align-items-center gap-2">
-                <div class="input-group" style="width: 190px;">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <div class="input-group" style="width: 220px;">
                     <div class="input-group-prepend">
                         <span class="input-group-text bg-white border-right-0 py-1" style="border-radius: 6px 0 0 6px; border-color: #cbd5e1;"><i class="feather icon-search text-muted" style="font-size: 11px;"></i></span>
                     </div>
-                    <input type="text" id="live-table-search" class="form-control form-control-sm border-left-0" style="border-radius: 0 6px 6px 0; font-size: 12px; height: 32px;" placeholder="{{ __('Search...') }}">
+                    <input type="text" id="live-table-search" class="form-control form-control-sm border-left-0" style="border-radius: 0 6px 6px 0; font-size: 12px; height: 32px;" placeholder="{{ __('Search product, order, ID...') }}">
                 </div>
 
                 <div class="d-flex align-items-center gap-1 font-weight-semibold text-muted" style="font-size: 12px;">
                     <span>{{ __('Show') }}</span>
-                    <select id="table-page-size" class="form-control form-control-sm px-2 py-0" style="width: 58px; height: 32px; font-size: 12px;">
+                    <select id="table-page-size" class="form-control form-control-sm px-2 py-0" style="width: 66px; height: 32px; font-size: 12px;">
                         <option value="10">10</option>
-                        <option value="25">25</option>
+                        <option value="25" selected>25</option>
                         <option value="50">50</option>
                         <option value="100">100</option>
+                        <option value="all">{{ __('All') }}</option>
                     </select>
                 </div>
 
+                <span id="table-page-indicator" class="text-muted font-weight-semibold" style="font-size: 11.5px; min-width: 68px; text-align: center;"></span>
+
                 <div class="btn-group btn-group-sm">
-                    <button type="button" class="btn btn-light border px-2 py-1"><i class="feather icon-chevron-left"></i></button>
-                    <button type="button" class="btn btn-light border px-2 py-1"><i class="feather icon-chevron-right"></i></button>
+                    <button type="button" id="btn-table-prev" class="btn btn-light border px-2 py-1"><i class="feather icon-chevron-left"></i></button>
+                    <button type="button" id="btn-table-next" class="btn btn-light border px-2 py-1"><i class="feather icon-chevron-right"></i></button>
                 </div>
             </div>
         </div>
 
-        <!-- The 17-Column Table -->
-        <div class="table-responsive">
+        <!-- Prominent Live All Total Qty Summary Strip (Always visible in both views) -->
+        @php
+            $initTotalOrders = $filteredTotalOrders ?? $filteredOrders->count();
+            $initTotalQty = $filteredTotalQty ?? (int)$filteredOrders->sum('qty');
+            $initGroupedCount = isset($productGroupedOrders) ? $productGroupedOrders->count() : 0;
+            $initTotalAmount = $filteredTotalAmount ?? (float)$filteredOrders->sum('order_amount');
+            $initTotalCost = $filteredTotalCost ?? (float)$filteredOrders->sum('product_cost');
+            $initTotalCharge = $filteredTotalCharge ?? (float)$filteredOrders->sum('courier_charge');
+            $initTotalProfit = $filteredTotalProfit ?? (float)$filteredOrders->sum('net_profit');
+        @endphp
+        <div class="cd-totals-strip" id="detailed-list-totals-bar">
+            <div class="cd-total-pill cd-total-pill-primary">
+                <i class="feather icon-layers" style="font-size: 13px;"></i>
+                <span style="opacity: 0.9;">{{ __('All Total Qty') }}:</span>
+                <strong id="live-total-qty-val" style="font-size: 14px;">{{ number_format($initTotalQty) }} Pcs</strong>
+            </div>
+            <div class="cd-total-pill">
+                <span class="text-muted">{{ __('Matching Orders') }}:</span>
+                <strong class="text-dark" id="live-total-orders-val">{{ number_format($initTotalOrders) }}</strong>
+            </div>
+            <div class="cd-total-pill">
+                <span class="text-muted">{{ __('Products') }}:</span>
+                <strong class="text-primary" id="live-total-products-val">{{ number_format($initGroupedCount) }}</strong>
+            </div>
+            <div class="cd-total-pill">
+                <span class="text-muted">{{ __('Total Order Amount') }}:</span>
+                <strong class="text-dark">৳ <span id="live-total-amount-val">{{ number_format($initTotalAmount) }}</span></strong>
+            </div>
+            <div class="cd-total-pill">
+                <span class="text-muted">{{ __('Total Product Cost') }}:</span>
+                <strong class="text-dark">৳ <span id="live-total-cost-val">{{ number_format($initTotalCost) }}</span></strong>
+            </div>
+            <div class="cd-total-pill">
+                <span class="text-muted">{{ __('Total Courier Charge') }}:</span>
+                <strong class="text-dark">৳ <span id="live-total-charge-val">{{ number_format($initTotalCharge) }}</span></strong>
+            </div>
+            <div class="cd-total-pill">
+                <span class="text-muted">{{ __('Net Profit/Loss') }}:</span>
+                <strong id="live-total-profit-val" class="{{ $initTotalProfit >= 0 ? 'text-success' : 'text-danger' }}">
+                    {{ $initTotalProfit < 0 ? '-৳ ' . number_format(abs($initTotalProfit)) : '৳ ' . number_format($initTotalProfit) }}
+                </strong>
+            </div>
+        </div>
+
+        <!-- View 1: Product Total Qty Consolidated Table (Default Active View) -->
+        <div class="table-responsive" id="grouped-products-wrapper">
+            <table class="table order-table mb-0" id="grouped-products-datatable">
+                <thead>
+                    <tr>
+                        <th style="width: 38px;">#</th>
+                        <th>{{ __('Product Image') }}</th>
+                        <th>{{ __('Product Name') }}</th>
+                        <th class="text-center">{{ __('Total Orders') }}</th>
+                        <th class="text-center" style="color: #2563eb;">{{ __('All Total Qty') }}</th>
+                        <th class="text-center text-success">{{ __('Delivered') }}</th>
+                        <th class="text-center" style="color: #0891b2;">{{ __('Partial') }}</th>
+                        <th class="text-center text-primary">{{ __('Pending / Transit') }}</th>
+                        <th class="text-center" style="color: #ea580c;">{{ __('Returned') }}</th>
+                        <th class="text-center text-danger">{{ __('Cancelled') }}</th>
+                        <th class="text-right">{{ __('Order Amount') }}</th>
+                        <th class="text-right">{{ __('Product Cost') }}</th>
+                        <th class="text-right">{{ __('Courier Charge') }}</th>
+                        <th class="text-right">{{ __('Net Profit/Loss') }}</th>
+                        <th class="text-center">{{ __('Action') }}</th>
+                    </tr>
+                </thead>
+                <tbody id="grouped-products-tbody">
+                    @php
+                        $gOrders = 0; $gQty = 0; $gDel = 0; $gPart = 0; $gPend = 0; $gRet = 0; $gCanc = 0;
+                        $gAmt = 0; $gCost = 0; $gCharge = 0; $gProfit = 0;
+                    @endphp
+                    @forelse(($productGroupedOrders ?? collect()) as $gIdx => $gp)
+                        @php
+                            $gOrders += $gp->orders_count;
+                            $gQty += $gp->total_qty;
+                            $gDel += $gp->delivered_qty;
+                            $gPart += $gp->partial_qty;
+                            $gPend += $gp->pending_qty;
+                            $gRet += $gp->returned_qty;
+                            $gCanc += $gp->cancelled_qty;
+                            $gAmt += $gp->order_amount;
+                            $gCost += $gp->product_cost;
+                            $gCharge += $gp->courier_charge;
+                            $gProfit += $gp->net_profit;
+                            $gpIsProfit = ($gp->net_profit > 0);
+                            $gpIsLoss = ($gp->net_profit < 0);
+                        @endphp
+                        <tr>
+                            <td class="text-muted font-weight-bold">{{ $gIdx + 1 }}</td>
+                            <td>
+                                <div style="width: 36px; height: 36px; border-radius: 6px; border: 1px solid #e2e8f0; overflow: hidden; background: #fff; display: flex; align-items: center; justify-content: center;">
+                                    <img src="{{ $gp->product_image }}" alt="{{ $gp->product_name }}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                                </div>
+                            </td>
+                            <td class="font-weight-bold text-dark">{{ $gp->product_name }}</td>
+                            <td class="text-center font-weight-bold">{{ number_format($gp->orders_count) }}</td>
+                            <td class="text-center">
+                                <span class="badge px-2.5 py-1 font-weight-bold" style="font-size: 12.5px; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;">
+                                    {{ number_format($gp->total_qty) }} Pcs
+                                </span>
+                            </td>
+                            <td class="text-center font-weight-bold text-success">{{ number_format($gp->delivered_qty) }}</td>
+                            <td class="text-center font-weight-bold" style="color: #0891b2;">{{ number_format($gp->partial_qty) }}</td>
+                            <td class="text-center font-weight-bold text-primary">{{ number_format($gp->pending_qty) }}</td>
+                            <td class="text-center font-weight-bold" style="color: #ea580c;">{{ number_format($gp->returned_qty) }}</td>
+                            <td class="text-center font-weight-bold text-danger">{{ number_format($gp->cancelled_qty) }}</td>
+                            <td class="text-right font-weight-bold text-dark">৳ {{ number_format($gp->order_amount) }}</td>
+                            <td class="text-right text-muted font-weight-semibold">৳ {{ number_format($gp->product_cost) }}</td>
+                            <td class="text-right text-muted font-weight-semibold">৳ {{ number_format($gp->courier_charge) }}</td>
+                            <td class="text-right font-weight-bold {{ $gpIsProfit ? 'text-success' : ($gpIsLoss ? 'text-danger' : 'text-muted') }}">
+                                {{ $gpIsLoss ? '-৳ ' . number_format(abs($gp->net_profit)) : '৳ ' . number_format($gp->net_profit) }}
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-xs btn-outline-primary font-weight-bold px-2 py-1 btn-view-product-orders" data-product="{{ e($gp->product_name) }}" style="font-size: 11px; border-radius: 6px;">
+                                    <i class="feather icon-eye mr-1"></i> {{ __('View Orders') }}
+                                </button>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="15" class="text-center py-4 text-muted">
+                                {{ __('No products found matching the filter criteria.') }}
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+                <tfoot id="grouped-products-tfoot">
+                    <tr>
+                        <td>#</td>
+                        <td></td>
+                        <td>{{ __('All Total Qty') }}</td>
+                        <td class="text-center">{{ number_format($gOrders) }}</td>
+                        <td class="text-center text-primary">{{ number_format($gQty) }} Pcs</td>
+                        <td class="text-center text-success">{{ number_format($gDel) }}</td>
+                        <td class="text-center" style="color: #0891b2;">{{ number_format($gPart) }}</td>
+                        <td class="text-center text-primary">{{ number_format($gPend) }}</td>
+                        <td class="text-center" style="color: #ea580c;">{{ number_format($gRet) }}</td>
+                        <td class="text-center text-danger">{{ number_format($gCanc) }}</td>
+                        <td class="text-right">৳ {{ number_format($gAmt) }}</td>
+                        <td class="text-right">৳ {{ number_format($gCost) }}</td>
+                        <td class="text-right">৳ {{ number_format($gCharge) }}</td>
+                        <td class="text-right {{ $gProfit >= 0 ? 'text-success' : 'text-danger' }}">
+                            {{ $gProfit < 0 ? '-৳ ' . number_format(abs($gProfit)) : '৳ ' . number_format($gProfit) }}
+                        </td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <!-- View 2: The 17-Column Order Wise Table -->
+        <div class="table-responsive" id="detailed-orders-wrapper" style="display: none;">
             <table class="table order-table mb-0" id="courier-orders-datatable">
                 <thead>
                     <tr>
@@ -1016,10 +1239,29 @@
 
                             $isProfit = ($item->net_profit > 0);
                             $isLoss = ($item->net_profit < 0);
+                            $rowSearchText = strtolower(trim(implode(' ', array_filter([
+                                $item->order_id,
+                                $item->source,
+                                $item->date,
+                                $item->product_name,
+                                $item->all_product_names ?? '',
+                                $item->courier,
+                                $item->tracking_id,
+                                $item->status,
+                            ]))));
                         @endphp
-                        <tr>
+                        <tr class="order-data-row"
+                            data-product-name="{{ e($item->product_name) }}"
+                            data-product-image="{{ e($item->product_image) }}"
+                            data-qty="{{ (int)$item->qty }}"
+                            data-order-amount="{{ (float)$item->order_amount }}"
+                            data-product-cost="{{ (float)$item->product_cost }}"
+                            data-courier-charge="{{ (float)$item->courier_charge }}"
+                            data-net-profit="{{ (float)$item->net_profit }}"
+                            data-status="{{ e($item->status) }}"
+                            data-search-text="{{ e($rowSearchText) }}">
                             <td><input type="checkbox" class="order-select-checkbox"></td>
-                            <td class="text-muted font-weight-bold">{{ $idx + 1 }}</td>
+                            <td class="text-muted font-weight-bold row-sl-num">{{ $idx + 1 }}</td>
                             <td class="font-weight-bold" style="color: #0f172a;">{{ $item->order_id }}</td>
                             <td>
                                 @if($item->source === 'Website')
@@ -1057,13 +1299,32 @@
                             </td>
                         </tr>
                     @empty
-                        <tr>
+                        <tr id="orders-empty-row">
                             <td colspan="17" class="text-center py-4 text-muted">
                                 {{ __('No orders found matching the filter criteria.') }}
                             </td>
                         </tr>
                     @endforelse
                 </tbody>
+                <tfoot id="orders-table-tfoot">
+                    <tr>
+                        <td></td>
+                        <td>#</td>
+                        <td colspan="5">{{ __('All Matching Orders Total') }} ({{ number_format($initTotalOrders) }} {{ __('Orders') }})</td>
+                        <td class="text-center text-primary">{{ number_format($initTotalQty) }} Pcs</td>
+                        <td></td>
+                        <td></td>
+                        <td class="text-right">৳ {{ number_format($initTotalAmount) }}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td class="text-right">৳ {{ number_format($initTotalCost) }}</td>
+                        <td class="text-right">৳ {{ number_format($initTotalCharge) }}</td>
+                        <td class="text-right {{ $initTotalProfit >= 0 ? 'text-success' : 'text-danger' }}">
+                            {{ $initTotalProfit < 0 ? '-৳ ' . number_format(abs($initTotalProfit)) : '৳ ' . number_format($initTotalProfit) }}
+                        </td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
     </div>
@@ -1121,22 +1382,327 @@
         var checkAll = document.getElementById('check-all-orders');
         if (checkAll) {
             checkAll.addEventListener('change', function () {
-                document.querySelectorAll('.order-select-checkbox').forEach(cb => cb.checked = checkAll.checked);
-            });
-        }
-
-        // Live Table Search Filter
-        var liveSearchInput = document.getElementById('live-table-search');
-        if (liveSearchInput) {
-            liveSearchInput.addEventListener('keyup', function () {
-                var filter = liveSearchInput.value.toLowerCase();
-                var rows = document.querySelectorAll('#orders-table-tbody tr');
-                rows.forEach(function (row) {
-                    var text = row.innerText.toLowerCase();
-                    row.style.display = text.indexOf(filter) > -1 ? '' : 'none';
+                document.querySelectorAll('#orders-table-tbody tr.order-data-row').forEach(function (row) {
+                    if (row.style.display !== 'none') {
+                        var cb = row.querySelector('.order-select-checkbox');
+                        if (cb) cb.checked = checkAll.checked;
+                    }
                 });
             });
         }
+
+        // Unified Detailed Orders & Consolidated Product Total Qty Controller
+        var activeViewMode = 'grouped'; // 'grouped' | 'detailed'
+        var currentPage = 1;
+        var liveSearchInput = document.getElementById('live-table-search');
+        var pageSizeSelect = document.getElementById('table-page-size');
+        var btnViewGrouped = document.getElementById('btn-view-grouped');
+        var btnViewDetailed = document.getElementById('btn-view-detailed');
+        var btnPrev = document.getElementById('btn-table-prev');
+        var btnNext = document.getElementById('btn-table-next');
+        var pageIndicator = document.getElementById('table-page-indicator');
+        var groupedWrapper = document.getElementById('grouped-products-wrapper');
+        var detailedWrapper = document.getElementById('detailed-orders-wrapper');
+        var groupedTbody = document.getElementById('grouped-products-tbody');
+        var groupedTfoot = document.getElementById('grouped-products-tfoot');
+        var ordersTbody = document.getElementById('orders-table-tbody');
+        var ordersTfoot = document.getElementById('orders-table-tfoot');
+
+        function escapeHtml(str) {
+            return String(str == null ? '' : str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function formatMoney(num) {
+            var n = Math.round(Number(num) || 0);
+            return (n < 0 ? '-৳ ' : '৳ ') + Math.abs(n).toLocaleString();
+        }
+
+        function switchViewMode(mode) {
+            activeViewMode = mode;
+            if (mode === 'grouped') {
+                if (btnViewGrouped) btnViewGrouped.classList.add('active');
+                if (btnViewDetailed) btnViewDetailed.classList.remove('active');
+                if (groupedWrapper) groupedWrapper.style.display = '';
+                if (detailedWrapper) detailedWrapper.style.display = 'none';
+            } else {
+                if (btnViewGrouped) btnViewGrouped.classList.remove('active');
+                if (btnViewDetailed) btnViewDetailed.classList.add('active');
+                if (groupedWrapper) groupedWrapper.style.display = 'none';
+                if (detailedWrapper) detailedWrapper.style.display = '';
+            }
+            currentPage = 1;
+            refreshDetailedOrdersView();
+        }
+
+        function refreshDetailedOrdersView() {
+            var filter = liveSearchInput ? liveSearchInput.value.toLowerCase().trim() : '';
+            var orderRows = Array.from(document.querySelectorAll('#orders-table-tbody tr.order-data-row'));
+
+            var matchingRows = [];
+            var sumOrders = 0;
+            var sumQty = 0;
+            var sumAmt = 0;
+            var sumCost = 0;
+            var sumCharge = 0;
+            var sumProfit = 0;
+            var productMap = {};
+
+            orderRows.forEach(function (row) {
+                var searchText = (row.getAttribute('data-search-text') || row.innerText || '').toLowerCase();
+                if (filter === '' || searchText.indexOf(filter) > -1) {
+                    matchingRows.push(row);
+
+                    var pName = row.getAttribute('data-product-name') || 'General Gear';
+                    var pImage = row.getAttribute('data-product-image') || '';
+                    var qty = parseInt(row.getAttribute('data-qty') || '0', 10) || 0;
+                    var amt = parseFloat(row.getAttribute('data-order-amount') || '0') || 0;
+                    var cost = parseFloat(row.getAttribute('data-product-cost') || '0') || 0;
+                    var charge = parseFloat(row.getAttribute('data-courier-charge') || '0') || 0;
+                    var profit = parseFloat(row.getAttribute('data-net-profit') || '0') || 0;
+                    var statusLower = (row.getAttribute('data-status') || '').toLowerCase();
+
+                    sumOrders += 1;
+                    sumQty += qty;
+                    sumAmt += amt;
+                    sumCost += cost;
+                    sumCharge += charge;
+                    sumProfit += profit;
+
+                    if (!productMap[pName]) {
+                        productMap[pName] = {
+                            product_name: pName,
+                            product_image: pImage,
+                            orders_count: 0,
+                            total_qty: 0,
+                            delivered_qty: 0,
+                            partial_qty: 0,
+                            pending_qty: 0,
+                            returned_qty: 0,
+                            cancelled_qty: 0,
+                            order_amount: 0,
+                            product_cost: 0,
+                            courier_charge: 0,
+                            net_profit: 0
+                        };
+                    }
+                    var grp = productMap[pName];
+                    grp.orders_count += 1;
+                    grp.total_qty += qty;
+                    grp.order_amount += amt;
+                    grp.product_cost += cost;
+                    grp.courier_charge += charge;
+                    grp.net_profit += profit;
+
+                    if (statusLower === 'delivered' || statusLower === 'cod processing') {
+                        grp.delivered_qty += qty;
+                    } else if (statusLower === 'partial') {
+                        grp.partial_qty += qty;
+                    } else if (statusLower === 'returned') {
+                        grp.returned_qty += qty;
+                    } else if (statusLower === 'cancelled') {
+                        grp.cancelled_qty += qty;
+                    } else {
+                        grp.pending_qty += qty;
+                    }
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            var groupedArray = Object.values(productMap).sort(function (a, b) {
+                return b.total_qty - a.total_qty;
+            });
+
+            // 1. Update prominent summary strip (always reflects ALL matching records across all pages)
+            var elTotalQty = document.getElementById('live-total-qty-val');
+            var elTotalOrders = document.getElementById('live-total-orders-val');
+            var elTotalProducts = document.getElementById('live-total-products-val');
+            var elTotalAmt = document.getElementById('live-total-amount-val');
+            var elTotalCost = document.getElementById('live-total-cost-val');
+            var elTotalCharge = document.getElementById('live-total-charge-val');
+            var elTotalProfit = document.getElementById('live-total-profit-val');
+
+            if (elTotalQty) elTotalQty.textContent = sumQty.toLocaleString() + ' Pcs';
+            if (elTotalOrders) elTotalOrders.textContent = sumOrders.toLocaleString();
+            if (elTotalProducts) elTotalProducts.textContent = groupedArray.length.toLocaleString();
+            if (elTotalAmt) elTotalAmt.textContent = Math.round(sumAmt).toLocaleString();
+            if (elTotalCost) elTotalCost.textContent = Math.round(sumCost).toLocaleString();
+            if (elTotalCharge) elTotalCharge.textContent = Math.round(sumCharge).toLocaleString();
+            if (elTotalProfit) {
+                elTotalProfit.textContent = formatMoney(sumProfit);
+                elTotalProfit.className = sumProfit >= 0 ? 'text-success' : 'text-danger';
+            }
+
+            // 2. Render Consolidated Product Total Qty Table Body & Footer
+            var gDel = 0, gPart = 0, gPend = 0, gRet = 0, gCanc = 0;
+            if (groupedTbody) {
+                if (groupedArray.length === 0) {
+                    groupedTbody.innerHTML = '<tr><td colspan="15" class="text-center py-4 text-muted">{{ __('No products found matching the filter criteria.') }}</td></tr>';
+                } else {
+                    var groupedHtml = '';
+                    groupedArray.forEach(function (gp, idx) {
+                        gDel += gp.delivered_qty;
+                        gPart += gp.partial_qty;
+                        gPend += gp.pending_qty;
+                        gRet += gp.returned_qty;
+                        gCanc += gp.cancelled_qty;
+
+                        var profitCls = gp.net_profit > 0 ? 'text-success' : (gp.net_profit < 0 ? 'text-danger' : 'text-muted');
+                        groupedHtml += '<tr class="grouped-data-row">'
+                            + '<td class="text-muted font-weight-bold">' + (idx + 1) + '</td>'
+                            + '<td><div style="width: 36px; height: 36px; border-radius: 6px; border: 1px solid #e2e8f0; overflow: hidden; background: #fff; display: flex; align-items: center; justify-content: center;"><img src="' + escapeHtml(gp.product_image) + '" alt="' + escapeHtml(gp.product_name) + '" style="max-width: 100%; max-height: 100%; object-fit: contain;"></div></td>'
+                            + '<td class="font-weight-bold text-dark">' + escapeHtml(gp.product_name) + '</td>'
+                            + '<td class="text-center font-weight-bold">' + gp.orders_count.toLocaleString() + '</td>'
+                            + '<td class="text-center"><span class="badge px-2.5 py-1 font-weight-bold" style="font-size: 12.5px; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;">' + gp.total_qty.toLocaleString() + ' Pcs</span></td>'
+                            + '<td class="text-center font-weight-bold text-success">' + gp.delivered_qty.toLocaleString() + '</td>'
+                            + '<td class="text-center font-weight-bold" style="color: #0891b2;">' + gp.partial_qty.toLocaleString() + '</td>'
+                            + '<td class="text-center font-weight-bold text-primary">' + gp.pending_qty.toLocaleString() + '</td>'
+                            + '<td class="text-center font-weight-bold" style="color: #ea580c;">' + gp.returned_qty.toLocaleString() + '</td>'
+                            + '<td class="text-center font-weight-bold text-danger">' + gp.cancelled_qty.toLocaleString() + '</td>'
+                            + '<td class="text-right font-weight-bold text-dark">৳ ' + Math.round(gp.order_amount).toLocaleString() + '</td>'
+                            + '<td class="text-right text-muted font-weight-semibold">৳ ' + Math.round(gp.product_cost).toLocaleString() + '</td>'
+                            + '<td class="text-right text-muted font-weight-semibold">৳ ' + Math.round(gp.courier_charge).toLocaleString() + '</td>'
+                            + '<td class="text-right font-weight-bold ' + profitCls + '">' + formatMoney(gp.net_profit) + '</td>'
+                            + '<td class="text-center"><button type="button" class="btn btn-xs btn-outline-primary font-weight-bold px-2 py-1 btn-view-product-orders" data-product="' + escapeHtml(gp.product_name) + '" style="font-size: 11px; border-radius: 6px;"><i class="feather icon-eye mr-1"></i> {{ __('View Orders') }}</button></td>'
+                            + '</tr>';
+                    });
+                    groupedTbody.innerHTML = groupedHtml;
+                }
+            }
+
+            if (groupedTfoot) {
+                var gfCls = sumProfit >= 0 ? 'text-success' : 'text-danger';
+                groupedTfoot.innerHTML = '<tr>'
+                    + '<td>#</td><td></td>'
+                    + '<td>{{ __('All Total Qty') }}</td>'
+                    + '<td class="text-center">' + sumOrders.toLocaleString() + '</td>'
+                    + '<td class="text-center text-primary">' + sumQty.toLocaleString() + ' Pcs</td>'
+                    + '<td class="text-center text-success">' + gDel.toLocaleString() + '</td>'
+                    + '<td class="text-center" style="color: #0891b2;">' + gPart.toLocaleString() + '</td>'
+                    + '<td class="text-center text-primary">' + gPend.toLocaleString() + '</td>'
+                    + '<td class="text-center" style="color: #ea580c;">' + gRet.toLocaleString() + '</td>'
+                    + '<td class="text-center text-danger">' + gCanc.toLocaleString() + '</td>'
+                    + '<td class="text-right">৳ ' + Math.round(sumAmt).toLocaleString() + '</td>'
+                    + '<td class="text-right">৳ ' + Math.round(sumCost).toLocaleString() + '</td>'
+                    + '<td class="text-right">৳ ' + Math.round(sumCharge).toLocaleString() + '</td>'
+                    + '<td class="text-right ' + gfCls + '">' + formatMoney(sumProfit) + '</td>'
+                    + '<td></td>'
+                    + '</tr>';
+            }
+
+            // 3. Update Order Wise Table Footer across ALL matching orders
+            if (ordersTfoot) {
+                var ofCls = sumProfit >= 0 ? 'text-success' : 'text-danger';
+                ordersTfoot.innerHTML = '<tr>'
+                    + '<td></td><td>#</td>'
+                    + '<td colspan="5">{{ __('All Matching Orders Total') }} (' + sumOrders.toLocaleString() + ' {{ __('Orders') }})</td>'
+                    + '<td class="text-center text-primary">' + sumQty.toLocaleString() + ' Pcs</td>'
+                    + '<td></td><td></td>'
+                    + '<td class="text-right">৳ ' + Math.round(sumAmt).toLocaleString() + '</td>'
+                    + '<td></td><td></td><td></td>'
+                    + '<td class="text-right">৳ ' + Math.round(sumCost).toLocaleString() + '</td>'
+                    + '<td class="text-right">৳ ' + Math.round(sumCharge).toLocaleString() + '</td>'
+                    + '<td class="text-right ' + ofCls + '">' + formatMoney(sumProfit) + '</td>'
+                    + '</tr>';
+            }
+
+            // 4. Paginate Active Table
+            var pageSizeVal = pageSizeSelect ? pageSizeSelect.value : '25';
+            var activeRows = activeViewMode === 'grouped'
+                ? Array.from(document.querySelectorAll('#grouped-products-tbody tr.grouped-data-row'))
+                : matchingRows;
+
+            var totalActive = activeRows.length;
+            var perPage = (pageSizeVal === 'all') ? Math.max(1, totalActive) : (parseInt(pageSizeVal, 10) || 25);
+            var totalPages = Math.max(1, Math.ceil(totalActive / perPage));
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            var startIdx = (currentPage - 1) * perPage;
+            var endIdx = startIdx + perPage;
+
+            activeRows.forEach(function (r, i) {
+                r.style.display = (i >= startIdx && i < endIdx) ? '' : 'none';
+            });
+
+            if (activeViewMode === 'detailed' && ordersTbody) {
+                var existingEmpty = document.getElementById('orders-dynamic-empty-row');
+                if (totalActive === 0 && orderRows.length > 0) {
+                    if (!existingEmpty) {
+                        var tr = document.createElement('tr');
+                        tr.id = 'orders-dynamic-empty-row';
+                        tr.innerHTML = '<td colspan="17" class="text-center py-4 text-muted">{{ __('No orders found matching the filter criteria.') }}</td>';
+                        ordersTbody.appendChild(tr);
+                    }
+                } else if (existingEmpty) {
+                    existingEmpty.remove();
+                }
+            }
+
+            if (pageIndicator) {
+                if (totalActive === 0) {
+                    pageIndicator.textContent = '0 of 0';
+                } else {
+                    var showStart = startIdx + 1;
+                    var showEnd = Math.min(endIdx, totalActive);
+                    pageIndicator.textContent = showStart + '-' + showEnd + ' / ' + totalActive;
+                }
+            }
+            if (btnPrev) btnPrev.disabled = (currentPage <= 1);
+            if (btnNext) btnNext.disabled = (currentPage >= totalPages);
+        }
+
+        if (liveSearchInput) {
+            ['input', 'keyup'].forEach(function (evt) {
+                liveSearchInput.addEventListener(evt, function () {
+                    currentPage = 1;
+                    refreshDetailedOrdersView();
+                });
+            });
+        }
+        if (pageSizeSelect) {
+            pageSizeSelect.addEventListener('change', function () {
+                currentPage = 1;
+                refreshDetailedOrdersView();
+            });
+        }
+        if (btnViewGrouped) {
+            btnViewGrouped.addEventListener('click', function () { switchViewMode('grouped'); });
+        }
+        if (btnViewDetailed) {
+            btnViewDetailed.addEventListener('click', function () { switchViewMode('detailed'); });
+        }
+        if (btnPrev) {
+            btnPrev.addEventListener('click', function () {
+                if (currentPage > 1) {
+                    currentPage -= 1;
+                    refreshDetailedOrdersView();
+                }
+            });
+        }
+        if (btnNext) {
+            btnNext.addEventListener('click', function () {
+                currentPage += 1;
+                refreshDetailedOrdersView();
+            });
+        }
+        if (groupedTbody) {
+            groupedTbody.addEventListener('click', function (e) {
+                var btn = e.target.closest('.btn-view-product-orders');
+                if (btn) {
+                    var prod = btn.getAttribute('data-product') || '';
+                    if (liveSearchInput) liveSearchInput.value = prod;
+                    switchViewMode('detailed');
+                }
+            });
+        }
+
+        refreshDetailedOrdersView();
     });
 
     // Quick Date Range Preset Setter
