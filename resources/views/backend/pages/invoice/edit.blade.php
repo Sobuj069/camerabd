@@ -182,18 +182,39 @@
         body.dark-theme .footerpos_right {
             background-color: #0a693c !important;
         }
-        }); // End of $(document).ready
     </style>
 @endpush
 
 @section('invoice')
+    @php
+        $prefillCustName    = old('customer_name', $invoice->customer?->name ?? ($linkedWebsiteOrder?->customer_name ?? ''));
+        $prefillCustPhone   = old('customer_phone', $invoice->customer?->phone ?? ($linkedWebsiteOrder?->phone ?? ''));
+        $prefillCustAddress = old('customer_address', $invoice->customer?->address ?? ($linkedWebsiteOrder?->delivery_address ?? ''));
+        $isWithoutManage    = ($invoice->stock_mode === 'without_manage') || in_array(strtolower(trim((string)$invoice->order_status)), ['cancelled', 'returned']);
+    @endphp
     <div class="invoice-contentbar">
         <div class="row">
             <!-- Start col -->
             <div class="col-md-10 offset-1">
                 <div class="card card_top">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap px-3 pt-3 pb-2 border-bottom" style="gap: 10px;">
+                        <div class="d-flex align-items-center flex-wrap" style="gap: 8px;">
+                            <h5 class="mb-0 font-weight-bold text-dark">
+                                <i class="feather icon-edit text-primary mr-1"></i> {{ __('Edit Invoice') }} #{{ $invoice->invoice_no }}
+                            </h5>
+                            @if($invoice->sale_type === 'Online')
+                                <span class="badge badge-primary px-2 py-1" style="font-size: 11px;">Online Order</span>
+                            @else
+                                <span class="badge badge-secondary px-2 py-1" style="font-size: 11px;">Outlet Sale</span>
+                            @endif
+                        </div>
+                        <a href="{{ ($returnToOnline ?? false) ? route('invoice.online.sale') : route('invoice.index') }}" class="btn btn-sm btn-outline-secondary font-weight-bold">
+                            <i class="feather icon-arrow-left mr-1"></i> {{ ($returnToOnline ?? false) ? __('Back to Online Sale List') : __('Back to Sale List') }}
+                        </a>
+                    </div>
                     <form action="{{ route('invoice.up', $invoice->id) }}" id="payment_form" method="POST">
                         @csrf
+                        <input type="hidden" name="redirect_to" value="{{ ($returnToOnline ?? false) ? 'online' : 'print' }}">
                         <div class="cart-container">
                             <div class="cart-head">
                                 <div class="input-group mb-3">
@@ -203,21 +224,36 @@
                                     <input type="text" id="product_search" class="form-control" placeholder="Search Product by Name or Barcode">
                                     <input type="hidden" id="search_product_id">
                                 </div>
-                                <div class="row align-items-center">
-                                    <div class="col-md-4 mb-3">
+                                <div class="row align-items-start">
+                                    <div class="col-md-3 mb-3">
                                         <label style="font-weight: 600; font-size: 11px; margin-bottom: 4px; color: #475569;">{{ __('Invoice Date') }}</label>
-                                        <input type="date" class="form-control" id="date" value="{{ $invoice->date }}" name="date" max="{{ date('Y-m-d') }}" required>
+                                        <input type="date" class="form-control" id="date" value="{{ old('date', $invoice->date) }}" name="date" max="{{ date('Y-m-d') }}" required>
                                     </div>
-                                    <div class="col-md-4 mb-3">
-                                        <label style="font-weight: 600; font-size: 11px; margin-bottom: 4px; color: #475569;">{{ __('Customer Name') }}</label>
-                                        <input type="text" class="form-control" readonly value="{{ $invoice->customer?->name ?? 'Walk-in Customer' }} {{ $invoice->customer?->phone ? '('.$invoice->customer->phone.')' : '' }}">
+                                    <div class="col-md-3 mb-3">
+                                        <label style="font-weight: 600; font-size: 11px; margin-bottom: 4px; color: #475569;">
+                                            {{ __('Customer Name') }} @if($invoice->sale_type === 'Online')<span class="text-danger">*</span>@endif
+                                        </label>
+                                        <input type="text" class="form-control" id="edit_customer_name" name="customer_name" value="{{ $prefillCustName }}" placeholder="{{ __('Customer Name') }}" {{ $invoice->sale_type === 'Online' ? 'required' : '' }}>
                                     </div>
-                                    <div class="col-md-4 mb-3">
+                                    <div class="col-md-3 mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <label class="mb-0" style="font-weight: 600; font-size: 11px; color: #475569;">
+                                                {{ __('Customer Phone (11 Digits)') }} @if($invoice->sale_type === 'Online')<span class="text-danger">*</span>@endif
+                                            </label>
+                                            <span id="edit_phone_status" class="badge badge-secondary" style="font-size: 10px;">0/11</span>
+                                        </div>
+                                        <input type="tel" class="form-control" id="edit_customer_phone" name="customer_phone" inputmode="numeric" maxlength="14" value="{{ $prefillCustPhone }}" placeholder="01XXXXXXXXX" {{ $invoice->sale_type === 'Online' ? 'required' : '' }}>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
                                         <label style="font-weight: 600; font-size: 11px; margin-bottom: 4px; color: #dc2626;">{{ __('Previous Customer Due') }}</label>
                                         <div style="background: #fef2f2; border: 1px solid #fca5a5; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 14px; color: #b91c1c; display: flex; justify-content: space-between; align-items: center;">
                                             <span>৳ {{ number_format($previousDue ?? 0, 2) }}</span>
                                             <span style="font-size: 10px; color: #64748b; font-weight: 600;">(Total: ৳ {{ number_format($totalCustomerDue ?? 0, 2) }})</span>
                                         </div>
+                                    </div>
+                                    <div class="col-md-12 mb-3">
+                                        <label style="font-weight: 600; font-size: 11px; margin-bottom: 4px; color: #475569;">{{ __('Delivery Address') }}</label>
+                                        <input type="text" class="form-control" id="edit_customer_address" name="customer_address" value="{{ $prefillCustAddress }}" placeholder="{{ __('Full Delivery Address (House, Road, Area, Thana, District)') }}">
                                     </div>
                                 </div>
                             </div>
@@ -250,24 +286,27 @@
                                         <tbody id="tbody">
                                             @foreach ($invoiceItem as $key => $item)
                                                 @php
-                                                    $factor = ($item->product->unit && $item->product->unit->related_value) ? $item->product->unit->related_value : 1;
+                                                    $prodUnit = $item->product?->unit;
+                                                    $factor = ($prodUnit && $prodUnit->related_value) ? $prodUnit->related_value : 1;
                                                     $sold_qty_sub = ($item->main_qty * $factor) + ($item->sub_qty ?? 0);
-                                                    $max_available_sub = product_fake_stock_val($item->product) + $sold_qty_sub;
+                                                    $max_available_sub = $isWithoutManage ? 99999999 : (product_fake_stock_val($item->product) + $sold_qty_sub);
                                                 @endphp
                                                 <input type="hidden" name="itemId[]" value="{{ $item->id }}">
                                                 <tr>
                                                     <td class="table_data_style_left">{{ ++$key }}</td>
                                                     <td style="">
-                                                        {{ $item->product->name }}
+                                                        {{ $item->product?->name ?? ($item->new_details ?? 'Product') }}
                                                         <input type="hidden" value="{{ $item->product_id }}"
                                                             name="product_id[]" />
                                                         
                                                         @php
-                                                            $variations = $item->product->product_variations()
-                                                                ->leftJoin('product_sizes', 'product_variations.size_id', '=', 'product_sizes.id')
-                                                                ->select('product_variations.*')
-                                                                ->orderBy('product_sizes.size', 'asc')
-                                                                ->get();
+                                                            $variations = $item->product
+                                                                ? $item->product->product_variations()
+                                                                    ->leftJoin('product_sizes', 'product_variations.size_id', '=', 'product_sizes.id')
+                                                                    ->select('product_variations.*')
+                                                                    ->orderBy('product_sizes.size', 'asc')
+                                                                    ->get()
+                                                                : collect();
                                                         @endphp
                                                         @if($variations && count($variations) > 0)
                                                             <div class="mt-1">
@@ -275,16 +314,16 @@
                                                                     <option value="">{{ __('Select Variation') }}</option>
                                                                     @foreach($variations as $variation)
                                                                         @php
-                                                                            $stock = variation_stock($variation->id);
-                                                                            if ($item->product_variation_id == $variation->id) {
+                                                                            $stock = $isWithoutManage ? 99999999 : variation_stock($variation->id);
+                                                                            if (!$isWithoutManage && $item->product_variation_id == $variation->id) {
                                                                                 $stock += $sold_qty_sub;
                                                                             }
-                                                                            $isOutOfStock = $stock <= 0;
+                                                                            $isOutOfStock = !$isWithoutManage && $stock <= 0;
                                                                         @endphp
                                                                         <option value="{{ $variation->id }}" stock="{{ $stock }}"
                                                                             {{ $item->product_variation_id == $variation->id ? 'selected' : '' }}
                                                                             {{ ($isOutOfStock && $item->product_variation_id != $variation->id) ? 'disabled' : '' }}>
-                                                                            {{ $variation->size->size ?? '' }} - {{ $variation->color->color ?? '' }} - Qty: {{ $stock }}{{ ($isOutOfStock && $item->product_variation_id != $variation->id) ? ' (Out of Stock)' : '' }}
+                                                                            {{ $variation->size->size ?? '' }} - {{ $variation->color->color ?? '' }} - Qty: {{ $isWithoutManage ? 'Available' : $stock }}{{ ($isOutOfStock && $item->product_variation_id != $variation->id) ? ' (Out of Stock)' : '' }}
                                                                         </option>
                                                                     @endforeach
                                                                 </select>
@@ -293,13 +332,13 @@
                                                             <input type="hidden" name="variation_id[]">
                                                         @endif
                                                         @if(env('APP_IMEI') == 'yes')
-                                                            @if($item->product->imei == 1)
+                                                            @if(($item->product?->imei ?? 0) == 1)
                                                                 <div class="mt-2 text-left">
                                                                     <button type="button" class="btn btn-sm btn-info btn-enter-invoice-imei" 
                                                                             data-product-id="{{ $item->product_id }}"
-                                                                            data-product-name="{{ $item->product->name }}"
+                                                                            data-product-name="{{ $item->product?->name ?? 'Product' }}"
                                                                             style="padding: 3px 8px; font-size: 11px;">
-                                                                        <i class="fa fa-barcode"></i> Add IMEI (<span class="imei-count">{{ count(array_filter(array_map('trim', explode("\n", $item->imei)))) }}</span>)
+                                                                        <i class="fa fa-barcode"></i> Add IMEI (<span class="imei-count">{{ count(array_filter(array_map('trim', explode("\n", (string)$item->imei)))) }}</span>)
                                                                     </button>
                                                                     <textarea name="imei[]" class="imei_input imei-hidden-input d-none">{{ $item->imei }}</textarea>
                                                                 </div>
@@ -312,53 +351,54 @@
                                                     </td>
                                                     <td>
                                                         <div class="d-flex align-items-center justify-content-center" style="min-width: 150px; flex-wrap: nowrap;">
-                                                            @if ($item->product->is_service == 0)
-                                                                @if ($item->product->unit->related_unit == null)
+                                                            @if (($item->product?->is_service ?? 0) == 0 && $prodUnit)
+                                                                @if ($prodUnit->related_unit == null)
                                                                     <input type="text" class="has_sub_unit" hidden
                                                                         value="false">
                                                                     <label class="ml-2 mr-2"
-                                                                        style="padding-top: 5px; white-space: nowrap;">{{ $item->product->unit->name }}:</label>
+                                                                        style="padding-top: 5px; white-space: nowrap;">{{ $prodUnit->name }}:</label>
                                                                     <input type="number" value="{{ $item->main_qty }}"
                                                                         class="form-control main_qty" style="width: 80px;" name="main_qty[]"
                                                                         data-value="{{ $max_available_sub }}"
-                                                                        data-related="{{ $item->product->unit->related_value }}"
+                                                                        data-related="{{ $prodUnit->related_value }}"
                                                                         onkeydown="return event.keyCode !== 190"
-                                                                        min="0" @if (env('APP_IMEI') == 'yes' && $item->product->imei == 1) readonly @endif>
+                                                                        min="0" @if (env('APP_IMEI') == 'yes' && ($item->product?->imei ?? 0) == 1) readonly @endif>
                                                                 @else
                                                                     <input type="text" class="has_sub_unit" hidden
                                                                         value="true">
                                                                     <input type="text" class="conversion" hidden
-                                                                        value="${data.product.unit.related_value}">
+                                                                        value="{{ $prodUnit->related_value }}">
                                                                     <label class="mr-1 ml-1"
-                                                                        style="padding-top: 5px; white-space: nowrap;">{{ $item->product->unit->name }}:</label>
+                                                                        style="padding-top: 5px; white-space: nowrap;">{{ $prodUnit->name }}:</label>
                                                                     <input type="number" value="{{ $item->main_qty }}"
                                                                         class="form-control main_qty mr-1" style="width: 70px;"
                                                                         name="main_qty[]"
                                                                         data-value="{{ $max_available_sub }}"
-                                                                        data-related="{{ $item->product->unit->related_value }}"
+                                                                        data-related="{{ $prodUnit->related_value }}"
                                                                         onkeydown="return event.keyCode !== 190"
-                                                                        min="0" @if (env('APP_IMEI') == 'yes' && $item->product->imei == 1) readonly @endif>
+                                                                        min="0" @if (env('APP_IMEI') == 'yes' && ($item->product?->imei ?? 0) == 1) readonly @endif>
 
                                                                     <label class="mr-1"
-                                                                        style="padding-top: 5px; white-space: nowrap;">{{ $item->product->unit->related_unit->name }}:</label>
+                                                                        style="padding-top: 5px; white-space: nowrap;">{{ $prodUnit->related_unit->name }}:</label>
                                                                     <input type="number" value="{{ $item->sub_qty }}"
                                                                         class="form-control sub_qty mr-1" style="width: 70px;"
                                                                         name="sub_qty[]"
                                                                         onkeydown="return event.keyCode !== 190"
-                                                                        min="0" max="" @if (env('APP_IMEI') == 'yes' && $item->product->imei == 1) readonly @endif>
+                                                                        min="0" max="" @if (env('APP_IMEI') == 'yes' && ($item->product?->imei ?? 0) == 1) readonly @endif>
                                                                 @endif
                                                             @else
+                                                                <input type="text" class="has_sub_unit" hidden value="false">
                                                                 <label class="ml-2 mr-2"
                                                                     style="padding-top: 5px; white-space: nowrap;">Pcs:</label>
                                                                 <input type="number" value="{{ $item->main_qty }}"
                                                                     class="form-control main_qty" style="width: 80px;" name="main_qty[]"
-                                                                    data-value="99999999"
-                                                                    min="0" @if (env('APP_IMEI') == 'yes' && $item->product->imei == 1) readonly @endif>
+                                                                    data-value="{{ $isWithoutManage ? 99999999 : $max_available_sub }}"
+                                                                    min="0" @if (env('APP_IMEI') == 'yes' && ($item->product?->imei ?? 0) == 1) readonly @endif>
                                                             @endif
                                                         </div>
                                                     </td>
                                                     <td>
-                                                        <input type="number" value="{{ $item->rate }}"
+                                                        <input type="number" step="any" value="{{ $item->rate }}"
                                                             class="form-control rate" name="rate[]" />
                                                     </td>
                                                     <td>
@@ -366,7 +406,7 @@
                                                             class="form-control product_discount" name="product_discount[]" />
                                                     </td>
                                                     <td>
-                                                        <input type="number" readonly name="sub_total[]"
+                                                        <input type="number" step="any" readonly name="sub_total[]"
                                                             class="form-control sub_total" value="{{ $item->subtotal }}" />
                                                     </td>
                                                     <td class="table_data_style_right text-center">
@@ -377,10 +417,16 @@
                                         </tbody>
                                         <tfoot>
                                             <tr class="bg-light-primary">
-                                                <td colspan="5" class="text-right fw-bold">Grand Total</td>
+                                                <td colspan="5" class="text-right fw-bold">Items Subtotal</td>
                                                 <td colspan="2">
                                                     <input type="number" step="any" name="estimated_amount"
                                                         value="0" class="form-control estimated_amount" readonly>
+                                                </td>
+                                            </tr>
+                                            <tr class="bg-light-primary">
+                                                <td colspan="5" class="text-right fw-bold">Delivery Charge</td>
+                                                <td colspan="2">
+                                                    <input type="number" step="any" min="0" class="form-control delivery_charge_input" name="delivery_charge" value="{{ (float)($invoice->delivery_charge ?? 0) }}">
                                                 </td>
                                             </tr>
                                             {{-- Discount --}}
@@ -555,8 +601,93 @@
     </div>
 
     <script>
+        const isOnlineSaleEdit = {{ $invoice->sale_type === 'Online' ? 'true' : 'false' }};
+        const isWithoutManageStock = {{ $isWithoutManage ? 'true' : 'false' }};
+
+        function normalizeEditBdPhone(raw) {
+            const bnMap = {'০':'0','১':'1','২':'2','৩':'3','৪':'4','৫':'5','৬':'6','৭':'7','৮':'8','৯':'9'};
+            let ascii = String(raw || '').replace(/[০-৯]/g, ch => bnMap[ch] || ch);
+            let digits = ascii.replace(/[^0-9]/g, '');
+            if (digits.startsWith('8801') && (digits.length === 13 || digits.length > 11)) {
+                digits = digits.substring(2);
+            }
+            if (digits.startsWith('01') && digits.length > 11) {
+                digits = digits.substring(0, 11);
+            }
+            return digits;
+        }
+
+        function isValidEditBdPhone(val) {
+            return /^01[3-9][0-9]{8}$/.test(String(val || ''));
+        }
+
+        function refreshEditPhoneStatus() {
+            var phoneEl = document.getElementById('edit_customer_phone');
+            var badgeEl = document.getElementById('edit_phone_status');
+            if (!phoneEl || !badgeEl) return true;
+
+            var clean = normalizeEditBdPhone(phoneEl.value);
+            if (phoneEl.value !== clean) {
+                phoneEl.value = clean;
+            }
+            if (isValidEditBdPhone(clean)) {
+                badgeEl.className = 'badge badge-success';
+                badgeEl.textContent = '11/11 ✓';
+                phoneEl.style.borderColor = '#10b981';
+                return true;
+            } else {
+                badgeEl.className = 'badge badge-danger';
+                badgeEl.textContent = clean.length + '/11';
+                phoneEl.style.borderColor = '#ef4444';
+                return false;
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
+            var editPhoneEl = document.getElementById('edit_customer_phone');
+            if (editPhoneEl) {
+                refreshEditPhoneStatus();
+                editPhoneEl.addEventListener('input', refreshEditPhoneStatus);
+                editPhoneEl.addEventListener('blur', refreshEditPhoneStatus);
+            }
+
             document.getElementById('update_btn').addEventListener('click', function(e) {
+                var custNameEl = document.getElementById('edit_customer_name');
+                var custName = custNameEl ? custNameEl.value.trim() : '';
+                var custPhone = editPhoneEl ? normalizeEditBdPhone(editPhoneEl.value) : '';
+                if (editPhoneEl) editPhoneEl.value = custPhone;
+
+                if (isOnlineSaleEdit) {
+                    if (!custName) {
+                        iziToast.warning({
+                            title: "{{ __('Customer Name Required') }}",
+                            message: "{{ __('Please enter customer name.') }}",
+                            position: "topRight",
+                        });
+                        if (custNameEl) custNameEl.focus();
+                        return false;
+                    }
+                    if (!isValidEditBdPhone(custPhone)) {
+                        refreshEditPhoneStatus();
+                        iziToast.error({
+                            title: "{{ __('Invalid Phone Number') }}",
+                            message: "{{ __('অবশ্যই সঠিক ১১ ডিজিটের মোবাইল নাম্বার দিতে হবে (যেমন: 017XXXXXXXX)।') }}",
+                            position: "topRight",
+                        });
+                        if (editPhoneEl) editPhoneEl.focus();
+                        return false;
+                    }
+                } else if (custPhone.length > 0 && !isValidEditBdPhone(custPhone)) {
+                    refreshEditPhoneStatus();
+                    iziToast.error({
+                        title: "{{ __('Invalid Phone Number') }}",
+                        message: "{{ __('Please enter a valid 11-digit mobile number (e.g. 017XXXXXXXX).') }}",
+                        position: "topRight",
+                    });
+                    if (editPhoneEl) editPhoneEl.focus();
+                    return false;
+                }
+
                 var imeiError = false;
                 var imeiInputs = document.querySelectorAll('.imei_input');
                 
@@ -585,7 +716,7 @@
                     var total_amount = parseFloat(document.getElementById("grandTotal").value) || 0;
                     var paid_amount = parseFloat(document.getElementById("total_paid").value) || 0;
                     var due_amount = total_amount - paid_amount;
-                    if (customer_id == 1 && due_amount > 0.01) {
+                    if (!isOnlineSaleEdit && customer_id == 1 && due_amount > 0.01) {
                         iziToast.warning({
                             title: "{{ __('Walk-in customer cannot have a due amount!') }}",
                             message: "{{ __('Please pay the full amount.') }}",
@@ -720,7 +851,7 @@
                 $.get(url, (data) => {
 
                     // check stock
-                    if (data.product.is_service == 0 && data.pure_stock <= 0) {
+                    if (!isWithoutManageStock && data.product.is_service == 0 && data.pure_stock <= 0) {
                         iziToast.warning({
                             title: "Out of stock this product.",
                             position: "topRight",
@@ -763,7 +894,7 @@
             $.get(url, data => {
                 // console.log(data.product.variations);
                 // check stock
-                if (data.product.is_service == 0 && data.pure_stock <= 0) {
+                if (!isWithoutManageStock && data.product.is_service == 0 && data.pure_stock <= 0) {
                     iziToast.warning({
                         title: "Out of stock this product.",
                         position: "topRight",
@@ -816,9 +947,10 @@
                 <option value="">{{ __('Select Variation') }}</option>`;
 
                 $.each(data.variations, function(idx, value) {
-                    let isOutOfStock = parseFloat(value.stock) <= 0;
-                    variation_data += `<option stock='${value.stock}' value='${value.id}' ${isOutOfStock ? 'disabled' : ''}>
-                    ${value.size} - ${value.color} - Qty: ${value.stock}${isOutOfStock ? ' (Out of Stock)' : ''}</option>`;
+                    let vStock = isWithoutManageStock ? 99999999 : value.stock;
+                    let isOutOfStock = !isWithoutManageStock && parseFloat(value.stock) <= 0;
+                    variation_data += `<option stock='${vStock}' value='${value.id}' ${isOutOfStock ? 'disabled' : ''}>
+                    ${value.size} - ${value.color} - Qty: ${isWithoutManageStock ? 'Available' : value.stock}${isOutOfStock ? ' (Out of Stock)' : ''}</option>`;
                 });
 
                 variation_data += '</select>';
@@ -826,13 +958,14 @@
                 variation_data = `<input type="hidden" name="variation_id[]">`;
             }
 
+            let rowMaxStock = isWithoutManageStock ? 99999999 : data.pure_stock;
             if (data.product.is_service == 0) {
                 if (!data.product.unit || data.product.unit.related_unit == null) {
                     quantity_data =
                         `<input type="text" class="has_sub_unit" hidden value="false">
                             <label class="ml-2 mr-2" style="padding-top: 5px; white-space: nowrap;">${data.product.unit ? data.product.unit.name : 'Unit'}:</label>
                             <input type="number" value="1" class="form-control main_qty" style="width: 80px;" name="main_qty[]" 
-                            data-value="${data.pure_stock}" data-related="${data.product.unit ? data.product.unit.related_value : 0}" 
+                            data-value="${rowMaxStock}" data-related="${data.product.unit ? data.product.unit.related_value : 0}" 
                             onkeydown="return event.keyCode !== 190" min="0">`;
                 } else {
                     quantity_data =
@@ -840,7 +973,7 @@
                             <input type="text" class="conversion" hidden value="${data.product.unit.related_value}">
                             <label class="mr-1 ml-1" style="padding-top: 5px; white-space: nowrap;">${data.product.unit.name}:</label>
                             <input type="number" value="1" class="form-control main_qty mr-1" style="width: 70px;" name="main_qty[]" 
-                            data-value="${data.pure_stock}" data-related="${data.product.unit.related_value}" 
+                            data-value="${rowMaxStock}" data-related="${data.product.unit.related_value}" 
                             onkeydown="return event.keyCode !== 190" min="0">
 
                             <label class="mr-1" style="padding-top: 5px; white-space: nowrap;">${data.product.unit.related_unit.name}:</label>
@@ -891,13 +1024,13 @@
                         </div>
                     </td>
                     <td>
-                    <input type="number" style="min-width: 100px;" value="${data.product.selling_price}" class="form-control rate" name="rate[]" />
+                    <input type="number" step="any" style="min-width: 100px;" value="${data.product.selling_price}" class="form-control rate" name="rate[]" />
                     </td>
                     <td>
                         <input type="text" value="0" class="form-control product_discount" name="product_discount[]" />
                     </td>
                     <td>
-                    <input type="number" style="min-width: 100px;" readonly name="sub_total[]" class="form-control sub_total" value="${data.product.selling_price}"/>
+                    <input type="number" step="any" style="min-width: 100px;" readonly name="sub_total[]" class="form-control sub_total" value="${data.product.selling_price}"/>
                     </td>
                     <td class="table_data_style_right text-center">
                     <a href="#" class="remove-btn item-index" data-value="${index}"><i class="fa fa-trash text-danger"></i></a>
@@ -915,21 +1048,25 @@
             let converted_sub = to_sub_unit(main_val, sub_val, related_by, has_sub_unit);
             
             let stock = 0;
-            let variation_select = obj.parents('tr').find('select[name="variation_id[]"]');
-            if (variation_select.length > 0) {
-                let selectedOption = variation_select.find('option:selected');
-                let variationStock = parseFloat(selectedOption.attr('stock'));
-                if (!isNaN(variationStock)) {
-                    stock = variationStock;
+            if (isWithoutManageStock) {
+                stock = 99999999;
+            } else {
+                let variation_select = obj.parents('tr').find('select[name="variation_id[]"]');
+                if (variation_select.length > 0) {
+                    let selectedOption = variation_select.find('option:selected');
+                    let variationStock = parseFloat(selectedOption.attr('stock'));
+                    if (!isNaN(variationStock)) {
+                        stock = variationStock;
+                    } else {
+                        stock = parseFloat(obj.parents('tr').find('.main_qty').attr('data-value')) || 0;
+                    }
                 } else {
                     stock = parseFloat(obj.parents('tr').find('.main_qty').attr('data-value')) || 0;
                 }
-            } else {
-                stock = parseFloat(obj.parents('tr').find('.main_qty').attr('data-value')) || 0;
             }
 
 
-            if (stock < converted_sub) {
+            if (!isWithoutManageStock && stock < converted_sub) {
                 // put the max stock
                 var converted;
                 if (has_sub_unit == "true") {
@@ -1043,10 +1180,10 @@
             totalCalculate();
         }
 
-        // Other Calculations - discount
+        // Other Calculations - discount & delivery charge
         $(document).on(
-            "keyup change",
-            "input[name='discount_amount']",
+            "keyup change input",
+            "input[name='discount_amount'], input[name='delivery_charge']",
             function() {
                 totalCalculate();
             }
@@ -1057,7 +1194,10 @@
             let discount = $(".discount_amount").val();
             let estimated_amount = parseFloat(
                 $("input[name='estimated_amount']").val()
-            );
+            ) || 0;
+            let delivery_charge = parseFloat(
+                $("input[name='delivery_charge']").val()
+            ) || 0;
 
             discount = empty_field_check(discount);
 
@@ -1065,12 +1205,12 @@
             let discountAmount = 0;
             if ((typeof discount === 'string' || discount instanceof String) && discount.includes("%")) {
                 let removed_percent_discount = discount.replace('%', '');
-                discount = parseFloat(removed_percent_discount);
-                discountAmount = Math.round($(".estimated_amount").val() * (discount / 100));
+                discount = parseFloat(removed_percent_discount) || 0;
+                discountAmount = Math.round(estimated_amount * (discount / 100));
             } else {
-                discountAmount = parseFloat(discount);
+                discountAmount = parseFloat(discount) || 0;
             }
-            let total_amount = estimated_amount - discountAmount;
+            let total_amount = Math.max(0, estimated_amount + delivery_charge - discountAmount);
             $("#grand_total").text(total_amount.toFixed(2));
             $("#grandTotal").val(total_amount.toFixed(2));
             $(".sub_total").text(estimated_amount.toFixed(2));

@@ -598,9 +598,18 @@ class FrontendController extends Controller
      */
     public function processCheckout(Request $request)
     {
+        // Normalize Bengali digits & country code (+88) before strict 11-digit validation
+        $rawPhone = (string) $request->input('phone', '');
+        $asciiPhone = strtr($rawPhone, ['০' => '0', '১' => '1', '২' => '2', '৩' => '3', '৪' => '4', '৫' => '5', '৬' => '6', '৭' => '7', '৮' => '8', '৯' => '9']);
+        $cleanPhoneDigits = preg_replace('/[^0-9]/', '', $asciiPhone);
+        if (strlen($cleanPhoneDigits) === 13 && str_starts_with($cleanPhoneDigits, '8801')) {
+            $cleanPhoneDigits = substr($cleanPhoneDigits, 2);
+        }
+        $request->merge(['phone' => $cleanPhoneDigits]);
+
         $validated = $request->validate([
             'customer_name' => 'required|string|max:255',
-            'phone' => 'required|string|max:30',
+            'phone' => ['required', 'string', 'regex:/^01[3-9][0-9]{8}$/'],
             'delivery_address' => 'required|string|max:500',
             'delivery_zone' => 'nullable|string|in:inside_dhaka,outside_dhaka',
             'city' => 'nullable|string|max:100',
@@ -612,6 +621,9 @@ class FrontendController extends Controller
             'shipping_cost' => 'nullable|numeric|min:0',
             'cart_items' => 'nullable|string',
             'order_no' => 'nullable|string|max:50',
+        ], [
+            'phone.required' => 'মোবাইল নাম্বার দেওয়া আবশ্যক। সঠিক ১১ ডিজিটের নাম্বার দিন (যেমন: 017XXXXXXXX)।',
+            'phone.regex' => 'অবশ্যই সঠিক ১১ ডিজিটের বাংলাদেশি মোবাইল নাম্বার দিতে হবে (যেমন: 017XXXXXXXX)। ১১ ডিজিট ছাড়া অর্ডার গ্রহণ করা হবে না।',
         ]);
 
         // -------------------------------------------------------------

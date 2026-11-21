@@ -36,6 +36,20 @@
     </div>
   @endif
 
+  @if($errors->any())
+    <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-900 text-xs font-semibold rounded-2xl shadow-xs">
+      <div class="flex items-center gap-2 mb-1 font-bold text-red-700">
+        <span class="material-symbols-outlined text-[20px]">error</span>
+        <span>অর্ডার সাবমিট করতে নিচের তথ্যগুলো সঠিকভাবে পূরণ করুন:</span>
+      </div>
+      <ul class="list-disc pl-6 space-y-0.5">
+        @foreach($errors->all() as $err)
+          <li>{{ $err }}</li>
+        @endforeach
+      </ul>
+    </div>
+  @endif
+
   <form action="{{ route('frontend.process-checkout') }}" method="POST" id="checkout-form" data-fbq-ignore="true">
     @csrf
     
@@ -68,10 +82,20 @@
 
             <!-- Phone Number -->
             <div>
-              <label class="block font-bold text-on-surface mb-1.5">
-                Mobile Number / মোবাইল নাম্বার <span class="text-primary font-bold">*</span>
-              </label>
-              <input type="tel" name="phone" required value="{{ old('phone') }}" placeholder="01XXXXXXXXX" class="w-full bg-surface-container rounded-xl p-3.5 border border-surface-border text-xs focus:outline-none focus:border-primary font-medium" />
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="block font-bold text-on-surface" for="checkout-phone-input">
+                  Mobile Number / ১১ ডিজিটের মোবাইল নাম্বার <span class="text-primary font-bold">*</span>
+                </label>
+                <span id="phone-digit-counter" class="text-[11px] font-bold text-slate-400">0/11 Digits</span>
+              </div>
+              <input type="tel" id="checkout-phone-input" name="phone" required inputmode="numeric" maxlength="14" autocomplete="tel" value="{{ old('phone') }}" placeholder="01XXXXXXXXX (১১ ডিজিট)" class="w-full bg-surface-container rounded-xl p-3.5 border {{ $errors->has('phone') ? 'border-red-500' : 'border-surface-border' }} text-xs focus:outline-none focus:border-primary font-medium" />
+              <p id="phone-validation-msg" class="text-[11px] mt-1 font-semibold {{ $errors->has('phone') ? 'text-red-600' : 'text-text-muted' }}">
+                @error('phone')
+                  {{ $message }}
+                @else
+                  সঠিক ১১ ডিজিটের মোবাইল নাম্বার দিন (যেমন: 017XXXXXXXX)
+                @enderror
+              </p>
             </div>
 
             <!-- Delivery Address -->
@@ -602,6 +626,91 @@
     }
   }
 
+  // Strict 11-digit Bangladeshi mobile number normalization & validation
+  function normalizeBdPhone(raw) {
+    const bnMap = {'০':'0','১':'1','২':'2','৩':'3','৪':'4','৫':'5','৬':'6','৭':'7','৮':'8','৯':'9'};
+    let ascii = String(raw || '').replace(/[০-৯]/g, ch => bnMap[ch] || ch);
+    let digits = ascii.replace(/[^0-9]/g, '');
+    if (digits.startsWith('8801') && (digits.length === 13 || digits.length > 11)) {
+      digits = digits.substring(2);
+    }
+    if (digits.startsWith('01') && digits.length > 11) {
+      digits = digits.substring(0, 11);
+    }
+    return digits;
+  }
+
+  function isValidBdPhone(val) {
+    return /^01[3-9][0-9]{8}$/.test(String(val || ''));
+  }
+
+  function updateCheckoutPhoneUI(showErrorWhenIncomplete) {
+    const phoneInputEl = document.getElementById('checkout-phone-input');
+    const counterEl = document.getElementById('phone-digit-counter');
+    const msgEl = document.getElementById('phone-validation-msg');
+    if (!phoneInputEl) return true;
+
+    const clean = normalizeBdPhone(phoneInputEl.value);
+    if (phoneInputEl.value !== clean) {
+      phoneInputEl.value = clean;
+    }
+
+    if (counterEl) {
+      counterEl.textContent = clean.length + '/11 Digits';
+    }
+
+    if (clean.length === 0 && !showErrorWhenIncomplete) {
+      phoneInputEl.classList.remove('border-red-500', 'border-emerald-500');
+      phoneInputEl.classList.add('border-surface-border');
+      if (counterEl) counterEl.className = 'text-[11px] font-bold text-slate-400';
+      if (msgEl) {
+        msgEl.className = 'text-[11px] mt-1 font-semibold text-text-muted';
+        msgEl.textContent = 'সঠিক ১১ ডিজিটের মোবাইল নাম্বার দিন (যেমন: 017XXXXXXXX)';
+      }
+      return false;
+    }
+
+    const valid = isValidBdPhone(clean);
+    if (valid) {
+      phoneInputEl.classList.remove('border-red-500', 'border-surface-border');
+      phoneInputEl.classList.add('border-emerald-500');
+      if (counterEl) counterEl.className = 'text-[11px] font-bold text-emerald-600';
+      if (msgEl) {
+        msgEl.className = 'text-[11px] mt-1 font-bold text-emerald-600';
+        msgEl.textContent = '✓ সঠিক ১১ ডিজিটের মোবাইল নাম্বার';
+      }
+      return true;
+    }
+
+    if (showErrorWhenIncomplete || clean.length >= 11 || (clean.length >= 2 && !clean.startsWith('01') && !clean.startsWith('88'))) {
+      phoneInputEl.classList.remove('border-emerald-500', 'border-surface-border');
+      phoneInputEl.classList.add('border-red-500');
+      if (counterEl) counterEl.className = 'text-[11px] font-bold text-red-600';
+      if (msgEl) {
+        msgEl.className = 'text-[11px] mt-1 font-bold text-red-600';
+        msgEl.textContent = '১১ ডিজিটের সঠিক বাংলাদেশি মোবাইল নাম্বার দিন (013-019 দিয়ে শুরু, যেমন: 017XXXXXXXX)। ১১ ডিজিট না হলে অর্ডার হবে না।';
+      }
+    } else {
+      phoneInputEl.classList.remove('border-red-500', 'border-emerald-500');
+      phoneInputEl.classList.add('border-surface-border');
+      if (counterEl) counterEl.className = 'text-[11px] font-bold text-amber-600';
+      if (msgEl) {
+        msgEl.className = 'text-[11px] mt-1 font-semibold text-text-muted';
+        msgEl.textContent = '১১ ডিজিটের মোবাইল নাম্বার দিন (আরও ' + Math.max(0, 11 - clean.length) + ' ডিজিট বাকি)';
+      }
+    }
+    return false;
+  }
+
+  const checkoutPhoneEl = document.getElementById('checkout-phone-input');
+  if (checkoutPhoneEl) {
+    checkoutPhoneEl.addEventListener('input', function() { updateCheckoutPhoneUI(false); });
+    checkoutPhoneEl.addEventListener('blur', function() { updateCheckoutPhoneUI(true); });
+    if (checkoutPhoneEl.value) {
+      updateCheckoutPhoneUI(false);
+    }
+  }
+
   // Form submit check with strict double-click guard & DataLayer Purchase tracking
   let isCheckoutSubmitting = false;
   const checkoutFormEl = document.getElementById('checkout-form');
@@ -639,6 +748,20 @@
         e.preventDefault();
         alert('Your cart is empty! Please add products before checking out.');
         return false;
+      }
+
+      // Enforce strict 11-digit BD phone BEFORE submit lock & BEFORE tracking
+      if (checkoutPhoneEl) {
+        const cleanPhone = normalizeBdPhone(checkoutPhoneEl.value);
+        checkoutPhoneEl.value = cleanPhone;
+        if (!isValidBdPhone(cleanPhone)) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          updateCheckoutPhoneUI(true);
+          checkoutPhoneEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          checkoutPhoneEl.focus();
+          return false;
+        }
       }
 
       // Check HTML5 validity before locking form

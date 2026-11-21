@@ -1099,23 +1099,25 @@ class InvoiceController extends Controller
         $courierType = strtolower(trim($request->courier_type ?? ''));
         $isCourierOrder = ($invoice->sale_type === 'Online' && !empty($request->courier_type));
 
-        if ($isCourierOrder) {
-            // Prevent courier orders for Walk-in Customer (ID == 1)
-            if ($request->customer_id == 1 || ($customer_info && $customer_info->id == 1) || strtolower(trim($customer_info?->name ?? '')) == 'walk-in customer') {
-                session()->flash('error', __('Courier orders cannot be placed for Walk-in Customer. Please select or create a registered customer with a valid name, phone, and delivery address.'));
-                return redirect()->back()->withInput();
+        if ($invoice->sale_type === 'Online') {
+            if ($isCourierOrder) {
+                // Prevent courier orders for Walk-in Customer (ID == 1)
+                if ($request->customer_id == 1 || ($customer_info && $customer_info->id == 1) || strtolower(trim($customer_info?->name ?? '')) == 'walk-in customer') {
+                    session()->flash('error', __('Courier orders cannot be placed for Walk-in Customer. Please select or create a registered customer with a valid name, phone, and delivery address.'));
+                    return redirect()->back()->withInput();
+                }
+
+                // Validate delivery address
+                if (empty(trim($customer_info?->address ?? ''))) {
+                    session()->flash('error', __('Courier order requires a registered customer with a valid delivery address.'));
+                    return redirect()->back()->withInput();
+                }
             }
 
-            // Validate phone number
-            $cleanPhone = preg_replace('/[^0-9]/', '', $customer_info?->phone ?? '');
-            if (empty($cleanPhone) || strlen($cleanPhone) < 11) {
-                session()->flash('error', __('Courier order requires a registered customer with a valid 11-digit mobile number.'));
-                return redirect()->back()->withInput();
-            }
-
-            // Validate delivery address
-            if (empty(trim($customer_info?->address ?? ''))) {
-                session()->flash('error', __('Courier order requires a registered customer with a valid delivery address.'));
+            // Validate strict 11-digit BD phone number for ALL Online orders
+            $cleanPhone = $this->normalizeBdPhone($customer_info?->phone);
+            if (!preg_match('/^01[3-9][0-9]{8}$/', $cleanPhone)) {
+                session()->flash('error', __('Online order requires a customer with a valid 11-digit mobile number (e.g. 017XXXXXXXX).'));
                 return redirect()->back()->withInput();
             }
         }
@@ -1538,13 +1540,17 @@ class InvoiceController extends Controller
 
     public function invoiceEdit($id)
     {
-        $invoice = Invoice::where('id', $id)->first();
+        $invoice = Invoice::with(['customer', 'websiteOrder'])->where('id', $id)->firstOrFail();
         $invoiceItem = InvoiceItem::where('invoice_id', $id)->get();
+
+        $linkedWebsiteOrder = $invoice->websiteOrder
+            ?: (!empty($invoice->source_link) ? \App\Models\WebsiteOrder::where('order_no', $invoice->source_link)->first() : null);
+        $returnToOnline = (request('from') === 'online' || $invoice->sale_type === 'Online');
 
         $previousDue = 0;
         $totalCustomerDue = 0;
 
-        if ($invoice && $invoice->customer_id) {
+        if ($invoice->customer_id) {
             $previousDue = Invoice::where('customer_id', $invoice->customer_id)
                 ->where('id', '!=', $id)
                 ->sum('total_due');
@@ -1576,6 +1582,8 @@ class InvoiceController extends Controller
         return view('backend.pages.invoice.edit', compact(
             'invoice',
             'invoiceItem',
+            'linkedWebsiteOrder',
+            'returnToOnline',
             'previousDue',
             'totalCustomerDue',
             'bank_accounts',
@@ -1594,6 +1602,29 @@ class InvoiceController extends Controller
             session()->flash('error', __('Please select at least one product to update the invoice.'));
             return redirect()->back()->withInput();
         }
+
+        // ===== VALIDATE CUSTOMER DETAILS & STRICT 11-DIGIT PHONE ON EDIT =====
+        $customerName     = trim((string) $request->input('customer_name', ''));
+        $customerPhoneRaw = trim((string) $request->input('customer_phone', ''));
+        $customerAddress  = trim((string) $request->input('customer_address', ''));
+        $customerPhone    = $this->normalizeBdPhone($customerPhoneRaw);
+
+        if ($invoice->sale_type === 'Online') {
+            if ($customerName === '') {
+                session()->flash('error', __('Customer name is required for online orders.'));
+                return redirect()->back()->withInput();
+            }
+            if (!preg_match('/^01[3-9][0-9]{8}$/', $customerPhone)) {
+                session()->flash('error', __('অবশ্যই সঠিক ১১ ডিজিটের মোবাইল নাম্বার দিতে হবে (যেমন: 017XXXXXXXX)।'));
+                return redirect()->back()->withInput();
+            }
+        } elseif ($customerPhoneRaw !== '' && !preg_match('/^01[3-9][0-9]{8}$/', $customerPhone)) {
+            session()->flash('error', __('Please enter a valid 11-digit mobile number (e.g. 017XXXXXXXX).'));
+            return redirect()->back()->withInput();
+        }
+
+        $skipStockManagement = ($invoice->stock_mode === 'without_manage')
+            || in_array(strtolower(trim((string) $invoice->order_status)), ['cancelled', 'returned']);
 
         // ===== 1. SERVER-SIDE STOCK VALIDATION ON SALE EDIT =====
         $oldItems = InvoiceItem::where('invoice_id', $invoice->id)->get();
@@ -1678,30 +1709,32 @@ class InvoiceController extends Controller
         }
 
         // Validate stock for any added or increased quantity
-        foreach ($newQtyMap as $key => $reqQty) {
-            list($pId, $vId) = explode('_', $key);
-            $vId = ($vId == 0) ? null : $vId;
-            $product = Product::find($pId);
-            if (!$product || $product->is_service == 1) continue;
+        if (!$skipStockManagement) {
+            foreach ($newQtyMap as $key => $reqQty) {
+                list($pId, $vId) = explode('_', $key);
+                $vId = ($vId == 0) ? null : $vId;
+                $product = Product::find($pId);
+                if (!$product || $product->is_service == 1) continue;
 
-            $alreadyInInvoice = $oldQtyMap[$key] ?? 0;
-            $additionalNeeded = $reqQty - $alreadyInInvoice;
+                $alreadyInInvoice = $oldQtyMap[$key] ?? 0;
+                $additionalNeeded = $reqQty - $alreadyInInvoice;
 
-            if ($additionalNeeded > 0) {
-                $purQuery = PurchaseItem::where('product_id', $pId)->where('branch_id', $branchId);
-                if ($vId) {
-                    $purQuery->where('product_variation_id', $vId);
-                }
-                $availableInStock = (float) $purQuery->sum('stock_qty');
+                if ($additionalNeeded > 0) {
+                    $purQuery = PurchaseItem::where('product_id', $pId)->where('branch_id', $branchId);
+                    if ($vId) {
+                        $purQuery->where('product_variation_id', $vId);
+                    }
+                    $availableInStock = (float) $purQuery->sum('stock_qty');
 
-                if ($availableInStock < $additionalNeeded) {
-                    $prodName = $newItemsMap[$key]['name'] ?? $product->name;
-                    session()->flash('error', __("Insufficient stock for ':prod'. Stock available: :stock, Additional needed: :req", [
-                        'prod'  => $prodName,
-                        'stock' => $availableInStock,
-                        'req'   => $additionalNeeded
-                    ]));
-                    return redirect()->back()->withInput();
+                    if ($availableInStock < $additionalNeeded) {
+                        $prodName = $newItemsMap[$key]['name'] ?? $product->name;
+                        session()->flash('error', __("Insufficient stock for ':prod'. Stock available: :stock, Additional needed: :req", [
+                            'prod'  => $prodName,
+                            'stock' => $availableInStock,
+                            'req'   => $additionalNeeded
+                        ]));
+                        return redirect()->back()->withInput();
+                    }
                 }
             }
         }
@@ -1710,10 +1743,63 @@ class InvoiceController extends Controller
         $oldTotalPaid = (float) $invoice->total_paid;
 
         // Perform Update in DB Transaction
-        DB::transaction(function () use ($request, $invoice, $oldItems, $oldItemsMap, $newItemsMap, $editDate, $oldTotalPaid) {
-            
-            // Update Invoice fields
-            $totalAmount = (float)$request->total_amount;
+        DB::transaction(function () use ($request, $invoice, $oldItems, $oldItemsMap, $newItemsMap, $editDate, $oldTotalPaid, $skipStockManagement, $customerName, $customerPhone, $customerAddress) {
+
+            // ===== SAFE CUSTOMER INFO UPDATE (Respecting customers.phone UNIQUE constraint & Walk-in protection) =====
+            $effectiveCustomerId = $invoice->customer_id ?: $request->customer_id;
+            if ($customerName !== '' || $customerPhone !== '' || $customerAddress !== '') {
+                $existingOther = ($customerPhone !== '')
+                    ? Customer::where('phone', $customerPhone)->where('id', '!=', $effectiveCustomerId)->first()
+                    : null;
+
+                if (empty($effectiveCustomerId) || (int) $effectiveCustomerId === 1) {
+                    if ($existingOther) {
+                        if ($customerName !== '') $existingOther->name = $customerName;
+                        if ($customerAddress !== '') $existingOther->address = $customerAddress;
+                        $existingOther->save();
+                        $effectiveCustomerId = $existingOther->id;
+                    } elseif ($customerPhone !== '') {
+                        $newCust = Customer::create([
+                            'date'      => date('Y-m-d'),
+                            'branch_id' => $invoice->branch_id,
+                            'member_id' => rand(100000000, 999999999),
+                            'name'      => $customerName ?: ('Customer ' . $customerPhone),
+                            'phone'     => $customerPhone,
+                            'address'   => $customerAddress,
+                            'status'    => 1,
+                        ]);
+                        $effectiveCustomerId = $newCust->id;
+                    }
+                } else {
+                    if ($existingOther) {
+                        if ($customerName !== '') $existingOther->name = $customerName;
+                        if ($customerAddress !== '') $existingOther->address = $customerAddress;
+                        $existingOther->save();
+                        $effectiveCustomerId = $existingOther->id;
+                    } else {
+                        $custObj = Customer::find($effectiveCustomerId);
+                        if ($custObj) {
+                            if ($customerName !== '') $custObj->name = $customerName;
+                            if ($customerPhone !== '') $custObj->phone = $customerPhone;
+                            if ($request->has('customer_address')) $custObj->address = $customerAddress;
+                            $custObj->save();
+                        }
+                    }
+                }
+            }
+            $invoice->customer_id = $effectiveCustomerId;
+
+            // Update Invoice pricing & payment fields
+            $deliveryCharge = $request->has('delivery_charge')
+                ? max(0, (float) $request->input('delivery_charge', 0))
+                : (float) ($invoice->delivery_charge ?? 0);
+            $subTotalsInput = $request->input('sub_total', []);
+            $itemsSubtotal = is_array($subTotalsInput) && count($subTotalsInput) > 0
+                ? array_sum(array_map('floatval', $subTotalsInput))
+                : (float) $request->estimated_amount;
+            $discountNumeric = (float) ($request->input('discount', 0));
+            $totalAmount = max(0, $itemsSubtotal + $deliveryCharge - $discountNumeric);
+
             $paymentType = $request->input('payment_type', 'pos');
             $validBankAmounts = [];
 
@@ -1739,9 +1825,10 @@ class InvoiceController extends Controller
             $change = max(0, $totalPaid - $totalAmount);
 
             $invoice->date = $request->date;
-            $invoice->estimated_amount = $request->estimated_amount;
+            $invoice->estimated_amount = $itemsSubtotal;
+            $invoice->delivery_charge = $deliveryCharge;
             $invoice->discount = ($request->discount_amount == null) ? '0.00' : $request->discount_amount;
-            $invoice->discount_amount = $request->discount;
+            $invoice->discount_amount = $discountNumeric;
             $invoice->total_amount = $totalAmount;
             $invoice->total_paid = $totalPaid;
             $invoice->total_due = $due;
@@ -1749,10 +1836,10 @@ class InvoiceController extends Controller
             $invoice->status = ($due > 0) ? 0 : 1;
             $invoice->updated_by = auth()->id();
             $previousDue = (float)($request->previous_due ?? 0);
-            if ($previousDue <= 0 && $request->customer_id && $request->customer_id != 1) {
-                $priorInvDue = (float) Invoice::where('customer_id', $request->customer_id)->where('id', '<', $invoice->id)->sum('total_due');
-                $custObj = Customer::find($request->customer_id);
-                $openBal = $custObj ? open_balance_customer($request->customer_id, $custObj->due_amount) : 0;
+            if ($previousDue <= 0 && $effectiveCustomerId && $effectiveCustomerId != 1) {
+                $priorInvDue = (float) Invoice::where('customer_id', $effectiveCustomerId)->where('id', '<', $invoice->id)->sum('total_due');
+                $custObj = Customer::find($effectiveCustomerId);
+                $openBal = $custObj ? open_balance_customer($effectiveCustomerId, $custObj->due_amount) : 0;
                 $previousDue = $priorInvDue + $openBal;
             }
             $invoice->previous_due = $previousDue;
@@ -1767,40 +1854,43 @@ class InvoiceController extends Controller
             }
             $invoice->save();
 
-            // STEP 1: Restore stock from old items
+            // STEP 1: Restore stock from old items (when stock management applies)
             foreach ($oldItems as $oldItem) {
-                if ($oldItem->imei) {
-                    $oldImeis = $this->parseImeis($oldItem->imei);
-                    SerialNumber::where('product_id', $oldItem->product_id)
-                                ->whereIn('serial', array_map('trim', $oldImeis))
-                                ->update(['status' => 1]);
-                }
-                
-                $product = Product::find($oldItem->product_id);
-                if ($product && $product->is_service == 0) {
-                    if ($product->unit && $product->unit->related_unit != null) {
-                        $oldQty = ($oldItem->main_qty * $product->unit->related_value) + ($oldItem->sub_qty ?? 0);
-                    } else {
-                        $oldQty = $oldItem->main_qty;
+                if (!$skipStockManagement) {
+                    if ($oldItem->imei) {
+                        $oldImeis = $this->parseImeis($oldItem->imei);
+                        SerialNumber::where('product_id', $oldItem->product_id)
+                                    ->whereIn('serial', array_map('trim', $oldImeis))
+                                    ->update(['status' => 1]);
                     }
-                    restoreToFIFO($product->id, $oldQty, $oldItem->product_variation_id, $invoice->branch_id);
+
+                    $product = Product::find($oldItem->product_id);
+                    if ($product && $product->is_service == 0) {
+                        if ($product->unit && $product->unit->related_unit != null) {
+                            $oldQty = ($oldItem->main_qty * $product->unit->related_value) + ($oldItem->sub_qty ?? 0);
+                        } else {
+                            $oldQty = $oldItem->main_qty;
+                        }
+                        restoreToFIFO($product->id, $oldQty, $oldItem->product_variation_id, $invoice->branch_id);
+                    }
                 }
-                
+
                 $oldItem->delete();
             }
 
             // STEP 2: Save new items and deduct stock
             $productIds = $request->input('product_id', []);
+            $savedInvoiceItems = [];
             foreach ($productIds as $key => $product_id) {
                 $invoice_item = new InvoiceItem();
                 $find_unit_id = Product::where('id', $product_id)->first();
-                
+
                 $invoice_item->invoice_id = $invoice->id;
                 $invoice_item->product_id = $product_id;
-                $invoice_item->rate = $request->rate[$key];
+                $invoice_item->rate = (float) ($request->rate[$key] ?? 0);
                 $invoice_item->product_discount = $request->product_discount[$key] ?? 0.00;
-                
-                $variation_id = $request->variation_id[$key] ?? null;
+
+                $variation_id = !empty($request->variation_id[$key]) ? $request->variation_id[$key] : null;
                 $invoice_item->product_variation_id = $variation_id;
 
                 $wVal = $request->warranty_value[$key] ?? null;
@@ -1846,37 +1936,42 @@ class InvoiceController extends Controller
                     } elseif ($find_unit_id->unit && $find_unit_id->unit->related_unit == null) {
                         $invoice_item->main_qty = $request->main_qty[$key];
                         $invoice_item->actual_main = $request->main_qty[$key];
-                        $saleQty = $request->main_qty[$key];
+                        $saleQty = (float) $request->main_qty[$key];
 
                         $invoice_item->subtotal = $request->sub_total[$key];
                         $invoice_item->actual_total = $request->sub_total[$key];
                         $invoice_item->inv_subtotal = $request->sub_total[$key];
                     } else {
                         $invoice_item->main_qty = $request->main_qty[$key];
-                        $invoice_item->sub_qty = $request->sub_qty[$key];
+                        $invoice_item->sub_qty = $request->sub_qty[$key] ?? 0;
                         $invoice_item->actual_main = $request->main_qty[$key];
-                        $invoice_item->actual_sub = $request->sub_qty[$key];
+                        $invoice_item->actual_sub = $request->sub_qty[$key] ?? 0;
                         $main = $request->main_qty[$key] * ($find_unit_id->unit ? $find_unit_id->unit->related_value : 1);
                         $sub = $request->sub_qty[$key] ?? 0;
-                        $saleQty = $main + $sub;
+                        $saleQty = (float) ($main + $sub);
 
                         $invoice_item->subtotal = $request->sub_total[$key];
                         $invoice_item->actual_total = $request->sub_total[$key];
                         $invoice_item->inv_subtotal = $request->sub_total[$key];
                     }
-                    
-                    $invoice_item->pur_subtotal = calculateUnitPriceUsingFIFO($product_id, $saleQty, $variation_id, $invoice->branch_id);
+
+                    if ($skipStockManagement) {
+                        $invoice_item->pur_subtotal = ($find_unit_id->purchase_price ?? 0.00) * $saleQty;
+                    } else {
+                        $invoice_item->pur_subtotal = calculateUnitPriceUsingFIFO($product_id, $saleQty, $variation_id, $invoice->branch_id);
+                    }
                 } else {
                     $invoice_item->main_qty = $request->main_qty[$key];
                     $invoice_item->subtotal = $request->sub_total[$key];
                     $invoice_item->inv_subtotal = $request->sub_total[$key];
                     $invoice_item->pur_subtotal = ($find_unit_id->purchase_price ?? 0.00) * $request->main_qty[$key];
                 }
-                
+
                 $invoice_item->date = $request->date;
                 $invoice_item->save();
+                $savedInvoiceItems[] = ['item' => $invoice_item, 'product' => $find_unit_id];
 
-                if ($invoice_item->imei) {
+                if ($invoice_item->imei && !$skipStockManagement) {
                     $imeis = $selectedImeis ?: $this->parseImeis($invoice_item->imei);
                     SerialNumber::where('product_id', $product_id)
                                 ->whereIn('serial', array_map('trim', $imeis))
@@ -1914,7 +2009,7 @@ class InvoiceController extends Controller
                     'branch_id'        => $invoice->branch_id,
                     'date'             => $request->date,
                     'invoice_id'       => $invoice->id,
-                    'customer_id'      => $request->customer_id,
+                    'customer_id'      => $effectiveCustomerId,
                     'debit'            => null,
                     'credit'           => $amt,
                     'bank_id'          => $bId,
@@ -1935,13 +2030,67 @@ class InvoiceController extends Controller
                 'branch_id'        => $invoice->branch_id,
                 'date'             => $request->date,
                 'invoice_id'       => $invoice->id,
-                'customer_id'      => $request->customer_id,
+                'customer_id'      => $effectiveCustomerId,
                 'debit'            => $totalAmount,
                 'credit'           => null,
                 'created_by'       => auth()->id(),
             ]);
 
-            // ===== STEP 4: PRODUCT EDIT LOGS AUDIT TRAIL =====
+            // ===== SYNC LINKED WEBSITE ORDER (if any) =====
+            $webOrder = \App\Models\WebsiteOrder::where('invoice_id', $invoice->id)->first()
+                ?: (!empty($invoice->source_link) ? \App\Models\WebsiteOrder::where('order_no', $invoice->source_link)->first() : null);
+
+            if ($webOrder) {
+                $webOrder->customer_id = $effectiveCustomerId;
+                if ($customerName !== '') {
+                    $webOrder->customer_name = $customerName;
+                }
+                if ($customerPhone !== '') {
+                    $webOrder->phone = $customerPhone;
+                    $webOrder->customer_phone = $customerPhone;
+                }
+                if ($request->has('customer_address')) {
+                    $webOrder->delivery_address = $customerAddress;
+                    $webOrder->customer_address = $customerAddress;
+                }
+                $webOrder->shipping_cost = $deliveryCharge;
+                $webOrder->shipping_fee = $deliveryCharge;
+                $webOrder->subtotal = $itemsSubtotal;
+                $webOrder->discount = $discountNumeric;
+                $webOrder->total_amount = $totalAmount;
+                if ($request->has('note')) {
+                    $webOrder->note = $invoice->note;
+                    $webOrder->order_notes = $invoice->note;
+                }
+                if (\Illuminate\Support\Facades\Schema::hasColumn('website_orders', 'total_paid')) {
+                    $webOrder->total_paid = $totalPaid;
+                }
+                $webOrder->saveQuietly();
+
+                \App\Models\WebsiteOrderItem::where('website_order_id', $webOrder->id)->delete();
+                foreach ($savedInvoiceItems as $entry) {
+                    $savedIt = $entry['item'];
+                    $savedProd = $entry['product'];
+                    $itQty = max(1, (int) round((float) $savedIt->main_qty));
+                    $itPrice = (float) $savedIt->rate;
+                    $itLineTotal = (float) $savedIt->subtotal;
+                    \App\Models\WebsiteOrderItem::create([
+                        'website_order_id'     => $webOrder->id,
+                        'product_id'           => $savedIt->product_id,
+                        'product_variation_id' => $savedIt->product_variation_id,
+                        'product_name'         => $savedProd?->name ?: 'Product',
+                        'product_barcode'      => $savedProd?->barcode,
+                        'product_code'         => $savedProd?->barcode,
+                        'product_image'        => $savedProd?->thumbnail_url,
+                        'unit_price'           => $itPrice,
+                        'quantity'             => $itQty,
+                        'total_price'          => $itLineTotal,
+                        'subtotal'             => $itLineTotal,
+                    ]);
+                }
+            }
+
+            // ===== STEP 5: PRODUCT EDIT LOGS AUDIT TRAIL =====
             foreach ($newItemsMap as $k => $newItem) {
                 if (!isset($oldItemsMap[$k])) {
                     // Added Product
@@ -1993,6 +2142,10 @@ class InvoiceController extends Controller
 
         session()->flash('success', __('Invoice Updated Successfully'));
         logActivity('Update Invoice', "Invoice #{$invoice->invoice_no} updated", $invoice);
+
+        if ($request->input('redirect_to') === 'online' || $invoice->sale_type === 'Online') {
+            return redirect()->route('invoice.online.sale');
+        }
         return redirect()->route('invoice.print', $invoice->id);
     }
 
@@ -3245,6 +3398,19 @@ class InvoiceController extends Controller
             'message' => __('Invoice note updated successfully.'),
             'note'    => $invoice->note ?? '',
         ]);
+    }
+
+    /**
+     * Normalize Bengali digits and country code (+88) into local BD digit sequence.
+     */
+    private function normalizeBdPhone(?string $raw): string
+    {
+        $ascii = strtr((string) $raw, ['০' => '0', '১' => '1', '২' => '2', '৩' => '3', '৪' => '4', '৫' => '5', '৬' => '6', '৭' => '7', '৮' => '8', '৯' => '9']);
+        $digits = preg_replace('/[^0-9]/', '', $ascii);
+        if (strlen($digits) === 13 && str_starts_with($digits, '8801')) {
+            $digits = substr($digits, 2);
+        }
+        return $digits;
     }
 }
 

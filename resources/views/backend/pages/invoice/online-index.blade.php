@@ -861,15 +861,30 @@
                                             </div>
                                             @if(!empty($data->customer->phone))
                                                 @php
-                                                    $cPhone = preg_replace('/[^\d]/', '', $data->customer->phone);
-                                                    $waPhone = str_starts_with($cPhone, '0') ? '88' . $cPhone : $cPhone;
+                                                    $cPhone = preg_replace('/[^\d]/', '', strtr((string) $data->customer->phone, ['০' => '0', '১' => '1', '২' => '2', '৩' => '3', '৪' => '4', '৫' => '5', '৬' => '6', '৭' => '7', '৮' => '8', '৯' => '9']));
+                                                    $normPhone = (strlen($cPhone) === 13 && str_starts_with($cPhone, '8801')) ? substr($cPhone, 2) : $cPhone;
+                                                    $isPhoneValid11 = (bool) preg_match('/^01[3-9][0-9]{8}$/', $normPhone);
+                                                    $waPhone = str_starts_with($normPhone, '0') ? '88' . $normPhone : $normPhone;
                                                 @endphp
                                                 <div class="small mt-1 d-flex align-items-center justify-content-center">
                                                     <a href="https://wa.me/{{ $waPhone }}" target="_blank" class="text-success mr-1" title="Chat on WhatsApp">
                                                         <i class="fa-brands fa-whatsapp"></i>
                                                     </a>
-                                                    <span>{{ $data->customer->phone }}</span>
+                                                    <span class="{{ $isPhoneValid11 ? '' : 'text-danger font-weight-bold' }}">{{ $data->customer->phone }}</span>
                                                 </div>
+                                                @if(!$isPhoneValid11)
+                                                    <div class="mt-1">
+                                                        @if(check_permission('invoice.edit'))
+                                                            <a href="{{ route('inv.edit', $data->id) }}?from=online" class="badge badge-danger" style="font-size: 9.5px; padding: 2px 6px;" title="{{ __('Click to fix customer phone number') }}">
+                                                                <i class="feather icon-alert-triangle mr-1"></i> {{ __('Invalid Phone (not 11 digits) — Edit') }}
+                                                            </a>
+                                                        @else
+                                                            <span class="badge badge-danger" style="font-size: 9.5px; padding: 2px 6px;">
+                                                                <i class="feather icon-alert-triangle mr-1"></i> {{ __('Invalid Phone (not 11 digits)') }}
+                                                            </span>
+                                                        @endif
+                                                    </div>
+                                                @endif
                                                 <button type="button" class="btn btn-xs mt-1" style="font-size:10px; border-radius:12px; padding:1px 8px; border:1px solid #06b6d4; color:#0891b2; background:#f0fdfa; cursor: pointer;" onclick="openCustomerFraudModal('{{ $data->customer->phone }}', '{{ addslashes($data->customer->name) }}')" title="{{ __('View Courier Delivery Rating & Fraud Check') }}">
                                                     <i class="feather icon-shield mr-1"></i> Courier Rating
                                                 </button>
@@ -977,6 +992,11 @@
                                                             <i class="feather icon-x-circle mr-2"></i> Mark as Cancelled (Restores Stock)
                                                         </a>
                                                         <div class="dropdown-divider"></div>
+                                                        @if (check_permission('invoice.edit'))
+                                                            <a class="dropdown-item text-primary font-weight-bold" href="{{ route('inv.edit', $data->id) }}?from=online">
+                                                                <i class="feather icon-edit mr-2"></i> {{ __('Edit Order / Invoice') }}
+                                                            </a>
+                                                        @endif
                                                         <a class="dropdown-item" href="javascript:void(0);" data-toggle="modal" data-target="#printModal-{{ $data->id }}">
                                                             <i class="feather icon-tag mr-2" style="color: #8b5cf6;"></i> Print Label
                                                         </a>

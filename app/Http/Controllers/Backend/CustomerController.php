@@ -117,12 +117,14 @@ class CustomerController extends Controller
             $addressRule = 'nullable|string';
         }
 
+        $request->merge(['phone' => $this->normalizeBdPhone($request->input('phone'))]);
+
         $request->validate([
             'name' => $nameRule,
             'phone' => [
                 'required',
                 'string',
-                'min:11',
+                'regex:/^01[3-9][0-9]{8}$/',
                 Rule::unique('customers')->where(function ($query) use ($uniBranch) {
                     return $query->where('branch_id', $uniBranch);
                 }),
@@ -131,7 +133,7 @@ class CustomerController extends Controller
         ], [
             'name.required' => __('Customer name is required.'),
             'phone.required' => __('Customer phone number is required.'),
-            'phone.min' => __('Please enter a valid 11-digit mobile number.'),
+            'phone.regex' => __('Please enter a valid 11-digit mobile number (e.g. 017XXXXXXXX).'),
             'address.required' => __('Full delivery address is required for courier order and customer record.'),
             'address.min' => __('Pathao and Steadfast courier require a detailed delivery address (minimum 10 characters long e.g. House, Road, Area, District).'),
         ]);
@@ -240,14 +242,21 @@ class CustomerController extends Controller
 
         $nameRule = $isOnlineOrder ? 'required|string|max:255' : 'nullable|string|max:255';
 
+        $request->merge(['phone' => $this->normalizeBdPhone($request->input('phone'))]);
+
         $request->validate([
             'name' => $nameRule,
-            'phone' => 'required|string|min:11',
+            'phone' => [
+                'required',
+                'string',
+                'regex:/^01[3-9][0-9]{8}$/',
+                Rule::unique('customers')->ignore($id),
+            ],
             'address' => 'nullable|string',
         ], [
             'name.required' => __('Customer name is required.'),
             'phone.required' => __('Customer phone number is required.'),
-            'phone.min' => __('Please enter a valid 11-digit mobile number.'),
+            'phone.regex' => __('Please enter a valid 11-digit mobile number (e.g. 017XXXXXXXX).'),
         ]);
 
         $customer = Customer::findOrFail($id);
@@ -599,5 +608,18 @@ class CustomerController extends Controller
         $data['totalDays'] = $totalDays;
 
         return view('backend.pages.customer.upcoming-wishlist', $data);
+    }
+
+    /**
+     * Normalize Bengali digits and country code (+88) into local BD digit sequence.
+     */
+    private function normalizeBdPhone(?string $raw): string
+    {
+        $ascii = strtr((string) $raw, ['০' => '0', '১' => '1', '২' => '2', '৩' => '3', '৪' => '4', '৫' => '5', '৬' => '6', '৭' => '7', '৮' => '8', '৯' => '9']);
+        $digits = preg_replace('/[^0-9]/', '', $ascii);
+        if (strlen($digits) === 13 && str_starts_with($digits, '8801')) {
+            $digits = substr($digits, 2);
+        }
+        return $digits;
     }
 }
