@@ -488,6 +488,23 @@ class WebsiteOrderController extends Controller
             $orderShipping = (float)($order->shipping_fee ?? $order->shipping_cost ?? 0);
             $orderDiscount = (float)($order->discount ?? 0);
             $order->total_amount = max(0, $currentSubtotal + $orderShipping - $orderDiscount);
+
+            $rawAdvance = $request->input('advance_amount', $request->input('total_paid'));
+            $advVal = ($rawAdvance !== null && $rawAdvance !== '')
+                ? max(0, (float)$rawAdvance)
+                : (float)($order->total_paid ?? 0);
+            if ($rawAdvance !== null && $rawAdvance !== '') {
+                if (\Illuminate\Support\Facades\Schema::hasColumn('website_orders', 'total_paid')) {
+                    $order->total_paid = $advVal;
+                }
+                if ($advVal >= $order->total_amount && $order->total_amount > 0) {
+                    $order->payment_status = 'paid';
+                } elseif ($advVal > 0) {
+                    $order->payment_status = 'partial';
+                } else {
+                    $order->payment_status = 'unpaid';
+                }
+            }
             $order->save();
 
             // 1. Mandatory Stock Check: ALWAYS check positive inventory before approval!
@@ -525,7 +542,7 @@ class WebsiteOrderController extends Controller
 
             // 2. Perform DB Transaction: Deduct FIFO stock, create/find Customer, create Invoice & InvoiceItems
             try {
-                DB::transaction(function () use ($order, $userBranchId, $rawStockMode, $request) {
+                DB::transaction(function () use ($order, $userBranchId, $rawStockMode, $request, $advVal) {
                     // Find or create customer
                     $cleanPhone = preg_replace('/[^\d]/', '', $order->customer_phone);
                     if (strlen($cleanPhone) > 11) {
@@ -576,7 +593,7 @@ class WebsiteOrderController extends Controller
                     $invoice->delivery_charge = $delCharge;
                     $invoice->discount = $discAmount;
                     $invoice->discount_amount = $discAmount;
-                    $invoice->total_paid = (float)($order->total_paid ?? 0);
+                    $invoice->total_paid = (float)$advVal;
                     $invoice->total_due = max(0, (float)$order->total_amount - (float)$invoice->total_paid);
                     $invoice->note = $order->note;
                     $invoice->source_link = $order->order_no;
@@ -982,13 +999,16 @@ class WebsiteOrderController extends Controller
         }
 
         if ($request->ajax() || $request->wantsJson()) {
+            $paidAmt = (float)($order->total_paid ?? ($advance ?? 0));
             return response()->json([
                 'success' => true,
                 'message' => 'Order details updated successfully!',
                 'subtotal' => $order->subtotal,
                 'delivery_charge' => $shipping,
                 'discount' => $discount,
-                'grand_total' => $order->total_amount,
+                'advance_amount' => $paidAmt,
+                'total_amount' => $order->total_amount,
+                'grand_total' => max(0, (float)$order->total_amount - $paidAmt),
             ]);
         }
         return redirect()->back()->with('success', 'Order details updated successfully!');

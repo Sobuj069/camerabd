@@ -641,7 +641,9 @@ body.dark-theme .badge-web-pill, html.dark-theme .badge-web-pill {
         $deliveryCharge = (float)($order->shipping_fee ?? $order->shipping_cost ?? 0);
         $discountAmount = (float)($order->discount ?? 0);
         $subtotalAmount = (float)($order->items->sum('total_price') ?: ($order->subtotal ?? $order->total_amount));
-        $grandTotal = max(0, $subtotalAmount + $deliveryCharge - $discountAmount);
+        $billTotal = max(0, $subtotalAmount + $deliveryCharge - $discountAmount);
+        $advanceAmount = (float)($order->payment_status === 'paid' ? $billTotal : ($order->total_paid ?? 0));
+        $grandTotal = max(0, $billTotal - $advanceAmount);
         
         $cards = $fraudStats['cards'] ?? [
             'overall' => ['label' => 'Overall', 'rate' => '100%', 'total' => 13, 'success' => 13, 'cancelled' => 0, 'header_bg' => '#a855f7'],
@@ -1112,7 +1114,7 @@ body.dark-theme .badge-web-pill, html.dark-theme .badge-web-pill {
                     <!-- Advance -->
                     <div class="col-6 col-sm col-md">
                         <label class="wc-total-label">Advance</label>
-                        <input type="number" name="total_paid" id="orderAdvanceInput" class="wc-total-box-input" value="{{ (int)($order->payment_status === 'paid' ? $grandTotal : ($order->total_paid ?? 0)) }}" min="0" placeholder="0" {{ $isApproved ? 'readonly' : '' }}>
+                        <input type="number" name="total_paid" id="orderAdvanceInput" class="wc-total-box-input" value="{{ (int)$advanceAmount }}" min="0" placeholder="0" {{ $isApproved ? 'readonly' : '' }}>
                     </div>
 
                     <!-- Sub Total -->
@@ -1143,6 +1145,7 @@ body.dark-theme .badge-web-pill, html.dark-theme .badge-web-pill {
                     @csrf
                     <input type="hidden" name="delivery_charge" id="approveDeliveryCharge" value="{{ (int)$deliveryCharge }}">
                     <input type="hidden" name="discount_amount" id="approveDiscountAmount" value="{{ (int)$discountAmount }}">
+                    <input type="hidden" name="advance_amount" id="approveAdvanceAmount" value="{{ (int)$advanceAmount }}">
                     <div class="wc-section-card mb-4">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <div class="section-title mb-0 d-flex align-items-center gap-2">
@@ -1185,7 +1188,7 @@ body.dark-theme .badge-web-pill, html.dark-theme .badge-web-pill {
 
                             <!-- Action Button -->
                             <div class="col-md-4">
-                                <button type="submit" id="btnApproveOrderBig" class="btn btn-success font-weight-bold w-100 d-flex align-items-center justify-content-center gap-2" style="background: #059669; border-color: #059669; height: 44px; border-radius: 8px; font-size: 15px; box-shadow: 0 2px 6px rgba(5, 150, 105, 0.3);" onclick="return confirm('Approve order #{{ $order->order_no }} ({{ number_format($grandTotal, 2) }}৳) and transfer to Online Sale List (Processing)?')">
+                                <button type="submit" id="btnApproveOrderBig" class="btn btn-success font-weight-bold w-100 d-flex align-items-center justify-content-center gap-2" style="background: #059669; border-color: #059669; height: 44px; border-radius: 8px; font-size: 15px; box-shadow: 0 2px 6px rgba(5, 150, 105, 0.3);" onclick="return confirm('Approve order #{{ $order->order_no }} (' + $('#btnApproveAmountText').text() + ') and transfer to Online Sale List (Processing)?')">
                                     <i class="fa fa-check-circle"></i> Approve & Move (<span id="btnApproveAmountText">{{ number_format($grandTotal, 2) }}৳</span>)
                                 </button>
                             </div>
@@ -1437,7 +1440,7 @@ function recalculateOrderTotal() {
     var delivery = parseFloat($('#orderDeliveryChargeInput').val()) || 0;
     var advance = parseFloat($('#orderAdvanceInput').val()) || 0;
 
-    var grandTotal = Math.max(0, subtotal + delivery - discount);
+    var grandTotal = Math.max(0, subtotal + delivery - discount - advance);
 
     $('#grandTotalDisplayVal').text(grandTotal.toFixed(0));
     $('#btnApproveAmountText').text(grandTotal.toFixed(2) + '৳');
@@ -1445,6 +1448,7 @@ function recalculateOrderTotal() {
     $('#summaryGrandTotal').text('৳' + grandTotal.toFixed(2));
     $('#approveDeliveryCharge').val(delivery);
     $('#approveDiscountAmount').val(discount);
+    $('#approveAdvanceAmount').val(advance);
 }
 
 // Auto recalculate on initial page load
@@ -1662,12 +1666,14 @@ $('#btnSaveTotals').on('click', function() {
     $('#orderMainForm').trigger('submit');
 });
 
-// Always ensure current delivery charge & discount are passed when approving
+// Always ensure current delivery charge, discount & advance are passed when approving
 $('#approveOrderForm').on('submit', function() {
     var deliveryVal = $('#orderDeliveryChargeInput').val() || 0;
     var discountVal = $('#orderDiscountInput').val() || 0;
+    var advanceVal = $('#orderAdvanceInput').val() || 0;
     $('#approveDeliveryCharge').val(deliveryVal);
     $('#approveDiscountAmount').val(discountVal);
+    $('#approveAdvanceAmount').val(advanceVal);
 });
 
 // Add Note AJAX

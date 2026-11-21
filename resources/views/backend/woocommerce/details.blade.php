@@ -692,7 +692,8 @@ html.dark-theme .wc-total-box-grand {
         $deliveryCharge = (float)($order->delivery_charge ?? 0);
         $discountAmount = (float)($order->discount_amount ?? 0);
         $subtotalAmount = (float)($order->invoiceItems->sum('subtotal') ?: $order->total_amount);
-        $grandTotal = (float)($order->total_amount ?: ($subtotalAmount + $deliveryCharge - $discountAmount));
+        $advanceAmount = (float)($order->total_paid ?? 0);
+        $grandTotal = max(0, (float)($order->total_amount ?: ($subtotalAmount + $deliveryCharge - $discountAmount)) - $advanceAmount);
         
         $cards = $fraudStats['cards'] ?? [
             'overall' => ['label' => 'Overall', 'rate' => '100%', 'total' => 13, 'success' => 13, 'cancelled' => 0, 'header_bg' => '#a855f7'],
@@ -1392,7 +1393,7 @@ function recalculateOrderTotal() {
     var delivery = parseFloat($('#orderDeliveryChargeInput').val()) || 0;
     var advance = parseFloat($('#orderAdvanceInput').val()) || 0;
 
-    var grandTotal = Math.max(0, subtotal + delivery - discount);
+    var grandTotal = Math.max(0, subtotal + delivery - discount - advance);
 
     $('#grandTotalDisplayVal').text(grandTotal.toFixed(0));
     $('#btnApproveAmountText').text(grandTotal.toFixed(2) + '৳');

@@ -171,9 +171,15 @@
                         <td class="text-right">- ৳ {{ number_format($order->discount, 2) }}</td>
                     </tr>
                 @endif
+                @if(($order->total_paid ?? 0) > 0)
+                    <tr>
+                        <td colspan="4" class="text-right"><strong>Advance Paid:</strong></td>
+                        <td class="text-right">- ৳ {{ number_format($order->total_paid, 2) }}</td>
+                    </tr>
+                @endif
                 <tr class="total-row">
                     <td colspan="4" class="text-right">GRAND TOTAL:</td>
-                    <td class="text-right" style="color: #006241; font-size: 16px;">৳ {{ number_format($order->total_amount, 2) }}</td>
+                    <td class="text-right" style="color: #006241; font-size: 16px;">৳ {{ number_format(max(0, $order->total_amount - ($order->total_paid ?? 0)), 2) }}</td>
                 </tr>
             </tfoot>
         </table>
