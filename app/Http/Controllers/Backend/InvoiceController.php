@@ -530,7 +530,7 @@ class InvoiceController extends Controller
         $totalDueAllMatching = (float) (clone $query)->where('total_due', '>', 0)->where('status', '!=', 2)->sum('total_due');
         $totalDueMatchingCount = (clone $query)->where('total_due', '>', 0)->where('status', '!=', 2)->count();
 
-        $invoices = $query->orderBy('created_at', 'DESC')->paginate(20)->appends($request->all());
+        $invoices = $query->orderBy('created_at', 'DESC')->paginate(50)->appends($request->all());
         $data['invoices'] = $invoices;
         $data['totalMatchingCount'] = $invoices->total();
         $data['totalDueAllMatching'] = $totalDueAllMatching;
