@@ -851,13 +851,8 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <div class="font-weight-bold text-dark d-flex align-items-center justify-content-center flex-wrap" style="gap: 4px;">
-                                                @if($data->isWebsiteOrder())
-                                                    <span class="badge" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; box-shadow: 0 1px 2px rgba(37,99,235,0.2);" title="{{ __('Website Customer') }}">
-                                                        <i class="feather icon-globe mr-1" style="font-size: 9px;"></i>Web
-                                                    </span>
-                                                @endif
-                                                <span>{{ $data->customer->name }}</span>
+                                            <div class="font-weight-bold text-dark">
+                                                @if($data->isWebsiteOrder())<span class="text-primary" title="{{ __('Website Customer') }}">Web-Customer</span> @endif{{ $data->customer->name }}
                                             </div>
                                             @if(!empty($data->customer->phone))
                                                 @php
@@ -1138,13 +1133,8 @@
                                                         </div>
                                                         <div class="col-6 mb-2">
                                                             <div class="text-muted small modal-detail-label">{{ __('Customer') }}</div>
-                                                            <div class="font-weight-bold modal-detail-value d-flex align-items-center flex-wrap" style="gap: 4px;">
-                                                                @if($data->isWebsiteOrder())
-                                                                    <span class="badge" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;" title="{{ __('Website Customer') }}">
-                                                                        <i class="feather icon-globe mr-1" style="font-size: 9px;"></i>Web
-                                                                    </span>
-                                                                @endif
-                                                                <span>{{ $data->customer->name }} ({{ $data->customer->phone }})</span>
+                                                            <div class="font-weight-bold modal-detail-value">
+                                                                @if($data->isWebsiteOrder())<span class="text-primary" title="{{ __('Website Customer') }}">Web-Customer</span> @endif{{ $data->customer->name }} ({{ $data->customer->phone }})
                                                             </div>
                                                             <button type="button" class="btn btn-xs mt-1" style="font-size:10px; border-radius:12px; padding:1px 8px; border:1px solid #06b6d4; color:#0891b2; background:#f0fdfa; cursor: pointer;" onclick="openCustomerFraudModal('{{ $data->customer->phone }}', '{{ addslashes($data->customer->name) }}')">
                                                                 <i class="feather icon-shield mr-1"></i> Check Courier Rating
