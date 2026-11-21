@@ -560,7 +560,11 @@
                                                         $var_total += variation_stock($variation->id);
                                                     }
                                                 @endphp
-                                                {{ $var_total }} {{ __('Pics') }}
+                                                @if ($var_total > 0)
+                                                    {{ $var_total }} {{ __('Pics') }}
+                                                @else
+                                                    {{ $stock_qty }}
+                                                @endif
                                                 <div class="d-print-none">
                                                     <button type="button" class="btn btn-xs btn-primary btn-view-variations mt-1" 
                                                             data-product="{{ $data->name }} - {{ $data->barcode }}"

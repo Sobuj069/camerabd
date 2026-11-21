@@ -355,6 +355,11 @@ class WebsiteOrderController extends Controller
             if (!$productId) {
                 return 0.0;
             }
+            $syncedStock = 0.0;
+            $prodModel = Product::with('unit.related_unit')->find($productId);
+            if ($prodModel && function_exists('sync_product_purchase_stock')) {
+                $syncedStock = (float) sync_product_purchase_stock($prodModel);
+            }
             if ($variationId) {
                 $varStock = (float) PurchaseItem::where('product_id', $productId)
                     ->where('product_variation_id', $variationId)
@@ -364,9 +369,10 @@ class WebsiteOrderController extends Controller
                     return $varStock;
                 }
             }
-            return (float) PurchaseItem::where('product_id', $productId)
+            $dbStock = (float) PurchaseItem::where('product_id', $productId)
                 ->where('stock_qty', '>', 0)
                 ->sum('stock_qty');
+            return max($dbStock, $syncedStock);
         };
 
         $available = $prod ? $calcStockForProduct($prod->id, $item->product_variation_id) : 0.0;
@@ -1286,9 +1292,12 @@ class WebsiteOrderController extends Controller
             ->get();
 
         $results = $products->map(function ($p) {
+            $synced = ((int) $p->is_service !== 1 && function_exists('sync_product_purchase_stock'))
+                ? (float) sync_product_purchase_stock($p)
+                : 0.0;
             $realStock = (int) $p->is_service === 1
                 ? 9999
-                : (float) PurchaseItem::where('product_id', $p->id)->where('stock_qty', '>', 0)->sum('stock_qty');
+                : max($synced, (float) PurchaseItem::where('product_id', $p->id)->where('stock_qty', '>', 0)->sum('stock_qty'));
             return [
                 'id' => $p->id,
                 'name' => $p->name,

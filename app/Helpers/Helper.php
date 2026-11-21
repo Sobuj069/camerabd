@@ -862,6 +862,65 @@ if (!function_exists('product_stock')) {
     }
 }
 
+if (!function_exists('sync_product_purchase_stock')) {
+    function sync_product_purchase_stock($product, $branchId = null)
+    {
+        if (!$product || (int) ($product->is_service ?? 0) === 1) {
+            return 0.0;
+        }
+
+        $factor = ($product->unit && $product->unit->related_unit && $product->unit->related_value > 0)
+            ? (float) $product->unit->related_value
+            : 1.0;
+
+        // Calculate expected stock in main unit using the exact ledger functions used in Product Stock Report
+        $purchase = (float) purchased_qty($product);
+        $sale     = (float) invoiced_qty($product);
+        $pur_ret  = (float) return_pur_qty($product);
+        $damage   = (float) damaged_qty($product);
+        $adj_in   = (float) adjust_in($product);
+        $adj_out  = (float) adjust_out($product);
+
+        $expectedMainStock = max(0.0, $purchase - $sale - $pur_ret - $damage + $adj_in - $adj_out);
+        $expectedBaseStock = $expectedMainStock * $factor;
+
+        $purQuery = PurchaseItem::where('product_id', $product->id)
+            ->orderBy('date', 'desc')
+            ->orderBy('id', 'desc');
+
+        if ($branchId) {
+            $branchPurItems = (clone $purQuery)->where('branch_id', $branchId)->get();
+            $purItems = $branchPurItems->isNotEmpty() ? $branchPurItems : $purQuery->get();
+        } else {
+            $purItems = $purQuery->get();
+        }
+
+        if ($purItems->isNotEmpty()) {
+            $currentStockSum = (float) $purItems->sum('stock_qty');
+            $hasNegativeBatch = $purItems->contains(fn($p) => (float) $p->stock_qty < 0);
+
+            if (abs($currentStockSum - $expectedBaseStock) > 0.001 || $hasNegativeBatch) {
+                $remaining = $expectedBaseStock;
+                foreach ($purItems as $idx => $pItem) {
+                    $batchCapacity = max(0.0, ((float) $pItem->main_qty * $factor) + (float) ($pItem->sub_qty ?? 0));
+                    if ($idx === 0 && $remaining > $batchCapacity) {
+                        $alloc = $remaining;
+                    } else {
+                        $alloc = min($remaining, $batchCapacity);
+                    }
+                    $remaining = max(0.0, $remaining - $alloc);
+                    if (abs((float) $pItem->stock_qty - $alloc) > 0.001) {
+                        $pItem->stock_qty = $alloc;
+                        $pItem->saveQuietly();
+                    }
+                }
+            }
+        }
+
+        return $expectedBaseStock;
+    }
+}
+
 if (!function_exists('product_fake_stock_val')) {
     function product_fake_stock_val($product, $branchId = null)
     {
@@ -883,11 +942,19 @@ if (!function_exists('product_fake_stock_val')) {
             }
         }
 
+        $expectedBaseStock = sync_product_purchase_stock($product, $branchId);
+
         $query = PurchaseItem::where('product_id', $product->id);
         if ($branchId) {
             $query->where('branch_id', $branchId);
         }
-        $actualStock = $query->sum('stock_qty');
+        $actualStock = (float) $query->sum('stock_qty');
+        if ($actualStock <= 0 && $expectedBaseStock > 0) {
+            $actualStock = (float) PurchaseItem::where('product_id', $product->id)->sum('stock_qty');
+            if ($actualStock <= 0) {
+                $actualStock = $expectedBaseStock;
+            }
+        }
 
         $invQuery = InvoiceItem::whereHas('invoice', function($iq) {
             $iq->where('sale_type', '!=', 'WooCommerce')
@@ -1162,6 +1229,8 @@ if (!function_exists('product_stock_check')) {
         if ($product->is_service == 1) {
             return 'Service Product';
         }
+
+        sync_product_purchase_stock($product);
 
         $userBranchId   = auth()->check() && auth()->user() ? auth()->user()->branch_id : 2;
         $filterBranchId = session('branch_filter_id', null);

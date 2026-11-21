@@ -117,6 +117,15 @@ class ReportController extends Controller
         $stockFilter = $request->input('stock_filter', 'all');
         $data['stock_filter'] = $stockFilter;
 
+        if ($stockFilter === 'within_stock' || $stockFilter === 'in_stock' || $stockFilter === 'out_of_stock') {
+            if (function_exists('sync_product_purchase_stock')) {
+                $candidatesToSync = (clone $query)->with('unit.related_unit')->get();
+                foreach ($candidatesToSync as $candProd) {
+                    sync_product_purchase_stock($candProd);
+                }
+            }
+        }
+
         if ($stockFilter === 'within_stock' || $stockFilter === 'in_stock') {
             $effectiveBranchId = ($userBranchId == 1) ? $filterBranchId : $userBranchId;
             $purStockQuery = PurchaseItem::select('product_id');
@@ -165,6 +174,9 @@ class ReportController extends Controller
         $grand_adjust_out_total = 0;
 
         foreach ($allProducts as $product) {
+            if (function_exists('sync_product_purchase_stock')) {
+                sync_product_purchase_stock($product);
+            }
             $purchase = (float) purchased_qty($product);
             $sale     = (float) invoiced_qty($product);
             $sale_ret = (float) returned_qty($product);
@@ -173,7 +185,7 @@ class ReportController extends Controller
             $adjust_in_total = (float) adjust_in($product);
             $adjust_out_total = (float)adjust_out($product);
 
-            $stock = $purchase - $sale + $adjust_in_total + $sale_ret - $adjust_out_total - $pur_ret - $damage;
+            $stock = $purchase - $sale + $adjust_in_total - $adjust_out_total - $pur_ret - $damage;
 
 
             $grand_purchase  += $purchase;
