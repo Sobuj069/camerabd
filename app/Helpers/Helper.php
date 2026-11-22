@@ -203,6 +203,33 @@ if (!function_exists('get_setting')) {
     }
 }
 
+if (!function_exists('apply_active_invoice_stock_filter')) {
+    function apply_active_invoice_stock_filter($iq)
+    {
+        static $hasStockModeCol = null;
+        if ($hasStockModeCol === null) {
+            $hasStockModeCol = \Illuminate\Support\Facades\Schema::hasColumn('invoices', 'stock_mode');
+        }
+
+        $iq->where(function ($sq) {
+            $sq->whereNull('sale_type')->orWhere('sale_type', '!=', 'WooCommerce');
+        })->where(function ($oq) {
+            $oq->whereNull('order_status')
+               ->orWhereNotIn('order_status', ['Returned', 'returned', 'Return', 'return', 'Cancelled', 'cancelled', 'failed', 'canceled']);
+        })->where(function ($stq) {
+            $stq->whereNull('status')->orWhere('status', '!=', 2);
+        });
+
+        if ($hasStockModeCol) {
+            $iq->where(function ($smq) {
+                $smq->whereNull('stock_mode')->orWhere('stock_mode', '!=', 'without_manage');
+            });
+        }
+
+        return $iq;
+    }
+}
+
 //invoiced_qty
 if (!function_exists('invoiced_qty')) {
     function invoiced_qty($product)
@@ -212,9 +239,7 @@ if (!function_exists('invoiced_qty')) {
             $filterBranchId = session('branch_filter_id', $userBranchId);
             if (!$product->unit || $product->unit->related_unit == null) {
                 $query = InvoiceItem::whereHas('invoice', function($iq) {
-                    $iq->where('sale_type', '!=', 'WooCommerce')
-                       ->whereNotIn('order_status', ['Returned', 'returned', 'Return', 'return', 'Cancelled', 'cancelled', 'failed', 'canceled'])
-                       ->where('status', '!=', 2);
+                    apply_active_invoice_stock_filter($iq);
                 })->where(function($iq2) {
                     $iq2->whereNull('is_return')->orWhere('is_return', '!=', 1);
                 })->where('product_id', $product->id);
@@ -233,9 +258,7 @@ if (!function_exists('invoiced_qty')) {
             } else {
                 //invoice
                 $query = InvoiceItem::whereHas('invoice', function($iq) {
-                    $iq->where('sale_type', '!=', 'WooCommerce')
-                       ->whereNotIn('order_status', ['Returned', 'returned', 'Return', 'return', 'Cancelled', 'cancelled', 'failed', 'canceled'])
-                       ->where('status', '!=', 2);
+                    apply_active_invoice_stock_filter($iq);
                 })->where(function($iq2) {
                     $iq2->whereNull('is_return')->orWhere('is_return', '!=', 1);
                 })->where('product_id', $product->id);
@@ -957,9 +980,7 @@ if (!function_exists('product_fake_stock_val')) {
         }
 
         $invQuery = InvoiceItem::whereHas('invoice', function($iq) {
-            $iq->where('sale_type', '!=', 'WooCommerce')
-               ->whereNotIn('order_status', ['Returned', 'returned', 'Return', 'return', 'Cancelled', 'cancelled', 'failed', 'canceled'])
-               ->where('status', '!=', 2);
+            apply_active_invoice_stock_filter($iq);
         })->where(function($iq2) {
             $iq2->whereNull('is_return')->orWhere('is_return', '!=', 1);
         })->where('product_id', $product->id);
