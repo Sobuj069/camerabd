@@ -206,11 +206,6 @@ if (!function_exists('get_setting')) {
 if (!function_exists('apply_active_invoice_stock_filter')) {
     function apply_active_invoice_stock_filter($iq)
     {
-        static $hasStockModeCol = null;
-        if ($hasStockModeCol === null) {
-            $hasStockModeCol = \Illuminate\Support\Facades\Schema::hasColumn('invoices', 'stock_mode');
-        }
-
         $iq->where(function ($sq) {
             $sq->whereNull('sale_type')->orWhere('sale_type', '!=', 'WooCommerce');
         })->where(function ($oq) {
@@ -219,12 +214,6 @@ if (!function_exists('apply_active_invoice_stock_filter')) {
         })->where(function ($stq) {
             $stq->whereNull('status')->orWhere('status', '!=', 2);
         });
-
-        if ($hasStockModeCol) {
-            $iq->where(function ($smq) {
-                $smq->whereNull('stock_mode')->orWhere('stock_mode', '!=', 'without_manage');
-            });
-        }
 
         return $iq;
     }
