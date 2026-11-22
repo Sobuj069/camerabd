@@ -1510,24 +1510,46 @@ class InvoiceController extends Controller
 
         $allSold = array_values(array_unique($allSold));
 
-        // 4. Get all Purchased/Stocked IMEIs for this branch
-        $serials = SerialNumber::where('product_id', $productId)
-            ->where('branch_id', $branchId)
-            ->pluck('serial')
-            ->map(static fn ($s) => trim((string) $s))
-            ->filter()
-            ->values();
+        // 4. Get all Purchased/Stocked IMEIs for this branch (with fallback if branch 1 or empty)
+        $targetBranchId = ($branchId && (int) $branchId !== 1) ? $branchId : (session('branch_filter_id') ?: 2);
+
+        $snQuery = SerialNumber::where('product_id', $productId);
+        if ($targetBranchId) {
+            $serials = (clone $snQuery)->where(fn($q) => $q->where('branch_id', $targetBranchId)->orWhereNull('branch_id'))
+                ->pluck('serial')
+                ->map(static fn ($s) => trim((string) $s))
+                ->filter()
+                ->values();
+            if ($serials->isEmpty()) {
+                $serials = $snQuery->pluck('serial')
+                    ->map(static fn ($s) => trim((string) $s))
+                    ->filter()
+                    ->values();
+            }
+        } else {
+            $serials = $snQuery->pluck('serial')
+                ->map(static fn ($s) => trim((string) $s))
+                ->filter()
+                ->values();
+        }
 
         if ($serials->isNotEmpty()) {
             $availableSerials = array_values(array_diff($serials->all(), $allSold));
-            return $availableSerials;
+            if (!empty($availableSerials)) {
+                return $availableSerials;
+            }
         }
 
-        // Fallback to PurchaseItems if SerialNumber table is empty
-        $purchaseItems = PurchaseItem::where('product_id', $productId)
-            ->where('branch_id', $branchId)
-            ->whereNotNull('imei')
-            ->get(['imei']);
+        // Fallback to PurchaseItems if SerialNumber table is empty or has no unsold serials
+        $purQuery = PurchaseItem::where('product_id', $productId)->whereNotNull('imei');
+        if ($targetBranchId) {
+            $purchaseItems = (clone $purQuery)->where(fn($q) => $q->where('branch_id', $targetBranchId)->orWhereNull('branch_id'))->get(['imei']);
+            if ($purchaseItems->isEmpty()) {
+                $purchaseItems = $purQuery->get(['imei']);
+            }
+        } else {
+            $purchaseItems = $purQuery->get(['imei']);
+        }
         $allImeis = [];
 
         foreach ($purchaseItems as $pi) {

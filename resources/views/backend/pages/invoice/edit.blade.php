@@ -1595,7 +1595,7 @@
                                 <div class="form-check mb-2 text-left" style="display: flex; align-items: center; justify-content: flex-start; gap: 8px;">
                                     <input class="form-check-input imei-checkbox" type="checkbox" value="${imei}" id="chk_${imei}" ${isChecked} style="width: 18px; height: 18px; cursor: pointer; flex: none;">
                                     <label class="form-check-label text-white mb-0" for="chk_${imei}" style="font-size: 14px; cursor: pointer; user-select: none;">
-                                        ${imei} ${data.current.includes(imei) ? '<span class="badge badge-success ml-1" style="font-size: 10px; background-color: #28a745;">Already Sold</span>' : ''}
+                                        ${imei} ${data.current.includes(imei) ? '<span class="badge badge-info ml-1" style="font-size: 10px; background-color: #17a2b8;">Selected</span>' : ''}
                                     </label>
                                 </div>
                             `;

@@ -876,38 +876,140 @@ class OthersController extends Controller
         $productId = $request->product_id;
         $invoiceId = $request->invoice_id;
 
-        $userBranchId = auth()->user()->branch_id;
-        $filterBranchId = session('branch_filter_id', auth()->user()->branch_id);
-        $branchId = ($userBranchId == 1 && $filterBranchId) ? $filterBranchId : $userBranchId;
+        $invoice = $invoiceId ? \App\Models\Invoice::find($invoiceId) : null;
 
-        if ($invoiceId) {
-            $invoice = \App\Models\Invoice::find($invoiceId);
-            if ($invoice) {
-                $branchId = $invoice->branch_id;
+        // Resolve branch: If branch is 1 (Admin/Head Office with no physical inventory), fallback to session branch or store branch (2)
+        $branchId = null;
+        if ($invoice && $invoice->branch_id && (int) $invoice->branch_id !== 1) {
+            $branchId = (int) $invoice->branch_id;
+        } else {
+            $sessionBranch = session('branch_filter_id');
+            if ($sessionBranch && (int) $sessionBranch !== 1) {
+                $branchId = (int) $sessionBranch;
+            } elseif (auth()->check() && (int) auth()->user()->branch_id !== 1) {
+                $branchId = (int) auth()->user()->branch_id;
+            } else {
+                $branchId = 2; // Default store branch (Baitul Mukarram Flagship)
             }
         }
 
         // 1. Get currently selected IMEIs for this invoice and product
         $currentImeis = [];
         if ($invoiceId) {
-            $invoiceItem = \App\Models\InvoiceItem::where('invoice_id', $invoiceId)
+            $invoiceItems = \App\Models\InvoiceItem::where('invoice_id', $invoiceId)
                 ->where('product_id', $productId)
-                ->first();
-            if ($invoiceItem && !empty($invoiceItem->imei)) {
-                $currentImeis = array_filter(array_map('trim', preg_split('/[\n,]+/', $invoiceItem->imei)));
+                ->pluck('imei')
+                ->toArray();
+            foreach ($invoiceItems as $raw) {
+                if (empty($raw)) continue;
+                $parts = preg_split('/[\r\n,]+/', (string) $raw);
+                foreach ($parts as $p) {
+                    $p = trim($p);
+                    if ($p !== '') $currentImeis[] = $p;
+                }
+            }
+            $currentImeis = array_values(array_unique($currentImeis));
+        }
+
+        // 2. Map all SOLD IMEIs from other active invoices (exclude current invoice)
+        $soldQuery = \App\Models\InvoiceItem::where('product_id', $productId)
+            ->whereNotNull('imei')
+            ->whereHas('invoice', fn($q) => $q->where('status', '!=', 2));
+        if ($invoiceId) {
+            $soldQuery->where('invoice_id', '!=', $invoiceId);
+        }
+        $soldImeisRaw = $soldQuery->pluck('imei')->toArray();
+
+        $soldMap = [];
+        foreach ($soldImeisRaw as $raw) {
+            if (empty($raw)) continue;
+            $parts = preg_split('/[\r\n,]+/', (string) $raw);
+            foreach ($parts as $p) {
+                $p = trim($p);
+                if ($p !== '') $soldMap[$p] = true;
             }
         }
 
-        // 2. Get available IMEIs (status = 1) in the current branch
-        $availableImeis = \App\Models\SerialNumber::where('product_id', $productId)
-            ->where('branch_id', $branchId)
-            ->where('status', 1)
-            ->pluck('serial')
+        // Damaged IMEIs
+        $damagedImeisRaw = \App\Models\DamageItem::where('product_id', $productId)
+            ->whereNotNull('imei')
+            ->pluck('imei')
             ->toArray();
+        foreach ($damagedImeisRaw as $raw) {
+            if (empty($raw)) continue;
+            $parts = preg_split('/[\r\n,]+/', (string) $raw);
+            foreach ($parts as $p) {
+                $p = trim($p);
+                if ($p !== '') $soldMap[$p] = true;
+            }
+        }
+
+        // Transferred Out IMEIs
+        $transQuery = \App\Models\TransferItem::where('product_id', $productId)->whereNotNull('imei');
+        if ($branchId) {
+            $transQuery->where('from_branch_id', $branchId);
+        }
+        $transImeisRaw = $transQuery->pluck('imei')->toArray();
+        foreach ($transImeisRaw as $raw) {
+            if (empty($raw)) continue;
+            $parts = preg_split('/[\r\n,]+/', (string) $raw);
+            foreach ($parts as $p) {
+                $p = trim($p);
+                if ($p !== '') $soldMap[$p] = true;
+            }
+        }
+
+        // 3. Stocked IMEIs from SerialNumber table
+        $stockedImeis = [];
+        $snQuery = \App\Models\SerialNumber::where('product_id', $productId);
+        if ($branchId) {
+            $snBranchQuery = (clone $snQuery)->where(fn($q) => $q->where('branch_id', $branchId)->orWhereNull('branch_id'));
+            $snRecords = $snBranchQuery->get();
+            if ($snRecords->isEmpty()) {
+                $snRecords = $snQuery->get();
+            }
+        } else {
+            $snRecords = $snQuery->get();
+        }
+
+        foreach ($snRecords as $sr) {
+            $s = trim((string) $sr->serial);
+            if ($s !== '') $stockedImeis[] = $s;
+        }
+
+        // Fallback / Supplement with PurchaseItem table
+        $piQuery = \App\Models\PurchaseItem::where('product_id', $productId)->whereNotNull('imei');
+        if ($branchId) {
+            $piBranchQuery = (clone $piQuery)->where(fn($q) => $q->where('branch_id', $branchId)->orWhereNull('branch_id'));
+            $piRecords = $piBranchQuery->get();
+            if ($piRecords->isEmpty()) {
+                $piRecords = $piQuery->get();
+            }
+        } else {
+            $piRecords = $piQuery->get();
+        }
+
+        foreach ($piRecords as $pi) {
+            $lines = preg_split('/[\r\n,]+/', (string) $pi->imei);
+            foreach ($lines as $line) {
+                $s = trim($line);
+                if ($s !== '') $stockedImeis[] = $s;
+            }
+        }
+
+        $stockedImeis = array_values(array_unique($stockedImeis));
+
+        // 4. Available = Stocked - Sold to other invoices
+        $availableImeis = [];
+        foreach ($stockedImeis as $s) {
+            if (!isset($soldMap[$s])) {
+                $availableImeis[] = $s;
+            }
+        }
 
         return response()->json([
             'current' => $currentImeis,
-            'available' => $availableImeis
+            'available' => array_values($availableImeis)
         ]);
     }
 
@@ -916,38 +1018,138 @@ class OthersController extends Controller
         $productId = $request->product_id;
         $quotationId = $request->quotation_id;
 
-        $userBranchId = auth()->user()->branch_id;
-        $filterBranchId = session('branch_filter_id', auth()->user()->branch_id);
-        $branchId = ($userBranchId == 1 && $filterBranchId) ? $filterBranchId : $userBranchId;
+        $quotation = $quotationId ? \App\Models\Quotation::find($quotationId) : null;
 
-        if ($quotationId) {
-            $quotation = \App\Models\Quotation::find($quotationId);
-            if ($quotation) {
-                $branchId = $quotation->branch_id;
+        // Resolve branch: If branch is 1 (Admin/Head Office with no physical inventory), fallback to session branch or store branch (2)
+        $branchId = null;
+        if ($quotation && $quotation->branch_id && (int) $quotation->branch_id !== 1) {
+            $branchId = (int) $quotation->branch_id;
+        } else {
+            $sessionBranch = session('branch_filter_id');
+            if ($sessionBranch && (int) $sessionBranch !== 1) {
+                $branchId = (int) $sessionBranch;
+            } elseif (auth()->check() && (int) auth()->user()->branch_id !== 1) {
+                $branchId = (int) auth()->user()->branch_id;
+            } else {
+                $branchId = 2; // Default store branch (Baitul Mukarram Flagship)
             }
         }
 
         // 1. Get currently selected IMEIs for this quotation and product
         $currentImeis = [];
         if ($quotationId) {
-            $quotationItem = \App\Models\QuotationItem::where('quotation_id', $quotationId)
+            $quotationItems = \App\Models\QuotationItem::where('quotation_id', $quotationId)
                 ->where('product_id', $productId)
-                ->first();
-            if ($quotationItem && !empty($quotationItem->imei)) {
-                $currentImeis = array_filter(array_map('trim', preg_split('/[\n,]+/', $quotationItem->imei)));
+                ->pluck('imei')
+                ->toArray();
+            foreach ($quotationItems as $raw) {
+                if (empty($raw)) continue;
+                $parts = preg_split('/[\r\n,]+/', (string) $raw);
+                foreach ($parts as $p) {
+                    $p = trim($p);
+                    if ($p !== '') $currentImeis[] = $p;
+                }
+            }
+            $currentImeis = array_values(array_unique($currentImeis));
+        }
+
+        // 2. Map all SOLD IMEIs from active invoices
+        $soldImeisRaw = \App\Models\InvoiceItem::where('product_id', $productId)
+            ->whereNotNull('imei')
+            ->whereHas('invoice', fn($q) => $q->where('status', '!=', 2))
+            ->pluck('imei')
+            ->toArray();
+
+        $soldMap = [];
+        foreach ($soldImeisRaw as $raw) {
+            if (empty($raw)) continue;
+            $parts = preg_split('/[\r\n,]+/', (string) $raw);
+            foreach ($parts as $p) {
+                $p = trim($p);
+                if ($p !== '') $soldMap[$p] = true;
             }
         }
 
-        // 2. Get available IMEIs (status = 1) in the current branch
-        $availableImeis = \App\Models\SerialNumber::where('product_id', $productId)
-            ->where('branch_id', $branchId)
-            ->where('status', 1)
-            ->pluck('serial')
+        // Damaged IMEIs
+        $damagedImeisRaw = \App\Models\DamageItem::where('product_id', $productId)
+            ->whereNotNull('imei')
+            ->pluck('imei')
             ->toArray();
+        foreach ($damagedImeisRaw as $raw) {
+            if (empty($raw)) continue;
+            $parts = preg_split('/[\r\n,]+/', (string) $raw);
+            foreach ($parts as $p) {
+                $p = trim($p);
+                if ($p !== '') $soldMap[$p] = true;
+            }
+        }
+
+        // Transferred Out IMEIs
+        $transQuery = \App\Models\TransferItem::where('product_id', $productId)->whereNotNull('imei');
+        if ($branchId) {
+            $transQuery->where('from_branch_id', $branchId);
+        }
+        $transImeisRaw = $transQuery->pluck('imei')->toArray();
+        foreach ($transImeisRaw as $raw) {
+            if (empty($raw)) continue;
+            $parts = preg_split('/[\r\n,]+/', (string) $raw);
+            foreach ($parts as $p) {
+                $p = trim($p);
+                if ($p !== '') $soldMap[$p] = true;
+            }
+        }
+
+        // 3. Stocked IMEIs from SerialNumber table
+        $stockedImeis = [];
+        $snQuery = \App\Models\SerialNumber::where('product_id', $productId);
+        if ($branchId) {
+            $snBranchQuery = (clone $snQuery)->where(fn($q) => $q->where('branch_id', $branchId)->orWhereNull('branch_id'));
+            $snRecords = $snBranchQuery->get();
+            if ($snRecords->isEmpty()) {
+                $snRecords = $snQuery->get();
+            }
+        } else {
+            $snRecords = $snQuery->get();
+        }
+
+        foreach ($snRecords as $sr) {
+            $s = trim((string) $sr->serial);
+            if ($s !== '') $stockedImeis[] = $s;
+        }
+
+        // Fallback / Supplement with PurchaseItem table
+        $piQuery = \App\Models\PurchaseItem::where('product_id', $productId)->whereNotNull('imei');
+        if ($branchId) {
+            $piBranchQuery = (clone $piQuery)->where(fn($q) => $q->where('branch_id', $branchId)->orWhereNull('branch_id'));
+            $piRecords = $piBranchQuery->get();
+            if ($piRecords->isEmpty()) {
+                $piRecords = $piQuery->get();
+            }
+        } else {
+            $piRecords = $piQuery->get();
+        }
+
+        foreach ($piRecords as $pi) {
+            $lines = preg_split('/[\r\n,]+/', (string) $pi->imei);
+            foreach ($lines as $line) {
+                $s = trim($line);
+                if ($s !== '') $stockedImeis[] = $s;
+            }
+        }
+
+        $stockedImeis = array_values(array_unique($stockedImeis));
+
+        // 4. Available = Stocked - Sold to invoices
+        $availableImeis = [];
+        foreach ($stockedImeis as $s) {
+            if (!isset($soldMap[$s])) {
+                $availableImeis[] = $s;
+            }
+        }
 
         return response()->json([
             'current' => $currentImeis,
-            'available' => $availableImeis
+            'available' => array_values($availableImeis)
         ]);
     }
 }
