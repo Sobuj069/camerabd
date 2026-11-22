@@ -262,7 +262,7 @@
                                                     
                                                     $transOutItems = $transOutQuery->pluck('imei')->toArray();
                                                     foreach ($transOutItems as $imeiStr) {
-                                                        $imeiArray = array_filter(array_map('trim', explode("\n", str_replace("\r", "", $imeiStr))));
+                                                        $imeiArray = array_filter(array_map('trim', preg_split('/[\r\n,]+/', (string) $imeiStr)));
                                                         $allTransferOutImeis = array_merge($allTransferOutImeis, $imeiArray);
                                                     }
                                                 @endphp
@@ -299,7 +299,7 @@
                                                     
                                                     $transInItems = $transInQuery->pluck('imei')->toArray();
                                                     foreach ($transInItems as $imeiStr) {
-                                                        $imeiArray = array_filter(array_map('trim', explode("\n", str_replace("\r", "", $imeiStr))));
+                                                        $imeiArray = array_filter(array_map('trim', preg_split('/[\r\n,]+/', (string) $imeiStr)));
                                                         $allTransferInImeis = array_merge($allTransferInImeis, $imeiArray);
                                                     }
                                                 @endphp
@@ -326,21 +326,40 @@
                                                     $filterBranchId = session('branch_filter_id');
                                                     $invQuery = App\Models\InvoiceItem::where('product_id', $data->id)
                                                         ->whereNotNull('imei')
-                                                        ->where('imei', '!=', '');
+                                                        ->where('imei', '!=', '')
+                                                        ->whereHas('invoice', function ($q) {
+                                                            $q->whereNull('status')->orWhere('status', '!=', 2);
+                                                        })
+                                                        ->where(function ($q) {
+                                                            $q->whereNull('is_return')->orWhere('is_return', '!=', 1);
+                                                        });
                                                     
-                                                    if ($userBranchId == 1) {
-                                                        if ($filterBranchId) {
-                                                            $invQuery->where('branch_id', $filterBranchId);
-                                                        }
-                                                    } else {
-                                                        $invQuery->where('branch_id', $userBranchId);
+                                                    $targetBranch = ($userBranchId == 1) ? $filterBranchId : $userBranchId;
+                                                    if ((int)$targetBranch === 2) {
+                                                        $invQuery->where(function($q) {
+                                                            $q->whereIn('branch_id', [2, 1])
+                                                              ->orWhereNull('branch_id');
+                                                        })->whereHas('invoice', function($iq) {
+                                                            $iq->where(function($biq) {
+                                                                $biq->whereIn('branch_id', [2, 1])
+                                                                    ->orWhereNull('branch_id');
+                                                            });
+                                                        });
+                                                    } elseif ($targetBranch) {
+                                                        $invQuery->where(function($q) use ($targetBranch) {
+                                                            $q->where('branch_id', $targetBranch)
+                                                              ->orWhereHas('invoice', function($iq) use ($targetBranch) {
+                                                                  $iq->where('branch_id', $targetBranch);
+                                                              });
+                                                        });
                                                     }
                                                     
                                                     $invoiceItems = $invQuery->pluck('imei')->toArray();
                                                     foreach ($invoiceItems as $imeiStr) {
-                                                        $imeiArray = array_filter(array_map('trim', explode("\n", str_replace("\r", "", $imeiStr))));
+                                                        $imeiArray = array_filter(array_map('trim', preg_split('/[\r\n,]+/', (string) $imeiStr)));
                                                         $allSoldImeis = array_merge($allSoldImeis, $imeiArray);
                                                     }
+                                                    $allSoldImeis = array_values(array_unique($allSoldImeis));
                                                 @endphp
                                                 @if (count($allSoldImeis) > 0)
                                                     <br>
@@ -377,7 +396,7 @@
                                                     
                                                     $returnItems = $rtnQuery->pluck('imei')->toArray();
                                                     foreach ($returnItems as $imeiStr) {
-                                                        $imeiArray = array_filter(array_map('trim', explode("\n", str_replace("\r", "", $imeiStr))));
+                                                        $imeiArray = array_filter(array_map('trim', preg_split('/[\r\n,]+/', (string) $imeiStr)));
                                                         $allSaleReturnImeis = array_merge($allSaleReturnImeis, $imeiArray);
                                                     }
                                                 @endphp
@@ -414,7 +433,7 @@
                                                     $returnPurchaseItems = $rtnQuery->pluck('imei')->toArray();
                                                     $allReturnImeis = [];
                                                     foreach ($returnPurchaseItems as $imeiStr) {
-                                                        $imeiArray = array_filter(array_map('trim', explode("\n", str_replace("\r", "", $imeiStr))));
+                                                        $imeiArray = array_filter(array_map('trim', preg_split('/[\r\n,]+/', (string) $imeiStr)));
                                                         $allReturnImeis = array_merge($allReturnImeis, $imeiArray);
                                                     }
                                                 @endphp
@@ -455,7 +474,7 @@
                                                     
                                                     $damageItems = $dmgQuery->pluck('imei')->toArray();
                                                     foreach ($damageItems as $imeiStr) {
-                                                        $imeiArray = array_filter(array_map('trim', explode("\n", str_replace("\r", "", $imeiStr))));
+                                                        $imeiArray = array_filter(array_map('trim', preg_split('/[\r\n,]+/', (string) $imeiStr)));
                                                         $allDamagedImeis = array_merge($allDamagedImeis, $imeiArray);
                                                     }
                                                 @endphp
@@ -493,7 +512,7 @@
                                                     
                                                     $adjInItems = $adjInQuery->pluck('imei')->toArray();
                                                     foreach ($adjInItems as $imeiStr) {
-                                                        $imeiArray = array_filter(array_map('trim', explode("\n", str_replace("\r", "", $imeiStr))));
+                                                        $imeiArray = array_filter(array_map('trim', preg_split('/[\r\n,]+/', (string) $imeiStr)));
                                                         $allAdjustInImeis = array_merge($allAdjustInImeis, $imeiArray);
                                                     }
                                                 @endphp
@@ -531,7 +550,7 @@
                                                     
                                                     $adjOutItems = $adjOutQuery->pluck('imei')->toArray();
                                                     foreach ($adjOutItems as $imeiStr) {
-                                                        $imeiArray = array_filter(array_map('trim', explode("\n", str_replace("\r", "", $imeiStr))));
+                                                        $imeiArray = array_filter(array_map('trim', preg_split('/[\r\n,]+/', (string) $imeiStr)));
                                                         $allAdjustOutImeis = array_merge($allAdjustOutImeis, $imeiArray);
                                                     }
                                                 @endphp
@@ -611,17 +630,33 @@
                                                     $purchaseItems = $purQuery->pluck('imei')->toArray();
                                                     $allImeis = [];
                                                     foreach ($purchaseItems as $imeiStr) {
-                                                        $imeiArray = array_filter(array_map('trim', explode("\n", str_replace("\r", "", $imeiStr))));
+                                                        $imeiArray = array_filter(array_map('trim', preg_split('/[\r\n,]+/', (string) $imeiStr)));
                                                         $allImeis = array_merge($allImeis, $imeiArray);
                                                     }
  
                                                     // Merge Adjust In IMEIs into all received IMEIs
                                                     $allImeis = array_merge($allImeis, $allAdjustInImeis ?? []);
+                                                    $allImeis = array_values(array_unique($allImeis));
 
                                                     $out = array_merge($allSoldImeis ?? [], $allReturnImeis ?? [], $allDamagedImeis ?? [], $allTransferOutImeis ?? [], $allAdjustOutImeis ?? []);
+
+                                                    // Absolutely ensure any IMEI sold on ANY active invoice (including online sales) is deducted
+                                                    $allGlobalSoldImeis = App\Models\InvoiceItem::where('product_id', $data->id)
+                                                        ->whereNotNull('imei')
+                                                        ->where('imei', '!=', '')
+                                                        ->whereHas('invoice', fn($q) => $q->whereNull('status')->orWhere('status', '!=', 2))
+                                                        ->where(fn($q) => $q->whereNull('is_return')->orWhere('is_return', '!=', 1))
+                                                        ->pluck('imei')
+                                                        ->toArray();
+                                                    foreach ($allGlobalSoldImeis as $gStr) {
+                                                        $gParts = array_filter(array_map('trim', preg_split('/[\r\n,]+/', (string) $gStr)));
+                                                        $out = array_merge($out, $gParts);
+                                                    }
+                                                    $out = array_values(array_unique($out));
+
                                                     // Subtract items that came back from customer to make them available again
                                                     $actuallyOut = array_diff($out, $allSaleReturnImeis ?? []);
-                                                    $availableImeis = array_diff($allImeis, $actuallyOut);
+                                                    $availableImeis = array_values(array_diff($allImeis, $actuallyOut));
                                                 @endphp
                                                 @if (count($availableImeis) > 0)
                                                     <br>

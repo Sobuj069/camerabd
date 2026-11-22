@@ -1618,7 +1618,13 @@ class InvoiceController extends Controller
     {
         $invoice = Invoice::findOrFail($id);
         $editDate = date('Y-m-d');
-        $branchId = $invoice->branch_id;
+        $branchId = ((int) $invoice->branch_id !== 1 && $invoice->branch_id)
+            ? (int) $invoice->branch_id
+            : ((int) (session('branch_filter_id') ?: 2));
+        if ((int) $invoice->branch_id === 1) {
+            $invoice->branch_id = $branchId;
+            $invoice->saveQuietly();
+        }
 
         if (!$request->has('product_id') || !is_array($request->product_id) || count($request->product_id) === 0) {
             session()->flash('error', __('Please select at least one product to update the invoice.'));

@@ -233,12 +233,24 @@ if (!function_exists('invoiced_qty')) {
                     $iq2->whereNull('is_return')->orWhere('is_return', '!=', 1);
                 })->where('product_id', $product->id);
 
-                if ($userBranchId == 1) {
-                    if ($filterBranchId) {
-                        $query->where('branch_id', $filterBranchId);
-                    }
-                } else {
-                    $query->where('branch_id', $userBranchId);
+                $targetBranch = ($userBranchId == 1) ? $filterBranchId : $userBranchId;
+                if ((int)$targetBranch === 2) {
+                    $query->where(function($q) {
+                        $q->whereIn('branch_id', [2, 1])
+                          ->orWhereNull('branch_id');
+                    })->whereHas('invoice', function($iq) {
+                        $iq->where(function($biq) {
+                            $biq->whereIn('branch_id', [2, 1])
+                                ->orWhereNull('branch_id');
+                        });
+                    });
+                } elseif ($targetBranch) {
+                    $query->where(function($q) use ($targetBranch) {
+                        $q->where('branch_id', $targetBranch)
+                          ->orWhereHas('invoice', function($iq) use ($targetBranch) {
+                              $iq->where('branch_id', $targetBranch);
+                          });
+                    });
                 }
                 
                 $inv_stock = InvoiceItem::filterByFakeSale($query)->sum('actual_main');
@@ -252,12 +264,24 @@ if (!function_exists('invoiced_qty')) {
                     $iq2->whereNull('is_return')->orWhere('is_return', '!=', 1);
                 })->where('product_id', $product->id);
 
-                if ($userBranchId == 1) {
-                    if ($filterBranchId) {
-                        $query->where('branch_id', $filterBranchId);
-                    }
-                } else {
-                    $query->where('branch_id', $userBranchId);
+                $targetBranch = ($userBranchId == 1) ? $filterBranchId : $userBranchId;
+                if ((int)$targetBranch === 2) {
+                    $query->where(function($q) {
+                        $q->whereIn('branch_id', [2, 1])
+                          ->orWhereNull('branch_id');
+                    })->whereHas('invoice', function($iq) {
+                        $iq->where(function($biq) {
+                            $biq->whereIn('branch_id', [2, 1])
+                                ->orWhereNull('branch_id');
+                        });
+                    });
+                } elseif ($targetBranch) {
+                    $query->where(function($q) use ($targetBranch) {
+                        $q->where('branch_id', $targetBranch)
+                          ->orWhereHas('invoice', function($iq) use ($targetBranch) {
+                              $iq->where('branch_id', $targetBranch);
+                          });
+                    });
                 }
 
                 $filteredItems = InvoiceItem::filterByFakeSale($query);
@@ -975,7 +999,19 @@ if (!function_exists('product_fake_stock_val')) {
         })->where('product_id', $product->id);
         $retQuery = ReturnItem::with('return.invoice')->where('product_id', $product->id);
         if ($branchId) {
-            $invQuery->where('branch_id', $branchId);
+            if ((int)$branchId === 2) {
+                $invQuery->where(function($q) {
+                    $q->whereIn('branch_id', [2, 1])
+                      ->orWhereNull('branch_id');
+                })->whereHas('invoice', function($iq) {
+                    $iq->where(function($biq) {
+                        $biq->whereIn('branch_id', [2, 1])
+                            ->orWhereNull('branch_id');
+                    });
+                });
+            } else {
+                $invQuery->where('branch_id', $branchId);
+            }
             $retQuery->where('branch_id', $branchId);
         }
 

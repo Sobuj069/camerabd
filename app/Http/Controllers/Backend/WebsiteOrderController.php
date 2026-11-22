@@ -479,7 +479,9 @@ class WebsiteOrderController extends Controller
 
         $order = WebsiteOrder::with(['items.product', 'items.variation'])->findOrFail($id);
         $newStatus = strtolower(trim($request->status));
-        $userBranchId = auth()->user()->branch_id ?? 1;
+        $userBranchId = (auth()->check() && (int) auth()->user()->branch_id !== 1)
+            ? (int) auth()->user()->branch_id
+            : ((int) (session('branch_filter_id') ?: 2));
 
         // If order is already approved, allow cancelling it with stock restoration and Meta CAPI cancellation
         if ($order->status === 'approved') {
