@@ -382,16 +382,17 @@
                                                 @php
                                                     $userBranchId = auth()->user()->branch_id;
                                                     $filterBranchId = session('branch_filter_id');
+                                                    $targetBranch = ($userBranchId == 1) ? $filterBranchId : $userBranchId;
+
+                                                    // 1. POS Return IMEIs
                                                     $rtnQuery = App\Models\ReturnItem::where('product_id', $data->id)
                                                         ->whereNotNull('imei')
                                                         ->where('imei', '!=', '');
                                                     
-                                                    if ($userBranchId == 1) {
-                                                        if ($filterBranchId) {
-                                                            $rtnQuery->where('branch_id', $filterBranchId);
-                                                        }
-                                                    } else {
-                                                        $rtnQuery->where('branch_id', $userBranchId);
+                                                    if ((int)$targetBranch === 2) {
+                                                        $rtnQuery->whereIn('branch_id', [2, 1]);
+                                                    } elseif ($targetBranch) {
+                                                        $rtnQuery->where('branch_id', $targetBranch);
                                                     }
                                                     
                                                     $returnItems = $rtnQuery->pluck('imei')->toArray();
@@ -399,6 +400,44 @@
                                                         $imeiArray = array_filter(array_map('trim', preg_split('/[\r\n,]+/', (string) $imeiStr)));
                                                         $allSaleReturnImeis = array_merge($allSaleReturnImeis, $imeiArray);
                                                     }
+
+                                                    // 2. Courier Return IMEIs
+                                                    $courierRtnQuery = App\Models\InvoiceItem::where('product_id', $data->id)
+                                                        ->whereNotNull('imei')
+                                                        ->where('imei', '!=', '')
+                                                        ->where(function ($q) {
+                                                            $q->where('is_return', 1)
+                                                              ->orWhereHas('invoice', function ($iq) {
+                                                                  $iq->whereIn('order_status', ['Returned', 'returned', 'Return', 'return']);
+                                                              });
+                                                        })
+                                                        ->whereDoesntHave('invoice.returns');
+
+                                                    if ((int)$targetBranch === 2) {
+                                                        $courierRtnQuery->where(function($q) {
+                                                            $q->whereIn('branch_id', [2, 1])
+                                                              ->orWhereNull('branch_id');
+                                                        })->whereHas('invoice', function($iq) {
+                                                            $iq->where(function($biq) {
+                                                                $biq->whereIn('branch_id', [2, 1])
+                                                                    ->orWhereNull('branch_id');
+                                                            });
+                                                        });
+                                                    } elseif ($targetBranch) {
+                                                        $courierRtnQuery->where(function($q) use ($targetBranch) {
+                                                            $q->where('branch_id', $targetBranch)
+                                                              ->orWhereHas('invoice', function($iq) use ($targetBranch) {
+                                                                  $iq->where('branch_id', $targetBranch);
+                                                              });
+                                                        });
+                                                    }
+
+                                                    $courierRtnItems = $courierRtnQuery->pluck('imei')->toArray();
+                                                    foreach ($courierRtnItems as $imeiStr) {
+                                                        $imeiArray = array_filter(array_map('trim', preg_split('/[\r\n,]+/', (string) $imeiStr)));
+                                                        $allSaleReturnImeis = array_merge($allSaleReturnImeis, $imeiArray);
+                                                    }
+                                                    $allSaleReturnImeis = array_values(array_unique($allSaleReturnImeis));
                                                 @endphp
                                                 @if (count($allSaleReturnImeis) > 0)
                                                     <br>

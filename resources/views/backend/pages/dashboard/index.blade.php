@@ -1937,7 +1937,7 @@
                                         $adjust_in_total = (float) adjust_in($product);
                                         $adjust_out_total = (float) adjust_out($product);
 
-                                        $stock = $purchase - $sale + $adjust_in_total + $sale_ret - $adjust_out_total - $pur_ret - $damage;
+                                        $stock = $purchase - $sale + $adjust_in_total - $adjust_out_total - $pur_ret - $damage;
                                     } else {
                                         $stock = 0;
                                     }
