@@ -185,7 +185,7 @@ class ReportController extends Controller
             $adjust_in_total = (float) adjust_in($product);
             $adjust_out_total = (float)adjust_out($product);
 
-            $stock = $purchase - $sale + $adjust_in_total - $adjust_out_total - $pur_ret - $damage;
+            $stock = $purchase - $sale + $sale_ret + $adjust_in_total - $adjust_out_total - $pur_ret - $damage;
 
 
             $grand_purchase  += $purchase;
@@ -1547,7 +1547,7 @@ class ReportController extends Controller
                     $adjustIn   = (float) adjust_in($product);
                     $adjustOut  = (float) adjust_out($product);
 
-                    $currentStock = $purchased - $invoiced + $adjustIn - $adjustOut - $purRet - $damage;
+                    $currentStock = $purchased - $invoiced + $saleRet + $adjustIn - $adjustOut - $purRet - $damage;
 
                     $productStats[$pid] = [
                         'product' => $product,

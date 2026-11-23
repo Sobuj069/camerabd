@@ -220,7 +220,7 @@
                                         $row_adjust_in_total   += (float) $adjust_in;
                                         $row_adjust_out_total   += (float) $adjust_out;
                                         
-                                        $row_stock_qty = $row_purchase - $row_sale + $row_adjust_in_total - $row_adjust_out_total - $row_pur_ret - $row_damage ;
+                                        $row_stock_qty = $row_purchase - $row_sale + $row_sale_ret + $row_adjust_in_total - $row_adjust_out_total - $row_pur_ret - $row_damage ;
                                     @endphp
                                     <tr>
                                         <td class="table_data_style_left">{{ $products->firstItem() ? ($products->firstItem() + $loop->index) : ($loop->index + 1) }}</td>
@@ -328,10 +328,14 @@
                                                         ->whereNotNull('imei')
                                                         ->where('imei', '!=', '')
                                                         ->whereHas('invoice', function ($q) {
-                                                            $q->whereNull('status')->orWhere('status', '!=', 2);
-                                                        })
-                                                        ->where(function ($q) {
-                                                            $q->whereNull('is_return')->orWhere('is_return', '!=', 1);
+                                                            $q->where(function ($sq) {
+                                                                $sq->whereNull('sale_type')->orWhere('sale_type', '!=', 'WooCommerce');
+                                                            })->where(function ($oq) {
+                                                                $oq->whereNull('order_status')
+                                                                   ->orWhereNotIn('order_status', ['Cancelled', 'cancelled', 'failed', 'canceled']);
+                                                            })->where(function ($stq) {
+                                                                $stq->whereNull('status')->orWhere('status', '!=', 3);
+                                                            });
                                                         });
                                                     
                                                     $targetBranch = ($userBranchId == 1) ? $filterBranchId : $userBranchId;
@@ -609,7 +613,7 @@
                                             {{-- @dd($data->); --}}
  
                                             @php
-                                                $available_calc = (float) $purchased_qty - (float) $invoiced_qty - (float) $return_pur_qty - (float) $damaged_qty + (float) $adjust_in - (float) $adjust_out;
+                                                $available_calc = (float) $purchased_qty - (float) $invoiced_qty + (float) $returned_qty - (float) $return_pur_qty - (float) $damaged_qty + (float) $adjust_in - (float) $adjust_out;
                                             @endphp
                                             @if ($data->product_variations->count() > 0)
                                                 @php
