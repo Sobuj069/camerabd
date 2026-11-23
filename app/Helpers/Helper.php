@@ -231,11 +231,6 @@ if (!function_exists('invoiced_qty')) {
             $baseQuery = InvoiceItem::whereHas('invoice', function($iq) {
                 $iq->where(function ($sq) {
                     $sq->whereNull('sale_type')->orWhere('sale_type', '!=', 'WooCommerce');
-                })->where(function ($oq) {
-                    $oq->whereNull('order_status')
-                       ->orWhereNotIn('order_status', ['Cancelled', 'cancelled', 'failed', 'canceled']);
-                })->where(function ($stq) {
-                    $stq->whereNull('status')->orWhere('status', '!=', 3);
                 });
             })->where('product_id', $product->id);
 
