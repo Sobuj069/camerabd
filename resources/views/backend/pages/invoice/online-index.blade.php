@@ -908,7 +908,7 @@
                                                     @if (env('APP_SC') == 'yes' && $item->product_variation)
                                                         <span class="text-muted">({{ $item->product_variation?->size?->size }}-{{ $item->product_variation?->color?->color }})</span>
                                                     @endif
-                                                    @if ($item->is_return == 1)
+                                                    @if ($item->is_return == 1 && in_array(strtolower(trim($data->order_status ?? '')), ['returned', 'return', 'return to origin', 'return_to_origin', 'returned_by_merchant', 'returned_approval', 'pending_return']))
                                                         <span class="badge bg-danger">Return</span>
                                                     @endif
                                                 </div>

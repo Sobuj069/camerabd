@@ -212,7 +212,7 @@ if (!function_exists('apply_active_invoice_stock_filter')) {
             $oq->whereNull('order_status')
                ->orWhereNotIn('order_status', [
                    'Returned', 'returned', 'Return', 'return',
-                   'RTS', 'rts', 'Return to Origin', 'return_to_origin',
+                   'Return to Origin', 'return_to_origin',
                    'returned_by_merchant', 'returned_approval',
                    'Cancelled', 'cancelled', 'failed', 'canceled'
                ]);
@@ -385,7 +385,7 @@ if (!function_exists('returned_qty')) {
                           })->where(function($oq) {
                               $oq->whereIn('order_status', [
                                   'Returned', 'returned', 'Return', 'return',
-                                  'RTS', 'rts', 'Return to Origin', 'return_to_origin',
+                                  'Return to Origin', 'return_to_origin',
                                   'returned_by_merchant', 'returned_approval'
                               ])->orWhere('status', 2);
                           });
@@ -2187,7 +2187,7 @@ if (!function_exists('syncInvoiceStockForStatusChange')) {
         $normOld = strtolower(trim((string)$oldStatus));
 
         $returnStatuses = [
-            'returned', 'return', 'rts', 'return to origin', 'return_to_origin', 
+            'returned', 'return', 'return to origin', 'return_to_origin', 
             'returned_by_merchant', 'returned_approval'
         ];
         $cancelStatuses = ['cancelled', 'cancel', 'failed', 'canceled'];

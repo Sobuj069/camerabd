@@ -1058,7 +1058,7 @@ class WooCommerceController extends Controller
         } elseif ($targetStatus === 'Shipping') {
             $invoice->status = 1;
         } elseif ($targetStatus === 'RTS') {
-            $invoice->status = 2;
+            $invoice->status = 1;
         }
 
         $invoice->save();

@@ -390,6 +390,27 @@ class InvoiceController extends Controller
             autoPayInvoiceDue($delInv);
         }
 
+        // Auto-heal active orders (RTS, Processing, etc.) that might have been incorrectly marked is_return = 1 or status = 2
+        \App\Models\InvoiceItem::where('is_return', 1)
+            ->whereHas('invoice', function($q) {
+                $q->whereIn('order_status', [
+                    'RTS', 'rts', 'Processing', 'processing', 'In Review', 'in_review', 
+                    'Pending (Courier)', 'pending_courier', 'In Transit', 'in_transit', 
+                    'In Courier', 'in_courier', 'All in Courier', 'all_in_courier', 
+                    'Delivered', 'delivered'
+                ]);
+            })
+            ->update(['is_return' => 0]);
+
+        \App\Models\Invoice::where('status', 2)
+            ->whereIn('order_status', [
+                'RTS', 'rts', 'Processing', 'processing', 'In Review', 'in_review', 
+                'Pending (Courier)', 'pending_courier', 'In Transit', 'in_transit', 
+                'In Courier', 'in_courier', 'All in Courier', 'all_in_courier', 
+                'Delivered', 'delivered'
+            ])
+            ->update(['status' => 1]);
+
         $baseStatusQuery = $this->buildOnlineSaleBaseQuery($request);
 
         // Auto-check candidate Steadfast orders for live partial/return/delivery status changes (throttled by Cache)
@@ -747,7 +768,7 @@ class InvoiceController extends Controller
                     logActivity('Update Order Status', "Invoice #{$inv->invoice_no} status changed from '{$oldStatus}' to 'In Courier'", $inv);
                 } else {
                     $normStatus = strtolower(trim((string)$status));
-                    if (in_array($normStatus, ['returned', 'return', 'rts', 'return to origin', 'return_to_origin', 'returned_by_merchant', 'returned_approval'])) {
+                    if (in_array($normStatus, ['returned', 'return', 'return to origin', 'return_to_origin', 'returned_by_merchant', 'returned_approval'])) {
                         $inv->status = 2;
                     } elseif (in_array($normStatus, ['cancelled', 'cancel', 'failed', 'canceled'])) {
                         $inv->status = 3;
@@ -3311,7 +3332,7 @@ class InvoiceController extends Controller
                 syncInvoiceStockForStatusChange($inv, $newStatus, $oldStatus);
 
                 $normSyncStatus = strtolower(trim((string)$newStatus));
-                if (in_array($normSyncStatus, ['returned', 'return', 'rts', 'return to origin', 'return_to_origin', 'returned_by_merchant', 'returned_approval'])) {
+                if (in_array($normSyncStatus, ['returned', 'return', 'return to origin', 'return_to_origin', 'returned_by_merchant', 'returned_approval'])) {
                     $inv->status = 2;
                 } elseif (in_array($normSyncStatus, ['cancelled', 'cancel', 'failed', 'canceled'])) {
                     $inv->status = 3;
@@ -3407,7 +3428,7 @@ class InvoiceController extends Controller
             }
         } else {
             $normScanStatus = strtolower(trim((string)$newStatus));
-            if (in_array($normScanStatus, ['returned', 'return', 'rts', 'return to origin', 'return_to_origin', 'returned_by_merchant', 'returned_approval'])) {
+            if (in_array($normScanStatus, ['returned', 'return', 'return to origin', 'return_to_origin', 'returned_by_merchant', 'returned_approval'])) {
                 $invoice->status = 2;
             } elseif (in_array($normScanStatus, ['cancelled', 'cancel', 'failed', 'canceled'])) {
                 $invoice->status = 3;

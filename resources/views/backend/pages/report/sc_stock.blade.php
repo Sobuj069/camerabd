@@ -391,7 +391,7 @@
                                                               ->orWhereHas('invoice', function ($iq) {
                                                                   $iq->whereIn('order_status', [
                                                                       'Returned', 'returned', 'Return', 'return',
-                                                                      'RTS', 'rts', 'Return to Origin', 'return_to_origin',
+                                                                      'Return to Origin', 'return_to_origin',
                                                                       'returned_by_merchant', 'returned_approval'
                                                                   ])->orWhere('status', 2);
                                                               });
