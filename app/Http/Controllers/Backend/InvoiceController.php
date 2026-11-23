@@ -3392,6 +3392,13 @@ class InvoiceController extends Controller
                 ], 422);
             }
         } else {
+            if (in_array(strtolower(trim($newStatus)), ['returned', 'return'])) {
+                $invoice->status = 2;
+            } elseif (in_array(strtolower(trim($newStatus)), ['cancelled', 'cancel', 'failed', 'canceled'])) {
+                $invoice->status = 3;
+            } else {
+                $invoice->status = 1;
+            }
             $invoice->order_status = $newStatus;
             $invoice->save();
         }
