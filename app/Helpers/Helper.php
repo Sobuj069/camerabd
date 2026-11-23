@@ -226,42 +226,67 @@ if (!function_exists('invoiced_qty')) {
         if ($product->is_service == 0) {
             $userBranchId = auth()->user()?->branch_id ?? 1;
             $filterBranchId = session('branch_filter_id', $userBranchId);
-            $targetBranch = ($userBranchId == 1) ? $filterBranchId : $userBranchId;
-
-            $baseQuery = InvoiceItem::whereHas('invoice', function($iq) {
-                $iq->where(function ($sq) {
-                    $sq->whereNull('sale_type')->orWhere('sale_type', '!=', 'WooCommerce');
-                });
-            })->where('product_id', $product->id);
-
-            if ((int)$targetBranch === 2) {
-                $baseQuery->where(function($q) {
-                    $q->whereIn('branch_id', [2, 1])
-                      ->orWhereNull('branch_id');
-                })->whereHas('invoice', function($iq) {
-                    $iq->where(function($biq) {
-                        $biq->whereIn('branch_id', [2, 1])
-                            ->orWhereNull('branch_id');
-                    });
-                });
-            } elseif ($targetBranch) {
-                $baseQuery->where(function($q) use ($targetBranch) {
-                    $q->where('branch_id', $targetBranch)
-                      ->orWhereHas('invoice', function($iq) use ($targetBranch) {
-                          $iq->where('branch_id', $targetBranch);
-                      });
-                });
-            }
-
             if (!$product->unit || $product->unit->related_unit == null) {
-                $inv_stock = InvoiceItem::filterByFakeSale($baseQuery)->sum('main_qty');
+                $query = InvoiceItem::whereHas('invoice', function($iq) {
+                    apply_active_invoice_stock_filter($iq);
+                })->where(function($iq2) {
+                    $iq2->whereNull('is_return')->orWhere('is_return', '!=', 1);
+                })->where('product_id', $product->id);
+
+                $targetBranch = ($userBranchId == 1) ? $filterBranchId : $userBranchId;
+                if ((int)$targetBranch === 2) {
+                    $query->where(function($q) {
+                        $q->whereIn('branch_id', [2, 1])
+                          ->orWhereNull('branch_id');
+                    })->whereHas('invoice', function($iq) {
+                        $iq->where(function($biq) {
+                            $biq->whereIn('branch_id', [2, 1])
+                                ->orWhereNull('branch_id');
+                        });
+                    });
+                } elseif ($targetBranch) {
+                    $query->where(function($q) use ($targetBranch) {
+                        $q->where('branch_id', $targetBranch)
+                          ->orWhereHas('invoice', function($iq) use ($targetBranch) {
+                              $iq->where('branch_id', $targetBranch);
+                          });
+                    });
+                }
+                
+                $inv_stock = InvoiceItem::filterByFakeSale($query)->sum('actual_main');
                 $total_stock = $inv_stock;
                 $data['stock_qty'] = $total_stock . ' ' . ($product->unit->name ?? 'Pcs');
             } else {
-                //invoice with sub-unit
-                $filteredItems = InvoiceItem::filterByFakeSale($baseQuery);
-                $inv_stock_main = $filteredItems->sum('main_qty');
-                $inv_total_sub = $filteredItems->sum('sub_qty');
+                //invoice
+                $query = InvoiceItem::whereHas('invoice', function($iq) {
+                    apply_active_invoice_stock_filter($iq);
+                })->where(function($iq2) {
+                    $iq2->whereNull('is_return')->orWhere('is_return', '!=', 1);
+                })->where('product_id', $product->id);
+
+                $targetBranch = ($userBranchId == 1) ? $filterBranchId : $userBranchId;
+                if ((int)$targetBranch === 2) {
+                    $query->where(function($q) {
+                        $q->whereIn('branch_id', [2, 1])
+                          ->orWhereNull('branch_id');
+                    })->whereHas('invoice', function($iq) {
+                        $iq->where(function($biq) {
+                            $biq->whereIn('branch_id', [2, 1])
+                                ->orWhereNull('branch_id');
+                        });
+                    });
+                } elseif ($targetBranch) {
+                    $query->where(function($q) use ($targetBranch) {
+                        $q->where('branch_id', $targetBranch)
+                          ->orWhereHas('invoice', function($iq) use ($targetBranch) {
+                              $iq->where('branch_id', $targetBranch);
+                          });
+                    });
+                }
+
+                $filteredItems = InvoiceItem::filterByFakeSale($query);
+                $inv_stock_main = $filteredItems->sum('actual_main');
+                $inv_total_sub = $filteredItems->sum('actual_sub');
                 
                 $inv_total_main = (float)($inv_stock_main * $product->unit->related_value);
 
@@ -320,62 +345,27 @@ if (!function_exists('returned_qty')) {
         if ($product->is_service == 0) {
             $userBranchId = auth()->user()?->branch_id ?? 1;
             $filterBranchId = session('branch_filter_id', $userBranchId);
-            $targetBranch = ($userBranchId == 1) ? $filterBranchId : $userBranchId;
 
-            // 1. POS / In-store Return Items
             $query = ReturnItem::with('return.invoice')
                 ->where('product_id', $product->id);
 
-            if ((int)$targetBranch === 2) {
-                $query->whereIn('branch_id', [2, 1]);
-            } elseif ($targetBranch) {
-                $query->where('branch_id', $targetBranch);
-            }
-
-            // 2. Courier / Online Invoice Returns
-            $courierQuery = InvoiceItem::where('product_id', $product->id)
-                ->where(function ($q) {
-                    $q->where('is_return', 1)
-                      ->orWhereHas('invoice', function ($iq) {
-                          $iq->whereIn('order_status', ['Returned', 'returned', 'Return', 'return']);
-                      });
-                })
-                ->whereDoesntHave('invoice.returns');
-
-            if ((int)$targetBranch === 2) {
-                $courierQuery->where(function($q) {
-                    $q->whereIn('branch_id', [2, 1])
-                      ->orWhereNull('branch_id');
-                })->whereHas('invoice', function($iq) {
-                    $iq->where(function($biq) {
-                        $biq->whereIn('branch_id', [2, 1])
-                            ->orWhereNull('branch_id');
-                    });
-                });
-            } elseif ($targetBranch) {
-                $courierQuery->where(function($q) use ($targetBranch) {
-                    $q->where('branch_id', $targetBranch)
-                      ->orWhereHas('invoice', function($iq) use ($targetBranch) {
-                          $iq->where('branch_id', $targetBranch);
-                      });
-                });
+            if ($userBranchId == 1) {
+                if ($filterBranchId) {
+                    $query->where('branch_id', $filterBranchId);
+                }
+            } else {
+                $query->where('branch_id', $userBranchId);
             }
 
             if (!$product->unit || $product->unit->related_unit == null) {
-                $posStock = (float) ReturnItem::filterByFakeSale($query)->sum('main_qty');
-                $courierStock = (float) InvoiceItem::filterByFakeSale($courierQuery)->sum('main_qty');
-                $total_stock = $posStock + $courierStock;
+                $inv_stock = ReturnItem::filterByFakeSale($query)->sum('main_qty');
+                $total_stock = $inv_stock;
                 $data['stock_qty'] = $total_stock . ' ' . ($product->unit->name ?? 'Pcs');
             } else {
                 //return
-                $posMain = (float) ReturnItem::filterByFakeSale($query)->sum('main_qty');
-                $posSub  = (float) ReturnItem::filterByFakeSale($query)->sum('sub_qty');
-
-                $courierMain = (float) InvoiceItem::filterByFakeSale($courierQuery)->sum('main_qty');
-                $courierSub  = (float) InvoiceItem::filterByFakeSale($courierQuery)->sum('sub_qty');
-
-                $inv_stock_main = $posMain + $courierMain;
-                $inv_total_sub = $posSub + $courierSub;
+                $filteredItems = ReturnItem::filterByFakeSale($query);
+                $inv_stock_main = $filteredItems->sum('main_qty');
+                $inv_total_sub = $filteredItems->sum('sub_qty');
 
                 $inv_total_main = (float)($inv_stock_main * $product->unit->related_value);
                 $inv_total_stock = (float)($inv_total_main + $inv_total_sub);
@@ -922,13 +912,12 @@ if (!function_exists('sync_product_purchase_stock')) {
         // Calculate expected stock in main unit using the exact ledger functions used in Product Stock Report
         $purchase = (float) purchased_qty($product);
         $sale     = (float) invoiced_qty($product);
-        $sale_ret = (float) returned_qty($product);
         $pur_ret  = (float) return_pur_qty($product);
         $damage   = (float) damaged_qty($product);
         $adj_in   = (float) adjust_in($product);
         $adj_out  = (float) adjust_out($product);
 
-        $expectedMainStock = max(0.0, $purchase - $sale + $sale_ret - $pur_ret - $damage + $adj_in - $adj_out);
+        $expectedMainStock = max(0.0, $purchase - $sale - $pur_ret - $damage + $adj_in - $adj_out);
         $expectedBaseStock = $expectedMainStock * $factor;
 
         $purQuery = PurchaseItem::where('product_id', $product->id)

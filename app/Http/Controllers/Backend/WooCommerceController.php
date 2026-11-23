@@ -392,7 +392,7 @@ class WooCommerceController extends Controller
                         $adjustIn   = (float) adjust_in($product);
                         $adjustOut  = (float) adjust_out($product);
 
-                        $availableStock = $purchased - $invoiced + $saleRet + $adjustIn - $adjustOut - $purRet - $damage;
+                        $availableStock = $purchased - $invoiced + $adjustIn + $saleRet - $adjustOut - $purRet - $damage;
 
                         if ($availableStock < $requiredQty) {
                             $stockErrors[] = "Order #{$invoice->invoice_no}: Product '{$product->name}' is OUT OF STOCK (Available: {$availableStock} pcs, Required: {$requiredQty} pcs).";
@@ -485,7 +485,7 @@ class WooCommerceController extends Controller
                     $adjustIn   = (float) adjust_in($product);
                     $adjustOut  = (float) adjust_out($product);
 
-                    $availableStock = $purchased - $invoiced + $saleRet + $adjustIn - $adjustOut - $purRet - $damage;
+                    $availableStock = $purchased - $invoiced + $adjustIn + $saleRet - $adjustOut - $purRet - $damage;
 
                     if ($availableStock < $requiredQty) {
                         $stockErrors[] = "Product '{$product->name}' is OUT OF STOCK (Available: {$availableStock} pcs, Required: {$requiredQty} pcs).";

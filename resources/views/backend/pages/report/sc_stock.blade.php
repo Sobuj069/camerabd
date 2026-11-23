@@ -220,7 +220,7 @@
                                         $row_adjust_in_total   += (float) $adjust_in;
                                         $row_adjust_out_total   += (float) $adjust_out;
                                         
-                                        $row_stock_qty = $row_purchase - $row_sale + $row_sale_ret + $row_adjust_in_total - $row_adjust_out_total - $row_pur_ret - $row_damage ;
+                                        $row_stock_qty = $row_purchase - $row_sale + $row_adjust_in_total - $row_adjust_out_total - $row_pur_ret - $row_damage ;
                                     @endphp
                                     <tr>
                                         <td class="table_data_style_left">{{ $products->firstItem() ? ($products->firstItem() + $loop->index) : ($loop->index + 1) }}</td>
@@ -328,9 +328,10 @@
                                                         ->whereNotNull('imei')
                                                         ->where('imei', '!=', '')
                                                         ->whereHas('invoice', function ($q) {
-                                                            $q->where(function ($sq) {
-                                                                $sq->whereNull('sale_type')->orWhere('sale_type', '!=', 'WooCommerce');
-                                                            });
+                                                            $q->whereNull('status')->orWhere('status', '!=', 2);
+                                                        })
+                                                        ->where(function ($q) {
+                                                            $q->whereNull('is_return')->orWhere('is_return', '!=', 1);
                                                         });
                                                     
                                                     $targetBranch = ($userBranchId == 1) ? $filterBranchId : $userBranchId;
@@ -381,17 +382,16 @@
                                                 @php
                                                     $userBranchId = auth()->user()->branch_id;
                                                     $filterBranchId = session('branch_filter_id');
-                                                    $targetBranch = ($userBranchId == 1) ? $filterBranchId : $userBranchId;
-
-                                                    // 1. POS Return IMEIs
                                                     $rtnQuery = App\Models\ReturnItem::where('product_id', $data->id)
                                                         ->whereNotNull('imei')
                                                         ->where('imei', '!=', '');
                                                     
-                                                    if ((int)$targetBranch === 2) {
-                                                        $rtnQuery->whereIn('branch_id', [2, 1]);
-                                                    } elseif ($targetBranch) {
-                                                        $rtnQuery->where('branch_id', $targetBranch);
+                                                    if ($userBranchId == 1) {
+                                                        if ($filterBranchId) {
+                                                            $rtnQuery->where('branch_id', $filterBranchId);
+                                                        }
+                                                    } else {
+                                                        $rtnQuery->where('branch_id', $userBranchId);
                                                     }
                                                     
                                                     $returnItems = $rtnQuery->pluck('imei')->toArray();
@@ -399,44 +399,6 @@
                                                         $imeiArray = array_filter(array_map('trim', preg_split('/[\r\n,]+/', (string) $imeiStr)));
                                                         $allSaleReturnImeis = array_merge($allSaleReturnImeis, $imeiArray);
                                                     }
-
-                                                    // 2. Courier Return IMEIs
-                                                    $courierRtnQuery = App\Models\InvoiceItem::where('product_id', $data->id)
-                                                        ->whereNotNull('imei')
-                                                        ->where('imei', '!=', '')
-                                                        ->where(function ($q) {
-                                                            $q->where('is_return', 1)
-                                                              ->orWhereHas('invoice', function ($iq) {
-                                                                  $iq->whereIn('order_status', ['Returned', 'returned', 'Return', 'return']);
-                                                              });
-                                                        })
-                                                        ->whereDoesntHave('invoice.returns');
-
-                                                    if ((int)$targetBranch === 2) {
-                                                        $courierRtnQuery->where(function($q) {
-                                                            $q->whereIn('branch_id', [2, 1])
-                                                              ->orWhereNull('branch_id');
-                                                        })->whereHas('invoice', function($iq) {
-                                                            $iq->where(function($biq) {
-                                                                $biq->whereIn('branch_id', [2, 1])
-                                                                    ->orWhereNull('branch_id');
-                                                            });
-                                                        });
-                                                    } elseif ($targetBranch) {
-                                                        $courierRtnQuery->where(function($q) use ($targetBranch) {
-                                                            $q->where('branch_id', $targetBranch)
-                                                              ->orWhereHas('invoice', function($iq) use ($targetBranch) {
-                                                                  $iq->where('branch_id', $targetBranch);
-                                                              });
-                                                        });
-                                                    }
-
-                                                    $courierRtnItems = $courierRtnQuery->pluck('imei')->toArray();
-                                                    foreach ($courierRtnItems as $imeiStr) {
-                                                        $imeiArray = array_filter(array_map('trim', preg_split('/[\r\n,]+/', (string) $imeiStr)));
-                                                        $allSaleReturnImeis = array_merge($allSaleReturnImeis, $imeiArray);
-                                                    }
-                                                    $allSaleReturnImeis = array_values(array_unique($allSaleReturnImeis));
                                                 @endphp
                                                 @if (count($allSaleReturnImeis) > 0)
                                                     <br>
@@ -608,7 +570,7 @@
                                             {{-- @dd($data->); --}}
  
                                             @php
-                                                $available_calc = (float) $purchased_qty - (float) $invoiced_qty + (float) $returned_qty - (float) $return_pur_qty - (float) $damaged_qty + (float) $adjust_in - (float) $adjust_out;
+                                                $available_calc = (float) $purchased_qty - (float) $invoiced_qty - (float) $return_pur_qty - (float) $damaged_qty + (float) $adjust_in - (float) $adjust_out;
                                             @endphp
                                             @if ($data->product_variations->count() > 0)
                                                 @php

@@ -261,7 +261,7 @@ class PreOrderController extends Controller
             $adjust_in_total  = (float) adjust_in($product);
             $adjust_out_total = (float) adjust_out($product);
 
-            $availableStock = $purchase - $sale + $sale_ret + $adjust_in_total - $adjust_out_total - $pur_ret - $damage;
+            $availableStock = $purchase - $sale + $adjust_in_total + $sale_ret - $adjust_out_total - $pur_ret - $damage;
 
             if ($availableStock < $item->quantity) {
                 $insufficientItems[] = [
