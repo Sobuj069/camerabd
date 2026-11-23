@@ -178,18 +178,18 @@ class ReportController extends Controller
                 sync_product_purchase_stock($product);
             }
             $purchase = (float) purchased_qty($product);
-            $sale     = (float) invoiced_qty($product);
+            $net_sale = (float) invoiced_qty($product);
             $sale_ret = (float) returned_qty($product);
+            $gross_sale = $net_sale + $sale_ret;
             $pur_ret  = (float) return_pur_qty($product);
             $damage   = (float) damaged_qty($product);
             $adjust_in_total = (float) adjust_in($product);
-            $adjust_out_total = (float)adjust_out($product);
+            $adjust_out_total = (float) adjust_out($product);
 
-            $stock = $purchase - $sale + $adjust_in_total - $adjust_out_total - $pur_ret - $damage;
-
+            $stock = $purchase - $gross_sale + $sale_ret + $adjust_in_total - $adjust_out_total - $pur_ret - $damage;
 
             $grand_purchase  += $purchase;
-            $grand_sale      += $sale;
+            $grand_sale      += $gross_sale;
             $grand_sale_ret  += $sale_ret;
             $grand_pur_ret   += $pur_ret;
             $grand_damage    += $damage;
@@ -2417,7 +2417,7 @@ class ReportController extends Controller
                 (float) purchased_qty($p),
                 (float) stock_transfer_qty($p),
                 (float) stock_receive_qty($p),
-                (float) invoiced_qty($p),
+                ((float) invoiced_qty($p) + (float) returned_qty($p)),
                 (float) returned_qty($p),
                 (float) return_pur_qty($p),
                 (float) damaged_qty($p),

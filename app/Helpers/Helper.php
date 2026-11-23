@@ -210,12 +210,30 @@ if (!function_exists('apply_active_invoice_stock_filter')) {
             $sq->whereNull('sale_type')->orWhere('sale_type', '!=', 'WooCommerce');
         })->where(function ($oq) {
             $oq->whereNull('order_status')
-               ->orWhereNotIn('order_status', ['Returned', 'returned', 'Return', 'return', 'Cancelled', 'cancelled', 'failed', 'canceled']);
+               ->orWhereNotIn('order_status', [
+                   'Returned', 'returned', 'Return', 'return',
+                   'RTS', 'rts', 'Return to Origin', 'return_to_origin',
+                   'returned_by_merchant', 'returned_approval',
+                   'Cancelled', 'cancelled', 'failed', 'canceled'
+               ]);
         })->where(function ($stq) {
-            $stq->whereNull('status')->orWhere('status', '!=', 2);
+            $stq->whereNull('status')->orWhereNotIn('status', [2, 3]);
         });
 
         return $iq;
+    }
+}
+
+if (!function_exists('gross_invoiced_qty')) {
+    function gross_invoiced_qty($product)
+    {
+        if (!$product || $product->is_service == 1) {
+            return '0 Pcs';
+        }
+        $net = (float) invoiced_qty($product);
+        $ret = (float) returned_qty($product);
+        $gross = $net + $ret;
+        return $gross . ' ' . ($product->unit->name ?? 'Pcs');
     }
 }
 
@@ -345,27 +363,70 @@ if (!function_exists('returned_qty')) {
         if ($product->is_service == 0) {
             $userBranchId = auth()->user()?->branch_id ?? 1;
             $filterBranchId = session('branch_filter_id', $userBranchId);
+            $targetBranch = ($userBranchId == 1) ? $filterBranchId : $userBranchId;
 
+            // 1. POS / In-store Return Items
             $query = ReturnItem::with('return.invoice')
                 ->where('product_id', $product->id);
 
-            if ($userBranchId == 1) {
-                if ($filterBranchId) {
-                    $query->where('branch_id', $filterBranchId);
-                }
-            } else {
-                $query->where('branch_id', $userBranchId);
+            if ((int)$targetBranch === 2) {
+                $query->whereIn('branch_id', [2, 1]);
+            } elseif ($targetBranch) {
+                $query->where('branch_id', $targetBranch);
+            }
+
+            // 2. Courier / Online Invoice Returns
+            $courierQuery = InvoiceItem::where('product_id', $product->id)
+                ->where(function ($q) {
+                    $q->where('is_return', 1)
+                      ->orWhereHas('invoice', function ($iq) {
+                          $iq->where(function($siq) {
+                              $siq->whereNull('sale_type')->orWhere('sale_type', '!=', 'WooCommerce');
+                          })->where(function($oq) {
+                              $oq->whereIn('order_status', [
+                                  'Returned', 'returned', 'Return', 'return',
+                                  'RTS', 'rts', 'Return to Origin', 'return_to_origin',
+                                  'returned_by_merchant', 'returned_approval'
+                              ])->orWhere('status', 2);
+                          });
+                      });
+                })
+                ->whereDoesntHave('invoice.returns');
+
+            if ((int)$targetBranch === 2) {
+                $courierQuery->where(function($q) {
+                    $q->whereIn('branch_id', [2, 1])
+                      ->orWhereNull('branch_id');
+                })->whereHas('invoice', function($iq) {
+                    $iq->where(function($biq) {
+                        $biq->whereIn('branch_id', [2, 1])
+                            ->orWhereNull('branch_id');
+                    });
+                });
+            } elseif ($targetBranch) {
+                $courierQuery->where(function($q) use ($targetBranch) {
+                    $q->where('branch_id', $targetBranch)
+                      ->orWhereHas('invoice', function($iq) use ($targetBranch) {
+                          $iq->where('branch_id', $targetBranch);
+                      });
+                });
             }
 
             if (!$product->unit || $product->unit->related_unit == null) {
-                $inv_stock = ReturnItem::filterByFakeSale($query)->sum('main_qty');
-                $total_stock = $inv_stock;
+                $posStock = (float) ReturnItem::filterByFakeSale($query)->sum('main_qty');
+                $courierStock = (float) InvoiceItem::filterByFakeSale($courierQuery)->sum('main_qty');
+                $total_stock = $posStock + $courierStock;
                 $data['stock_qty'] = $total_stock . ' ' . ($product->unit->name ?? 'Pcs');
             } else {
                 //return
-                $filteredItems = ReturnItem::filterByFakeSale($query);
-                $inv_stock_main = $filteredItems->sum('main_qty');
-                $inv_total_sub = $filteredItems->sum('sub_qty');
+                $posMain = (float) ReturnItem::filterByFakeSale($query)->sum('main_qty');
+                $posSub  = (float) ReturnItem::filterByFakeSale($query)->sum('sub_qty');
+
+                $courierMain = (float) InvoiceItem::filterByFakeSale($courierQuery)->sum('main_qty');
+                $courierSub  = (float) InvoiceItem::filterByFakeSale($courierQuery)->sum('sub_qty');
+
+                $inv_stock_main = $posMain + $courierMain;
+                $inv_total_sub = $posSub + $courierSub;
 
                 $inv_total_main = (float)($inv_stock_main * $product->unit->related_value);
                 $inv_total_stock = (float)($inv_total_main + $inv_total_sub);
@@ -2125,8 +2186,19 @@ if (!function_exists('syncInvoiceStockForStatusChange')) {
         $normNew = strtolower(trim((string)$newStatus));
         $normOld = strtolower(trim((string)$oldStatus));
 
-        $isNewReturnedOrCancelled = in_array($normNew, ['returned', 'return', 'cancelled', 'failed', 'canceled']);
-        $wasReturnedOrCancelled = in_array($normOld, ['returned', 'return', 'cancelled', 'failed', 'canceled']);
+        $returnStatuses = [
+            'returned', 'return', 'rts', 'return to origin', 'return_to_origin', 
+            'returned_by_merchant', 'returned_approval'
+        ];
+        $cancelStatuses = ['cancelled', 'cancel', 'failed', 'canceled'];
+
+        $isNewReturned = in_array($normNew, $returnStatuses);
+        $isNewCancelled = in_array($normNew, $cancelStatuses);
+        $isNewReturnedOrCancelled = $isNewReturned || $isNewCancelled;
+
+        $wasReturned = in_array($normOld, $returnStatuses);
+        $wasCancelled = in_array($normOld, $cancelStatuses);
+        $wasReturnedOrCancelled = $wasReturned || $wasCancelled;
 
         $userBranchId = auth()->check() && auth()->user() ? auth()->user()->branch_id : 2;
         $branchId = ($invoice->branch_id && $invoice->branch_id != 1) 
@@ -2135,6 +2207,14 @@ if (!function_exists('syncInvoiceStockForStatusChange')) {
 
         // 1. Status changing TO Returned/Cancelled -> RESTORE STOCK (FIFO) + REACTIVATE IMEI
         if ($isNewReturnedOrCancelled) {
+            if ($isNewReturned && (int)$invoice->status !== 2) {
+                $invoice->status = 2;
+                $invoice->saveQuietly();
+            } elseif ($isNewCancelled && (int)$invoice->status !== 3) {
+                $invoice->status = 3;
+                $invoice->saveQuietly();
+            }
+
             $items = \App\Models\InvoiceItem::where('invoice_id', $invoice->id)->get();
             foreach ($items as $item) {
                 if ($item->product && $item->product->is_service == 0) {
@@ -2158,6 +2238,11 @@ if (!function_exists('syncInvoiceStockForStatusChange')) {
         }
         // 2. Status changing FROM Returned/Cancelled back to active status -> REDUCE STOCK (FIFO) + DEACTIVATE IMEI
         elseif (!$isNewReturnedOrCancelled && $wasReturnedOrCancelled) {
+            if ($invoice->status == 2 || $invoice->status == 3) {
+                $invoice->status = 1;
+                $invoice->saveQuietly();
+            }
+
             $items = \App\Models\InvoiceItem::where('invoice_id', $invoice->id)->get();
             foreach ($items as $item) {
                 if ($item->product && $item->product->is_service == 0) {

@@ -746,6 +746,14 @@ class InvoiceController extends Controller
                     $count++;
                     logActivity('Update Order Status', "Invoice #{$inv->invoice_no} status changed from '{$oldStatus}' to 'In Courier'", $inv);
                 } else {
+                    $normStatus = strtolower(trim((string)$status));
+                    if (in_array($normStatus, ['returned', 'return', 'rts', 'return to origin', 'return_to_origin', 'returned_by_merchant', 'returned_approval'])) {
+                        $inv->status = 2;
+                    } elseif (in_array($normStatus, ['cancelled', 'cancel', 'failed', 'canceled'])) {
+                        $inv->status = 3;
+                    } else {
+                        $inv->status = 1;
+                    }
                     $inv->order_status = $status;
                     $inv->save();
                     $count++;
@@ -3302,6 +3310,12 @@ class InvoiceController extends Controller
                 // Synchronize inventory stock and IMEI serials on status change
                 syncInvoiceStockForStatusChange($inv, $newStatus, $oldStatus);
 
+                $normSyncStatus = strtolower(trim((string)$newStatus));
+                if (in_array($normSyncStatus, ['returned', 'return', 'rts', 'return to origin', 'return_to_origin', 'returned_by_merchant', 'returned_approval'])) {
+                    $inv->status = 2;
+                } elseif (in_array($normSyncStatus, ['cancelled', 'cancel', 'failed', 'canceled'])) {
+                    $inv->status = 3;
+                }
                 $inv->order_status = $newStatus;
                 $inv->save();
 
@@ -3392,9 +3406,10 @@ class InvoiceController extends Controller
                 ], 422);
             }
         } else {
-            if (in_array(strtolower(trim($newStatus)), ['returned', 'return'])) {
+            $normScanStatus = strtolower(trim((string)$newStatus));
+            if (in_array($normScanStatus, ['returned', 'return', 'rts', 'return to origin', 'return_to_origin', 'returned_by_merchant', 'returned_approval'])) {
                 $invoice->status = 2;
-            } elseif (in_array(strtolower(trim($newStatus)), ['cancelled', 'cancel', 'failed', 'canceled'])) {
+            } elseif (in_array($normScanStatus, ['cancelled', 'cancel', 'failed', 'canceled'])) {
                 $invoice->status = 3;
             } else {
                 $invoice->status = 1;

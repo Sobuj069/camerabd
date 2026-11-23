@@ -29,9 +29,10 @@
                     @foreach($products as $data)
                         @php
                             $purchased_qty = purchased_qty($data);
-                            $invoiced_qty = invoiced_qty($data);
+                            $net_invoiced_qty = (float) invoiced_qty($data);
+                            $returned_qty = (float) returned_qty($data);
+                            $gross_stock_out = $net_invoiced_qty + $returned_qty;
                             $stock_qty = product_stock($data);
-                            $returned_qty = returned_qty($data);
                             $damaged_qty = damaged_qty($data);
                             $return_pur_qty = return_pur_qty($data);
                             $factor = ($data->unit && $data->unit->related_value) ? $data->unit->related_value : 1;
@@ -42,8 +43,8 @@
                             <td>{{ $data->name }} - {{ $data->barcode }}</td>
                             <td>{{ $data->category->name }}</td>
                             <td>{{ $purchased_qty }}</td>
-                            <td>{{ $invoiced_qty }}</td>
-                            <td>{{ $returned_qty }}</td>
+                            <td>{{ $gross_stock_out }} {{ $data->unit->name ?? 'Pcs' }}</td>
+                            <td>{{ $returned_qty }} {{ $data->unit->name ?? 'Pcs' }}</td>
                             <td>{{ $return_pur_qty }}</td>
                             <td>{{ $damaged_qty }}</td>
                             <td>{{ $stock_qty }}</td>

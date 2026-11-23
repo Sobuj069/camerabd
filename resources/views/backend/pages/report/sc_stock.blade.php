@@ -201,11 +201,13 @@
                                 @forelse($products as $data)
                                     @php
                                         $purchased_qty = purchased_qty($data);
-                                        $invoiced_qty = invoiced_qty($data);
+                                        $net_invoiced_qty = (float) invoiced_qty($data);
+                                        $returned_qty = (float) returned_qty($data);
+                                        $gross_invoiced_qty = $net_invoiced_qty + $returned_qty;
+
                                         $stock_qty = product_stock($data);
                                         $stock_transfer_qty = stock_transfer_qty($data);
                                         $stock_receive_qty = stock_receive_qty($data);
-                                        $returned_qty = returned_qty($data);
                                         $damaged_qty = damaged_qty($data);
                                         $adjust_in = adjust_in($data);
                                         $adjust_out = adjust_out($data);
@@ -213,14 +215,14 @@
                                         // dd($stock_qty);
 
                                         $row_purchase += (float) $purchased_qty;
-                                        $row_sale     += (float) $invoiced_qty;
+                                        $row_sale     += (float) $gross_invoiced_qty;
                                         $row_sale_ret += (float) $returned_qty;
                                         $row_pur_ret  += (float) $return_pur_qty;
                                         $row_damage   += (float) $damaged_qty;
                                         $row_adjust_in_total   += (float) $adjust_in;
                                         $row_adjust_out_total   += (float) $adjust_out;
                                         
-                                        $row_stock_qty = $row_purchase - $row_sale + $row_adjust_in_total - $row_adjust_out_total - $row_pur_ret - $row_damage ;
+                                        $row_stock_qty = $row_purchase - $row_sale + $row_sale_ret + $row_adjust_in_total - $row_adjust_out_total - $row_pur_ret - $row_damage ;
                                     @endphp
                                     <tr>
                                         <td class="table_data_style_left">{{ $products->firstItem() ? ($products->firstItem() + $loop->index) : ($loop->index + 1) }}</td>
@@ -316,25 +318,28 @@
                                             @endif
                                         </td>
                                         <td>
-                                            {{ $invoiced_qty }}
+                                            {{ $gross_invoiced_qty }} {{ $data->unit->name ?? 'Pcs' }}
                                             @php
                                                 $allSoldImeis = [];
+                                                $allSaleReturnImeis = [];
                                             @endphp
                                             @if ($data->imei == 1 || $data->imei == '1')
                                                 @php
                                                     $userBranchId = auth()->user()->branch_id;
                                                     $filterBranchId = session('branch_filter_id');
+                                                    $targetBranch = ($userBranchId == 1) ? $filterBranchId : $userBranchId;
+
+                                                    // 1. Sold active IMEIs
                                                     $invQuery = App\Models\InvoiceItem::where('product_id', $data->id)
                                                         ->whereNotNull('imei')
                                                         ->where('imei', '!=', '')
                                                         ->whereHas('invoice', function ($q) {
-                                                            $q->whereNull('status')->orWhere('status', '!=', 2);
+                                                            $q->whereNull('status')->orWhereNotIn('status', [2, 3]);
                                                         })
                                                         ->where(function ($q) {
                                                             $q->whereNull('is_return')->orWhere('is_return', '!=', 1);
                                                         });
                                                     
-                                                    $targetBranch = ($userBranchId == 1) ? $filterBranchId : $userBranchId;
                                                     if ((int)$targetBranch === 2) {
                                                         $invQuery->where(function($q) {
                                                             $q->whereIn('branch_id', [2, 1])
@@ -360,38 +365,16 @@
                                                         $allSoldImeis = array_merge($allSoldImeis, $imeiArray);
                                                     }
                                                     $allSoldImeis = array_values(array_unique($allSoldImeis));
-                                                @endphp
-                                                @if (count($allSoldImeis) > 0)
-                                                    <br>
-                                                    <button type="button" class="btn btn-xs btn-info btn-view-imeis mt-1" 
-                                                            data-product="{{ $data->name }} - {{ $data->barcode }}" 
-                                                            data-column="{{ __('Stock Out') }}"
-                                                            data-imeis="{{ json_encode(array_values($allSoldImeis)) }}" 
-                                                            style="padding: 1px 5px; font-size: 10px; border-radius: 3px; background-color: #17a2b8; border-color: #17a2b8; color: #fff;">
-                                                        <i class="fa fa-barcode"></i> {{ __('IMEI') }} ({{ count($allSoldImeis) }})
-                                                    </button>
-                                                @endif
-                                            @endif
-                                        </td>
-                                        <td>
-                                            {{ $returned_qty }}
-                                            @php
-                                                $allSaleReturnImeis = [];
-                                            @endphp
-                                            @if ($data->imei == 1 || $data->imei == '1')
-                                                @php
-                                                    $userBranchId = auth()->user()->branch_id;
-                                                    $filterBranchId = session('branch_filter_id');
+
+                                                    // 2. Sale Return IMEIs (POS + Courier)
                                                     $rtnQuery = App\Models\ReturnItem::where('product_id', $data->id)
                                                         ->whereNotNull('imei')
                                                         ->where('imei', '!=', '');
                                                     
-                                                    if ($userBranchId == 1) {
-                                                        if ($filterBranchId) {
-                                                            $rtnQuery->where('branch_id', $filterBranchId);
-                                                        }
-                                                    } else {
-                                                        $rtnQuery->where('branch_id', $userBranchId);
+                                                    if ((int)$targetBranch === 2) {
+                                                        $rtnQuery->whereIn('branch_id', [2, 1]);
+                                                    } elseif ($targetBranch) {
+                                                        $rtnQuery->where('branch_id', $targetBranch);
                                                     }
                                                     
                                                     $returnItems = $rtnQuery->pluck('imei')->toArray();
@@ -399,7 +382,66 @@
                                                         $imeiArray = array_filter(array_map('trim', preg_split('/[\r\n,]+/', (string) $imeiStr)));
                                                         $allSaleReturnImeis = array_merge($allSaleReturnImeis, $imeiArray);
                                                     }
+
+                                                    $courierRtnQuery = App\Models\InvoiceItem::where('product_id', $data->id)
+                                                        ->whereNotNull('imei')
+                                                        ->where('imei', '!=', '')
+                                                        ->where(function ($q) {
+                                                            $q->where('is_return', 1)
+                                                              ->orWhereHas('invoice', function ($iq) {
+                                                                  $iq->whereIn('order_status', [
+                                                                      'Returned', 'returned', 'Return', 'return',
+                                                                      'RTS', 'rts', 'Return to Origin', 'return_to_origin',
+                                                                      'returned_by_merchant', 'returned_approval'
+                                                                  ])->orWhere('status', 2);
+                                                              });
+                                                        })
+                                                        ->whereDoesntHave('invoice.returns');
+
+                                                    if ((int)$targetBranch === 2) {
+                                                        $courierRtnQuery->where(function($q) {
+                                                            $q->whereIn('branch_id', [2, 1])
+                                                              ->orWhereNull('branch_id');
+                                                        })->whereHas('invoice', function($iq) {
+                                                            $iq->where(function($biq) {
+                                                                $biq->whereIn('branch_id', [2, 1])
+                                                                    ->orWhereNull('branch_id');
+                                                            });
+                                                        });
+                                                    } elseif ($targetBranch) {
+                                                        $courierRtnQuery->where(function($q) use ($targetBranch) {
+                                                            $q->where('branch_id', $targetBranch)
+                                                              ->orWhereHas('invoice', function($iq) use ($targetBranch) {
+                                                                  $iq->where('branch_id', $targetBranch);
+                                                              });
+                                                        });
+                                                    }
+
+                                                    $courierRtnItems = $courierRtnQuery->pluck('imei')->toArray();
+                                                    foreach ($courierRtnItems as $imeiStr) {
+                                                        $imeiArray = array_filter(array_map('trim', preg_split('/[\r\n,]+/', (string) $imeiStr)));
+                                                        $allSaleReturnImeis = array_merge($allSaleReturnImeis, $imeiArray);
+                                                    }
+                                                    $allSaleReturnImeis = array_values(array_unique($allSaleReturnImeis));
+
+                                                    // Gross sold IMEIs = active sold + returned
+                                                    $allGrossSoldImeis = array_values(array_unique(array_merge($allSoldImeis, $allSaleReturnImeis)));
                                                 @endphp
+                                                @if (count($allGrossSoldImeis) > 0)
+                                                    <br>
+                                                    <button type="button" class="btn btn-xs btn-info btn-view-imeis mt-1" 
+                                                            data-product="{{ $data->name }} - {{ $data->barcode }}" 
+                                                            data-column="{{ __('Stock Out') }}"
+                                                            data-imeis="{{ json_encode(array_values($allGrossSoldImeis)) }}" 
+                                                            style="padding: 1px 5px; font-size: 10px; border-radius: 3px; background-color: #17a2b8; border-color: #17a2b8; color: #fff;">
+                                                        <i class="fa fa-barcode"></i> {{ __('IMEI') }} ({{ count($allGrossSoldImeis) }})
+                                                    </button>
+                                                @endif
+                                            @endif
+                                        </td>
+                                        <td>
+                                            {{ $returned_qty }} {{ $data->unit->name ?? 'Pcs' }}
+                                            @if ($data->imei == 1 || $data->imei == '1')
                                                 @if (count($allSaleReturnImeis) > 0)
                                                     <br>
                                                     <button type="button" class="btn btn-xs btn-info btn-view-imeis mt-1" 
@@ -570,7 +612,7 @@
                                             {{-- @dd($data->); --}}
  
                                             @php
-                                                $available_calc = (float) $purchased_qty - (float) $invoiced_qty - (float) $return_pur_qty - (float) $damaged_qty + (float) $adjust_in - (float) $adjust_out;
+                                                $available_calc = (float) $purchased_qty - (float) $gross_invoiced_qty + (float) $returned_qty - (float) $return_pur_qty - (float) $damaged_qty + (float) $adjust_in - (float) $adjust_out;
                                             @endphp
                                             @if ($data->product_variations->count() > 0)
                                                 @php
